@@ -1,18 +1,12 @@
-import supabase from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
-export default async function RiddlePage({ params }: Props) {
-  const { id } = params;
+export default async function RiddlePage({ params }: { params: { id: string } }) {
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from('riddles')
     .select('*')
-    .eq('id', id)
+    .eq('id', params.id)
     .single();
 
   if (error || !data) {
