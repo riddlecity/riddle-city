@@ -1,27 +1,28 @@
-import { createClient } from '@/lib/supabase';
+import supabase from '@/lib/supabase';
 
-type PageProps = {
+type Props = {
   params: {
     id: string;
   };
 };
 
-export default async function RiddlePage({ params }: PageProps) {
-  const supabase = createClient();
-  const { data: riddle } = await supabase
+export default async function RiddlePage({ params }: Props) {
+  const { id } = params;
+
+  const { data, error } = await supabase
     .from('riddles')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
-  if (!riddle) {
-    return <div>Riddle not found</div>;
+  if (error) {
+    return <div>Error loading riddle.</div>;
   }
 
   return (
-    <div>
-      <h1>{riddle.question}</h1>
-      <p>{riddle.answer}</p>
-    </div>
+    <main className="p-4">
+      <h1 className="text-xl font-bold">{data.title}</h1>
+      <p>{data.question}</p>
+    </main>
   );
 }
