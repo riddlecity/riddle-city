@@ -1,13 +1,11 @@
-import supabase from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
-type Props = {
-  params: {
-    id: string;
-  };
-};
-
-export default async function RiddlePage({ params }: Props) {
-  const { id } = params;
+export default async function RiddlePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
   const { data, error } = await supabase
     .from('riddles')
@@ -15,7 +13,7 @@ export default async function RiddlePage({ params }: Props) {
     .eq('id', id)
     .single();
 
-  if (error) {
+  if (error || !data) {
     return <div>Error loading riddle.</div>;
   }
 
