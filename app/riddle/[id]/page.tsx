@@ -13,7 +13,7 @@ export default async function RiddlePage({ params }: { params: { id: string } })
     .from("riddles")
     .select("riddle_text, qr_hint")
     .eq("id", params.id)
-    .single();
+    .single<RiddleData>(); // ✅ using the interface here
 
   if (error || !data) {
     return (
