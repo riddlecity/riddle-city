@@ -2,12 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import type { Metadata } from "next";
 
-interface RiddleData {
-  id: string;
-  riddle_text: string;
-  qr_hint: string;
-}
-
 interface Props {
   params: { id: string };
 }
