@@ -3,22 +3,25 @@ import Image from "next/image";
 import type { Metadata } from "next";
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Optional: This dynamically sets the page title
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
   return {
-    title: `Riddle – ${params.id}`,
+    title: `Riddle – ${id}`,
   };
 }
 
 export default async function RiddlePage({ params }: Props) {
+  const { id } = await params;
   const supabase = createClient();
+  
   const { data, error } = await supabase
     .from("riddles")
     .select("riddle_text, qr_hint")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !data) {
@@ -41,12 +44,10 @@ export default async function RiddlePage({ params }: Props) {
         className="mb-10 drop-shadow-2xl"
         priority
       />
-
       <section className="bg-white/5 backdrop-blur-sm text-white p-8 sm:p-10 rounded-3xl shadow-2xl max-w-xl w-full border border-white/10">
         <p className="text-lg sm:text-xl text-center font-medium leading-relaxed">
           {riddle_text}
         </p>
-
         <details className="mt-6 group">
           <summary className="cursor-pointer text-white/80 hover:text-white text-center text-base sm:text-lg font-semibold transition-colors duration-200">
             💡 Show Hint
