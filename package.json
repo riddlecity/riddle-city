@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@plasmicapp/react-web": "^0.2.393",
     "@supabase/supabase-js": "^2.50.3",
     "next": "15.3.4",
     "react": "^19.0.0",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@plasmicapp/cli": "^0.1.340",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
