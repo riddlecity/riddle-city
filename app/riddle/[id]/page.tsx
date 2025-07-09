@@ -1,16 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 
-type Props = {
+interface RiddleData {
+  id: string;
+  riddle_text: string;
+  qr_hint: string;
+}
+
+interface Props {
   params: { id: string };
-};
+}
 
-// ✅ Optional: Dynamic metadata (Title, etc.)
-export async function generateMetadata(
-  { params }: Props,
-  _parent: ResolvingMetadata
-): Promise<Metadata> {
+// Optional: This dynamically sets the page title
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Riddle – ${params.id}`,
   };
@@ -18,7 +21,6 @@ export async function generateMetadata(
 
 export default async function RiddlePage({ params }: Props) {
   const supabase = createClient();
-
   const { data, error } = await supabase
     .from("riddles")
     .select("riddle_text, qr_hint")
