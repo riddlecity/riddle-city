@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
+import { Metadata } from "next";
+
+interface RiddlePageProps {
+  params: {
+    id: string;
+  };
+}
 
 interface RiddleData {
   id: string;
@@ -7,13 +14,19 @@ interface RiddleData {
   qr_hint: string;
 }
 
-export default async function RiddlePage({ params }: { params: { id: string } }) {
+export const generateMetadata = async ({ params }: RiddlePageProps): Promise<Metadata> => {
+  return {
+    title: `Riddle - ${params.id}`,
+  };
+};
+
+export default async function RiddlePage({ params }: RiddlePageProps) {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("riddles")
     .select("riddle_text, qr_hint")
     .eq("id", params.id)
-    .single<RiddleData>(); // ✅ using the interface here
+    .single<RiddleData>();
 
   if (error || !data) {
     return (
