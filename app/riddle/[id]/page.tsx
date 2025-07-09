@@ -1,32 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
-import { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 
-interface RiddlePageProps {
-  params: {
-    id: string;
-  };
-}
-
-interface RiddleData {
-  id: string;
-  riddle_text: string;
-  qr_hint: string;
-}
-
-export const generateMetadata = async ({ params }: RiddlePageProps): Promise<Metadata> => {
-  return {
-    title: `Riddle - ${params.id}`,
-  };
+type Props = {
+  params: { id: string };
 };
 
-export default async function RiddlePage({ params }: RiddlePageProps) {
+// ✅ Optional: Dynamic metadata (Title, etc.)
+export async function generateMetadata(
+  { params }: Props,
+  _parent: ResolvingMetadata
+): Promise<Metadata> {
+  return {
+    title: `Riddle – ${params.id}`,
+  };
+}
+
+export default async function RiddlePage({ params }: Props) {
   const supabase = createClient();
+
   const { data, error } = await supabase
     .from("riddles")
     .select("riddle_text, qr_hint")
     .eq("id", params.id)
-    .single<RiddleData>();
+    .single();
 
   if (error || !data) {
     return (
