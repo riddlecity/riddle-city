@@ -1,6 +1,10 @@
 // Pseudocode for the scan handler
-export default async function ScanRiddle({ params }) {
-  const { riddleId } = params;
+interface Props {
+  params: Promise<{ riddleId: string }>;
+}
+
+export default async function ScanRiddle({ params }: Props) {
+  const { riddleId } = await params;
   const groupId = getGroupIdFromCookies();
   
   // Get group's current riddle
