@@ -6,9 +6,9 @@ import { createOrGetUserId } from "@/lib/createOrGetUserId";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const groupId = searchParams.get("groupId");
-
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  
+  const cookieStore = await cookies();
+  const supabase = createClient();
   const userId = createOrGetUserId();
 
   if (!groupId || !userId) {
