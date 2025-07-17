@@ -22,8 +22,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Group ID is required" }, { status: 400 });
     }
 
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+    const cookieStore = await cookies();
+    const supabase = createClient();
 
     // Get or create user
     let userId = cookieStore.get("user_id")?.value;
@@ -68,7 +68,6 @@ export async function POST(req: Request) {
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
-
       response.cookies.set("group_id", groupId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -114,7 +113,6 @@ export async function POST(req: Request) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 1 week
     });
-
     response.cookies.set("group_id", groupId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
