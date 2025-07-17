@@ -1,5 +1,3 @@
-// app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
-
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
@@ -7,8 +5,10 @@ import { createClient } from '@/lib/supabase/server';
 export default async function StartPage({
   params,
 }: {
-  params: { location: string; mode: string; sessionId: string };
+  params: Promise<{ location: string; mode: string; sessionId: string }>; // Mark params as a Promise
 }) {
+  const awaitedParams = await params; // Await the params object
+
   const supabase = createClient();
 
   // Step 1: Fetch Stripe session
@@ -18,7 +18,7 @@ export default async function StartPage({
 
   let stripeSession;
   try {
-    stripeSession = await stripe.checkout.sessions.retrieve(params.sessionId, {
+    stripeSession = await stripe.checkout.sessions.retrieve(awaitedParams.sessionId, { // Use awaitedParams
       expand: ['customer'],
     });
   } catch (error) {
@@ -54,8 +54,8 @@ export default async function StartPage({
   const { data: trackData, error: trackError } = await supabase
     .from('tracks')
     .select('id, start_riddle_id')
-    .eq('location', params.location)
-    .eq('mode', params.mode)
+    .eq('location', awaitedParams.location) // Use awaitedParams
+    .eq('mode', awaitedParams.mode) // Use awaitedParams
     .single();
 
   if (trackError || !trackData) {
@@ -92,5 +92,5 @@ export default async function StartPage({
   }
 
   // ✅ Step 6: Redirect to the first riddle page
-  return redirect(`/riddlecity/${params.location}/${params.mode}/riddle/${trackData.start_riddle_id}`);
+  return redirect(`/riddlecity/${awaitedParams.location}/${awaitedParams.mode}/riddle/${trackData.start_riddle_id}`); // Use awaitedParams
 }
