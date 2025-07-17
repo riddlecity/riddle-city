@@ -5,20 +5,21 @@ import { createClient } from '@/lib/supabase/server';
 export default async function StartPage({
   params,
 }: {
-  params: Promise<{ location: string; mode: string; sessionId: string }>; // Mark params as a Promise
+  params: Promise<{ location: string; mode: string; sessionId: string }>;
 }) {
-  const awaitedParams = await params; // Await the params object
+  const awaitedParams = await params;
 
   const supabase = createClient();
 
   // Step 1: Fetch Stripe session
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-04-10',
+    // FIX: Update the Stripe API version to the latest one suggested by the error
+    apiVersion: '2025-06-30.basil', // Update this line
   });
 
   let stripeSession;
   try {
-    stripeSession = await stripe.checkout.sessions.retrieve(awaitedParams.sessionId, { // Use awaitedParams
+    stripeSession = await stripe.checkout.sessions.retrieve(awaitedParams.sessionId, {
       expand: ['customer'],
     });
   } catch (error) {
@@ -54,8 +55,8 @@ export default async function StartPage({
   const { data: trackData, error: trackError } = await supabase
     .from('tracks')
     .select('id, start_riddle_id')
-    .eq('location', awaitedParams.location) // Use awaitedParams
-    .eq('mode', awaitedParams.mode) // Use awaitedParams
+    .eq('location', awaitedParams.location)
+    .eq('mode', awaitedParams.mode)
     .single();
 
   if (trackError || !trackData) {
@@ -92,5 +93,5 @@ export default async function StartPage({
   }
 
   // ✅ Step 6: Redirect to the first riddle page
-  return redirect(`/riddlecity/${awaitedParams.location}/${awaitedParams.mode}/riddle/${trackData.start_riddle_id}`); // Use awaitedParams
+  return redirect(`/riddlecity/${awaitedParams.location}/${awaitedParams.mode}/riddle/${trackData.start_riddle_id}`);
 }
