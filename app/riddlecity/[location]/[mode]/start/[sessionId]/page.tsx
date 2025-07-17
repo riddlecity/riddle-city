@@ -5,22 +5,26 @@ import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 
 interface Props {
-  params: Promise<{ location: string; mode: string; sessionId: string }>; // sessionId here is actually group.id
-  searchParams: { [key: string]: string | string[] | undefined }; // Add searchParams
+  params: Promise<{ location: string; mode: string; sessionId: string }>; // This was already Promise
+  // FIX: Make searchParams a Promise as well
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function StartPage({ params, searchParams }: Props) { // Pass searchParams
+export default async function StartPage({ params, searchParams }: Props) {
   const awaitedParams = await params;
+  // FIX: Await searchParams as well
+  const awaitedSearchParams = await searchParams; // <-- Add this line
   const cookieStore = await cookies();
 
   const supabase = await createClient();
 
   // --- CRITICAL FIX HERE ---
-  const stripeCheckoutSessionId = searchParams.session_id; // Get Stripe session ID from query params
+  // Use awaitedSearchParams to access the session_id
+  const stripeCheckoutSessionId = awaitedSearchParams.session_id;
 
   if (!stripeCheckoutSessionId || typeof stripeCheckoutSessionId !== 'string') {
     console.error('❌ Missing or invalid Stripe checkout session ID in URL.');
-    return redirect('/'); // Redirect if session_id is not found
+    return redirect('/');
   }
 
   // Step 1: Fetch Stripe session using the CORRECT ID
@@ -30,7 +34,6 @@ export default async function StartPage({ params, searchParams }: Props) { // Pa
 
   let stripeSession;
   try {
-    // Use stripeCheckoutSessionId here
     stripeSession = await stripe.checkout.sessions.retrieve(stripeCheckoutSessionId, {
       expand: ['customer'],
     });
@@ -39,10 +42,7 @@ export default async function StartPage({ params, searchParams }: Props) { // Pa
     return redirect('/');
   }
 
-  // ... (rest of your existing logic for customerEmail, metadata, cookies, group/member verification) ...
-
   // Extract essential IDs from Stripe session metadata
-  // These were correctly put in metadata by /api/checkout-session
   const groupIdFromMetadata = stripeSession.metadata?.group_id;
   const userIdFromMetadata = stripeSession.metadata?.user_id;
   const teamNameFromMetadata = stripeSession.metadata?.team_name;
@@ -87,7 +87,7 @@ export default async function StartPage({ params, searchParams }: Props) { // Pa
   const { data: existingGroup, error: groupFetchError } = await supabase
     .from('groups')
     .select('id, current_riddle_id, track_id')
-    .eq('id', groupIdFromMetadata) // Use groupIdFromMetadata for querying the group
+    .eq('id', groupIdFromMetadata)
     .eq('created_by', userIdFromMetadata)
     .single();
 
