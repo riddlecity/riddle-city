@@ -4,12 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   const { groupId, currentRiddleId } = await req.json();
-
+  
   if (!groupId || !currentRiddleId) {
     return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
   }
 
-  const supabase = createClient(cookies());
+  const cookieStore = await cookies();
+  const supabase = createClient();
 
   // Get the next riddle ID from the current one
   const { data: currentRiddle, error: riddleError } = await supabase
