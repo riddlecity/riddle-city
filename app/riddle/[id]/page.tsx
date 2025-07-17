@@ -20,14 +20,13 @@ export const metadata: Metadata = {
 export default async function RiddlePage({ params }: Props) {
   const { id } = await params;
   const cookieStore = await cookies();
-  const supabase = createClient();
+  const supabase = await createClient(); // ✅ FIX: Await it
 
-  // Get riddle data first
-  const { data, error } = await supabase
-    .from("riddles")
-    .select("riddle_text, qr_hint, order_index, track_id")
-    .eq("id", id)
-    .single();
+const { data, error } = await supabase
+  .from("riddles")
+  .select("riddle_text, qr_hint, order_index, track_id")
+  .eq("id", id)
+  .single();
 
   if (error || !data) {
     console.error('Riddle fetch error:', error);
