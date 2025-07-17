@@ -12,14 +12,14 @@ interface Props {
 export default async function LeaderboardPage({ params }: Props) {
   const { trackId } = await params;
   const cookieStore = await cookies();
-  const supabase = createClient();
+  const supabase = await createClient(); // ✅ Await the client
 
-  // Get track info to show what leaderboard this is for
-  const { data: track, error: trackError } = await supabase
-    .from("tracks")
-    .select("name, location, mode")
-    .eq("id", trackId)
-    .single();
+const { data: track, error: trackError } = await supabase
+  .from("tracks")
+  .select("name, location, mode")
+  .eq("id", trackId)
+  .single();
+
 
   if (trackError || !track) {
     notFound();
