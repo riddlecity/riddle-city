@@ -1,3 +1,4 @@
+// app/api/checkout-session/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
@@ -8,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 export async function POST(req: Request) {
   try {
     const { players, location, mode, teamName, emails } = await req.json();
-    
+
     if (!teamName || !teamName.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
       line_items: [{
         price_data: {
           currency: "gbp",
-          product_data: { 
+          product_data: {
             name: `${track.name} - Team: ${teamName.trim()}`,
             description: `Adventure for ${players} player${players > 1 ? 's' : ''}`
           },
@@ -94,36 +95,9 @@ export async function POST(req: Request) {
       throw new Error("Stripe session URL was not returned");
     }
 
-    // ✅ Set secure cookies for production
-    const response = NextResponse.json({ 
-      sessionUrl: session.url,
-      groupId: group.id,
-      teamName: teamName.trim()
-    });
-
-    const isProduction = process.env.NODE_ENV === "production";
-    const expires = 60 * 60 * 24;
-
-    response.cookies.set("group_id", group.id, {
-      maxAge: expires,
-      path: "/",
-      sameSite: "lax",
-      secure: isProduction,
-    });
-
-    response.cookies.set("user_id", userId, {
-      maxAge: expires,
-      path: "/",
-      sameSite: "lax",
-      secure: isProduction,
-    });
-
-    response.cookies.set("team_name", teamName.trim(), {
-      maxAge: expires,
-      path: "/",
-      sameSite: "lax",
-      secure: isProduction,
-    });
+    // --- REMOVED COOKIE SETTING FROM HERE ---
+    // The cookies are now set on the /riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
+    // after the Stripe redirect, for more reliable persistence.
 
     console.log("✅ Checkout session created successfully:", {
       groupId: group.id,
@@ -132,7 +106,12 @@ export async function POST(req: Request) {
       sessionId: session.id
     });
 
-    return response;
+    // Return the response with the session URL and group/team info
+    return NextResponse.json({
+      sessionUrl: session.url,
+      groupId: group.id,
+      teamName: teamName.trim()
+    });
 
   } catch (err) {
     console.error("Checkout session creation failed:", err);

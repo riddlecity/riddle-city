@@ -1,15 +1,17 @@
+// app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server'; // Ensure this path is correct
+import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers'; // Import cookies for setting them
 
-export default async function StartPage({
-  params,
-}: {
+interface Props {
   params: Promise<{ location: string; mode: string; sessionId: string }>;
-}) {
-  const awaitedParams = await params;
+}
 
-  // FIX: Await the Supabase client creation
+export default async function StartPage({ params }: Props) {
+  const awaitedParams = await params;
+  const cookieStore = cookies(); // Initialize cookie store to set cookies
+
   const supabase = await createClient(); // Await the creation of the Supabase client
 
   // Step 1: Fetch Stripe session
@@ -27,76 +29,77 @@ export default async function StartPage({
     return redirect('/');
   }
 
-  let customerEmail: string | null = null;
-  if (
-    stripeSession.customer &&
-    typeof stripeSession.customer === 'object' &&
-    !(stripeSession.customer as Stripe.Customer).deleted
-  ) {
-    customerEmail = (stripeSession.customer as Stripe.Customer).email;
+  // --- Extract essential IDs from Stripe session metadata ---
+  const groupIdFromMetadata = stripeSession.metadata?.group_id;
+  const userIdFromMetadata = stripeSession.metadata?.user_id;
+  const teamNameFromMetadata = stripeSession.metadata?.team_name; // Assuming team_name is also in metadata
+
+  if (!groupIdFromMetadata || !userIdFromMetadata || !teamNameFromMetadata) {
+    console.error('❌ Essential metadata (group_id, user_id, team_name) not found in Stripe session.');
+    return redirect('/'); // Redirect if essential metadata is missing
   }
 
-  if (!customerEmail) {
-    console.error('❌ Customer email not found or customer is deleted in Stripe session.');
-    return redirect('/');
-  }
+  // --- Set the cookies here, directly in the Server Component's execution context ---
+  // This ensures they are set *after* the Stripe redirect completes
+  const isProduction = process.env.NODE_ENV === "production";
+  const expires = 60 * 60 * 24; // 24 hours
 
-  // Step 2: Get Supabase user by email
-  // Now 'supabase' is the resolved client, so '.from()' can be called.
-  const { data: userProfile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', customerEmail)
-    .single();
-
-  if (profileError || !userProfile) {
-    console.error('❌ User not found in Supabase:', profileError);
-    return redirect('/');
-  }
-
-  const leaderId = userProfile.id;
-
-  // Step 3: Get track and starting riddle
-  const { data: trackData, error: trackError } = await supabase
-    .from('tracks')
-    .select('id, start_riddle_id')
-    .eq('location', awaitedParams.location)
-    .eq('mode', awaitedParams.mode)
-    .single();
-
-  if (trackError || !trackData) {
-    console.error('❌ Track not found:', trackError);
-    return redirect('/');
-  }
-
-  // Step 4: Create group
-  const { data: group, error: groupError } = await supabase
-    .from('groups')
-    .insert({
-      leader_id: leaderId,
-      track_id: trackData.id,
-      current_riddle_id: trackData.start_riddle_id,
-    })
-    .select('id')
-    .single();
-
-  if (groupError || !group) {
-    console.error('❌ Failed to create group:', groupError);
-    return redirect('/');
-  }
-
-  // Step 5: Add leader to group_members
-  const { error: addMemberError } = await supabase.from('group_members').insert({
-    group_id: group.id,
-    user_id: leaderId,
-    is_lead: true,
+  cookieStore.set("group_id", groupIdFromMetadata, {
+    maxAge: expires,
+    path: "/",
+    sameSite: "lax",
+    secure: isProduction,
   });
 
-  if (addMemberError) {
-    console.error('❌ Failed to add leader to group_members:', addMemberError);
+  cookieStore.set("user_id", userIdFromMetadata, {
+    maxAge: expires,
+    path: "/",
+    sameSite: "lax",
+    secure: isProduction,
+  });
+
+  cookieStore.set("team_name", teamNameFromMetadata, {
+    maxAge: expires,
+    path: "/",
+    sameSite: "lax",
+    secure: isProduction,
+  });
+
+  console.log("✅ Cookies set on StartPage:", {
+    groupId: groupIdFromMetadata,
+    userId: userIdFromMetadata,
+    teamName: teamNameFromMetadata
+  });
+
+  // --- Verify existing group and leader status (instead of creating new ones) ---
+  // We assume the group and leader member were already created by /api/checkout-session
+  const { data: existingGroup, error: groupFetchError } = await supabase
+    .from('groups')
+    .select('id, current_riddle_id, track_id') // Select track_id too, if needed for anti-cheat
+    .eq('id', groupIdFromMetadata)
+    .eq('created_by', userIdFromMetadata) // Verify this group was created by this user
+    .single();
+
+  if (groupFetchError || !existingGroup) {
+    console.error('❌ Existing group not found or not created by this leader:', groupFetchError);
+    return redirect('/'); // Redirect if the expected group isn't found
+  }
+
+  // Verify leader status in group_members (optional, but good for robustness)
+  const { data: memberData, error: memberFetchError } = await supabase
+    .from('group_members')
+    .select('is_leader')
+    .eq('group_id', groupIdFromMetadata)
+    .eq('user_id', userIdFromMetadata)
+    .single();
+
+  if (memberFetchError || !memberData || !memberData.is_leader) {
+    console.error('❌ User is not recognized as leader for this group:', memberFetchError);
+    // This scenario might indicate a data inconsistency or an attempt to bypass.
+    // You might want a different redirect or error message here.
     return redirect('/');
   }
 
-  // ✅ Step 6: Redirect to the first riddle page
-  return redirect(`/riddlecity/${awaitedParams.location}/${awaitedParams.mode}/riddle/${trackData.start_riddle_id}`);
+  // ✅ Redirect to the first riddle page using the current_riddle_id from the fetched group
+  return redirect(`/riddle/${existingGroup.current_riddle_id}`);
 }
