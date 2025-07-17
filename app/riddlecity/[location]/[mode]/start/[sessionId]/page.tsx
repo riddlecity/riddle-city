@@ -10,7 +10,8 @@ interface Props {
 
 export default async function StartPage({ params }: Props) {
   const awaitedParams = await params;
-  const cookieStore = cookies(); // Initialize cookie store to set cookies
+  // FIX: Await the cookies() call
+  const cookieStore = await cookies(); // <--- This line needs 'await'
 
   const supabase = await createClient(); // Await the creation of the Supabase client
 
@@ -44,6 +45,7 @@ export default async function StartPage({ params }: Props) {
   const isProduction = process.env.NODE_ENV === "production";
   const expires = 60 * 60 * 24; // 24 hours
 
+  // Now cookieStore is the actual object, so .set() exists
   cookieStore.set("group_id", groupIdFromMetadata, {
     maxAge: expires,
     path: "/",
