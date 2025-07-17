@@ -108,23 +108,22 @@ export async function POST(req: Request) {
     console.log("Group updated successfully:", updateResult);
 
     // Broadcast real-time update to other group members
-    const { error: broadcastError } = await serviceSupabase
-      .channel(`riddle-updates-${groupId}`)
-      .send({
-        type: 'broadcast',
-        event: 'riddle_update',
-        payload: {
-          groupId,
-          newRiddleId: nextRiddleId,
-          skippedCount: updateData.riddles_skipped,
-          isCompleted: isLastRiddle
-        }
-      });
-
-    if (broadcastError) {
-      console.error("Broadcast error:", broadcastError);
-    } else {
+    try {
+      await serviceSupabase
+        .channel(`riddle-updates-${groupId}`)
+        .send({
+          type: 'broadcast',
+          event: 'riddle_update',
+          payload: {
+            groupId,
+            newRiddleId: nextRiddleId,
+            skippedCount: updateData.riddles_skipped,
+            isCompleted: isLastRiddle
+          }
+        });
       console.log("Broadcast sent successfully");
+    } catch (broadcastError) {
+      console.error("Broadcast error:", broadcastError);
     }
 
     console.log("=== SKIP RIDDLE SUCCESS ===");
