@@ -29,8 +29,9 @@ const mode = (params?.mode as string) || "unknown";
 
   // Check if we're returning from successful payment
   useEffect(() => {
-    const sessionId = searchParams.get('session_id');
-    const success = searchParams.get('success');
+    const sessionId = searchParams?.get('session_id');
+const success = searchParams?.get('success');
+
     
     if (sessionId && success === 'true') {
       handlePaymentSuccess(sessionId);
