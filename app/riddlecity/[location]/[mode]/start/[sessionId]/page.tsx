@@ -53,4 +53,5 @@ export default function StartPage() {
         const { data: riddle, error: riddleError } = await supabase
           .from("riddles")
           .select("id")
-          .eq("track_id", trackId_
+          .eq("track_id", trackId);
+
