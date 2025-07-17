@@ -243,6 +243,13 @@ export default async function AdventureCompletePage({ params }: Props) {
           {/* Action buttons */}
           <div className="space-y-4">
             <Link
+              href={`/leaderboard/${group.track_id}`}
+              className="block w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🏆 View Full Leaderboard
+            </Link>
+            
+            <Link
               href="/riddlecity"
               className="block w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
             >
