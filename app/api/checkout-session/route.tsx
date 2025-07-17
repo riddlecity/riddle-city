@@ -14,7 +14,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
 
-    const supabase = createClient();
+    // Create Supabase client inside the function to avoid build-time issues
+    const supabase = await createClient();
     
     // Lookup track
     const { data: track, error: trackError } = await supabase
