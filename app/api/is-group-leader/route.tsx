@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 export async function POST(req: Request) {
   const { groupId } = await req.json();
   const cookieStore = await cookies();
-  const supabase = createClient();
+  const supabase = await createClient();
   
   const userId = cookieStore.get("user_id")?.value;
   
