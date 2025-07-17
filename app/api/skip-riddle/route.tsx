@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     // Create both regular and service role clients
-    const supabase = createClient(cookieStore);
+    const supabase = createClient();
     const serviceSupabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
