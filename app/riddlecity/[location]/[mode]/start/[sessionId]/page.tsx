@@ -2,27 +2,36 @@
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers'; // Import cookies for setting them
+import { cookies } from 'next/headers';
 
 interface Props {
-  params: Promise<{ location: string; mode: string; sessionId: string }>;
+  params: Promise<{ location: string; mode: string; sessionId: string }>; // sessionId here is actually group.id
+  searchParams: { [key: string]: string | string[] | undefined }; // Add searchParams
 }
 
-export default async function StartPage({ params }: Props) {
+export default async function StartPage({ params, searchParams }: Props) { // Pass searchParams
   const awaitedParams = await params;
-  // FIX: Await the cookies() call
-  const cookieStore = await cookies(); // <--- This line needs 'await'
+  const cookieStore = await cookies();
 
-  const supabase = await createClient(); // Await the creation of the Supabase client
+  const supabase = await createClient();
 
-  // Step 1: Fetch Stripe session
+  // --- CRITICAL FIX HERE ---
+  const stripeCheckoutSessionId = searchParams.session_id; // Get Stripe session ID from query params
+
+  if (!stripeCheckoutSessionId || typeof stripeCheckoutSessionId !== 'string') {
+    console.error('❌ Missing or invalid Stripe checkout session ID in URL.');
+    return redirect('/'); // Redirect if session_id is not found
+  }
+
+  // Step 1: Fetch Stripe session using the CORRECT ID
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-06-30.basil',
   });
 
   let stripeSession;
   try {
-    stripeSession = await stripe.checkout.sessions.retrieve(awaitedParams.sessionId, {
+    // Use stripeCheckoutSessionId here
+    stripeSession = await stripe.checkout.sessions.retrieve(stripeCheckoutSessionId, {
       expand: ['customer'],
     });
   } catch (error) {
@@ -30,22 +39,23 @@ export default async function StartPage({ params }: Props) {
     return redirect('/');
   }
 
-  // --- Extract essential IDs from Stripe session metadata ---
+  // ... (rest of your existing logic for customerEmail, metadata, cookies, group/member verification) ...
+
+  // Extract essential IDs from Stripe session metadata
+  // These were correctly put in metadata by /api/checkout-session
   const groupIdFromMetadata = stripeSession.metadata?.group_id;
   const userIdFromMetadata = stripeSession.metadata?.user_id;
-  const teamNameFromMetadata = stripeSession.metadata?.team_name; // Assuming team_name is also in metadata
+  const teamNameFromMetadata = stripeSession.metadata?.team_name;
 
   if (!groupIdFromMetadata || !userIdFromMetadata || !teamNameFromMetadata) {
     console.error('❌ Essential metadata (group_id, user_id, team_name) not found in Stripe session.');
-    return redirect('/'); // Redirect if essential metadata is missing
+    return redirect('/');
   }
 
-  // --- Set the cookies here, directly in the Server Component's execution context ---
-  // This ensures they are set *after* the Stripe redirect completes
+  // Set the cookies using the IDs from metadata
   const isProduction = process.env.NODE_ENV === "production";
-  const expires = 60 * 60 * 24; // 24 hours
+  const expires = 60 * 60 * 24;
 
-  // Now cookieStore is the actual object, so .set() exists
   cookieStore.set("group_id", groupIdFromMetadata, {
     maxAge: expires,
     path: "/",
@@ -73,21 +83,19 @@ export default async function StartPage({ params }: Props) {
     teamName: teamNameFromMetadata
   });
 
-  // --- Verify existing group and leader status (instead of creating new ones) ---
-  // We assume the group and leader member were already created by /api/checkout-session
+  // Verify existing group and leader status
   const { data: existingGroup, error: groupFetchError } = await supabase
     .from('groups')
-    .select('id, current_riddle_id, track_id') // Select track_id too, if needed for anti-cheat
-    .eq('id', groupIdFromMetadata)
-    .eq('created_by', userIdFromMetadata) // Verify this group was created by this user
+    .select('id, current_riddle_id, track_id')
+    .eq('id', groupIdFromMetadata) // Use groupIdFromMetadata for querying the group
+    .eq('created_by', userIdFromMetadata)
     .single();
 
   if (groupFetchError || !existingGroup) {
     console.error('❌ Existing group not found or not created by this leader:', groupFetchError);
-    return redirect('/'); // Redirect if the expected group isn't found
+    return redirect('/');
   }
 
-  // Verify leader status in group_members (optional, but good for robustness)
   const { data: memberData, error: memberFetchError } = await supabase
     .from('group_members')
     .select('is_leader')
@@ -97,11 +105,9 @@ export default async function StartPage({ params }: Props) {
 
   if (memberFetchError || !memberData || !memberData.is_leader) {
     console.error('❌ User is not recognized as leader for this group:', memberFetchError);
-    // This scenario might indicate a data inconsistency or an attempt to bypass.
-    // You might want a different redirect or error message here.
     return redirect('/');
   }
 
-  // ✅ Redirect to the first riddle page using the current_riddle_id from the fetched group
+  // Redirect to the first riddle page using the current_riddle_id from the fetched group
   return redirect(`/riddle/${existingGroup.current_riddle_id}`);
 }
