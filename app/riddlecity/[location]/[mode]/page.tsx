@@ -6,8 +6,8 @@ export default function PreferencesPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const location = (params.location as string) || "unknown";
-  const mode = (params.mode as string) || "unknown";
+  const location = (params?.location as string) || "unknown";
+const mode = (params?.mode as string) || "unknown";
   const [players, setPlayers] = useState(2);
   const [teamName, setTeamName] = useState("");
   const [emails, setEmails] = useState<string[]>(["", ""]);
