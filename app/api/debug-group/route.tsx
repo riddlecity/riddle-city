@@ -6,16 +6,16 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const groupId = searchParams.get("groupId");
-
+    
     if (!groupId) {
       return NextResponse.json(
         { error: "Group ID is required" },
         { status: 400 }
       );
     }
-
-    const supabase = createClient();
-
+    
+    const supabase = await createClient();
+    
     // Get user info
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .select("*, group_members(*)")
       .eq("id", groupId)
       .single();
-
+      
     // Get riddle info if group exists
     let currentRiddle = null;
     if (group && group.current_riddle_id) {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
         .single();
       currentRiddle = riddle;
     }
-
+    
     return NextResponse.json({
       debug: {
         groupId,
@@ -57,7 +57,6 @@ export async function GET(req: NextRequest) {
         timestamp: new Date().toISOString()
       }
     });
-
   } catch (error) {
     console.error("Debug API error:", error);
     return NextResponse.json(
