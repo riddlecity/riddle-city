@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server'; // Ensure this path is correct
 
 export default async function StartPage({
   params,
@@ -9,7 +9,8 @@ export default async function StartPage({
 }) {
   const awaitedParams = await params;
 
-  const supabase = createClient();
+  // FIX: Await the Supabase client creation
+  const supabase = await createClient(); // Await the creation of the Supabase client
 
   // Step 1: Fetch Stripe session
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -26,14 +27,13 @@ export default async function StartPage({
     return redirect('/');
   }
 
-  // FIX: Ensure customer exists, is an object, AND is not a 'DeletedCustomer'
   let customerEmail: string | null = null;
   if (
     stripeSession.customer &&
     typeof stripeSession.customer === 'object' &&
-    !(stripeSession.customer as Stripe.Customer).deleted // Cast to Customer to access 'deleted' property
+    !(stripeSession.customer as Stripe.Customer).deleted
   ) {
-    customerEmail = (stripeSession.customer as Stripe.Customer).email; // Cast to Customer to access 'email'
+    customerEmail = (stripeSession.customer as Stripe.Customer).email;
   }
 
   if (!customerEmail) {
@@ -42,6 +42,7 @@ export default async function StartPage({
   }
 
   // Step 2: Get Supabase user by email
+  // Now 'supabase' is the resolved client, so '.from()' can be called.
   const { data: userProfile, error: profileError } = await supabase
     .from('profiles')
     .select('id')
