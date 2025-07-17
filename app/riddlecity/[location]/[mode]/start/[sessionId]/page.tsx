@@ -26,16 +26,18 @@ export default async function StartPage({
     return redirect('/');
   }
 
-  // FIX: Explicitly check if stripeSession.customer exists and is an object.
-  // We can use a type guard to narrow down the type for TypeScript.
-  const customerEmail =
-    stripeSession.customer && typeof stripeSession.customer === 'object'
-      ? stripeSession.customer.email
-      : null;
+  // FIX: Ensure customer exists, is an object, AND is not a 'DeletedCustomer'
+  let customerEmail: string | null = null;
+  if (
+    stripeSession.customer &&
+    typeof stripeSession.customer === 'object' &&
+    !(stripeSession.customer as Stripe.Customer).deleted // Cast to Customer to access 'deleted' property
+  ) {
+    customerEmail = (stripeSession.customer as Stripe.Customer).email; // Cast to Customer to access 'email'
+  }
 
   if (!customerEmail) {
-    console.error('❌ Customer email not found in Stripe session or customer object is null.');
-    // Consider adding more specific error handling or redirection here
+    console.error('❌ Customer email not found or customer is deleted in Stripe session.');
     return redirect('/');
   }
 
