@@ -12,7 +12,7 @@ interface Props {
 export default async function AdventureCompletePage({ params }: Props) {
   const { groupId } = await params;
   const cookieStore = await cookies();
-  const supabase = createClient();
+  const supabase = await createClient(); // Added await here
 
   // Get group details with completion info
   const { data: group, error: groupError } = await supabase
