@@ -8,19 +8,19 @@ export async function GET(req: Request) {
   const groupId = searchParams.get("groupId");
   
   const cookieStore = await cookies();
-  const supabase = createClient();
+  const supabase = await createClient(); // Add await here
   const userId = createOrGetUserId();
-
+  
   if (!groupId || !userId) {
     return NextResponse.json({ isLeader: false }, { status: 400 });
   }
-
+  
   const { data: group } = await supabase
     .from("groups")
     .select("created_by")
     .eq("id", groupId)
     .single();
-
+    
   const isLeader = group?.created_by === userId;
   return NextResponse.json({ isLeader });
 }
