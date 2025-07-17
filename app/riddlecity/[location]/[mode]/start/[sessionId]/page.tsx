@@ -13,8 +13,7 @@ export default async function StartPage({
 
   // Step 1: Fetch Stripe session
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    // FIX: Update the Stripe API version to the latest one suggested by the error
-    apiVersion: '2025-06-30.basil', // Update this line
+    apiVersion: '2025-06-30.basil',
   });
 
   let stripeSession;
@@ -27,13 +26,16 @@ export default async function StartPage({
     return redirect('/');
   }
 
+  // FIX: Explicitly check if stripeSession.customer exists and is an object.
+  // We can use a type guard to narrow down the type for TypeScript.
   const customerEmail =
-    typeof stripeSession.customer === 'object'
+    stripeSession.customer && typeof stripeSession.customer === 'object'
       ? stripeSession.customer.email
       : null;
 
   if (!customerEmail) {
-    console.error('❌ Customer email not found in Stripe session');
+    console.error('❌ Customer email not found in Stripe session or customer object is null.');
+    // Consider adding more specific error handling or redirection here
     return redirect('/');
   }
 
