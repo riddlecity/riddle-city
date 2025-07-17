@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   try {
     const { track_id, player_limit, team_name } = await req.json();
     const cookieStore = await cookies();
-    const supabase = createClient();
+    const supabase = await createClient(); // <- Add await here
     
     let userId = cookieStore.get("user_id")?.value || uuidv4();
     
