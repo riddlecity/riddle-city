@@ -1,113 +1,117 @@
 // app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from 'next/navigation';
-import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
+import { setGameCookies } from '@/app/actions';
 
 interface Props {
-  params: Promise<{ location: string; mode: string; sessionId: string }>; // This was already Promise
-  // FIX: Make searchParams a Promise as well
+  params: Promise<{ location: string; mode: string; sessionId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function StartPage({ params, searchParams }: Props) {
   const awaitedParams = await params;
-  // FIX: Await searchParams as well
-  const awaitedSearchParams = await searchParams; // <-- Add this line
-  const cookieStore = await cookies();
+  const awaitedSearchParams = await searchParams;
+  const supabase = createClient();
 
-  const supabase = await createClient();
+  const stripeSessionId = awaitedSearchParams.session_id as string;
+  const successFlag = awaitedSearchParams.success;
 
-  // --- CRITICAL FIX HERE ---
-  // Use awaitedSearchParams to access the session_id
-  const stripeCheckoutSessionId = awaitedSearchParams.session_id;
-
-  if (!stripeCheckoutSessionId || typeof stripeCheckoutSessionId !== 'string') {
-    console.error('❌ Missing or invalid Stripe checkout session ID in URL.');
-    return redirect('/');
-  }
-
-  // Step 1: Fetch Stripe session using the CORRECT ID
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-06-30.basil',
+  console.log("🎮 Start page accessed:", {
+    sessionId: stripeSessionId,
+    success: successFlag,
+    location: awaitedParams.location,
+    mode: awaitedParams.mode
   });
 
-  let stripeSession;
+  // Verify this is a successful payment
+  if (!stripeSessionId || successFlag !== 'true') {
+    console.error('❌ Invalid payment confirmation - redirecting to home');
+    return redirect('/riddlecity');
+  }
+
   try {
-    stripeSession = await stripe.checkout.sessions.retrieve(stripeCheckoutSessionId, {
-      expand: ['customer'],
-    });
+    // Fetch Stripe session data using our API
+    const stripeResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/stripe-session?session_id=${stripeSessionId}`,
+      { cache: 'no-store' } // Don't cache this request
+    );
+
+    if (!stripeResponse.ok) {
+      console.error('❌ Failed to fetch Stripe session');
+      return redirect('/riddlecity');
+    }
+
+    const stripeSession = await stripeResponse.json();
+    
+    // Verify payment was successful
+    if (stripeSession.payment_status !== 'paid') {
+      console.error('❌ Payment not completed');
+      return redirect('/riddlecity');
+    }
+
+    // Extract metadata from Stripe session
+    const groupId = stripeSession.metadata?.group_id;
+    const userId = stripeSession.metadata?.user_id;
+    const teamName = stripeSession.metadata?.team_name;
+
+    console.log("💳 Stripe session metadata:", { groupId, userId, teamName });
+
+    if (!groupId || !userId) {
+      console.error('❌ Missing essential metadata from Stripe session');
+      return redirect('/riddlecity');
+    }
+
+    // Verify the group exists and was created by this user
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('id, current_riddle_id, track_id, created_by')
+      .eq('id', groupId)
+      .single();
+
+    if (groupError || !group) {
+      console.error('❌ Group not found in database:', groupError);
+      return redirect('/riddlecity');
+    }
+
+    if (group.created_by !== userId) {
+      console.error('❌ User is not the creator of this group');
+      return redirect('/riddlecity');
+    }
+
+    // Verify user is marked as leader in group_members
+    const { data: memberData, error: memberError } = await supabase
+      .from('group_members')
+      .select('is_leader')
+      .eq('group_id', groupId)
+      .eq('user_id', userId)
+      .single();
+
+    if (memberError || !memberData?.is_leader) {
+      console.error('❌ User is not marked as leader:', memberError);
+      return redirect('/riddlecity');
+    }
+
+    // Mark group as paid
+    const { error: updateError } = await supabase
+      .from('groups')
+      .update({ paid: true })
+      .eq('id', groupId);
+
+    if (updateError) {
+      console.error('❌ Failed to mark group as paid:', updateError);
+      // Continue anyway - the game can still work
+    }
+
+    // Set game cookies using Server Action
+    await setGameCookies(groupId, userId, teamName);
+
+    console.log("✅ Payment successful - redirecting to first riddle");
+    
+    // Redirect to the first riddle
+    return redirect(`/riddle/${group.current_riddle_id}`);
+
   } catch (error) {
-    console.error('❌ Failed to fetch Stripe session:', error);
-    return redirect('/');
+    console.error('❌ Unexpected error in start page:', error);
+    return redirect('/riddlecity');
   }
-
-  // Extract essential IDs from Stripe session metadata
-  const groupIdFromMetadata = stripeSession.metadata?.group_id;
-  const userIdFromMetadata = stripeSession.metadata?.user_id;
-  const teamNameFromMetadata = stripeSession.metadata?.team_name;
-
-  if (!groupIdFromMetadata || !userIdFromMetadata || !teamNameFromMetadata) {
-    console.error('❌ Essential metadata (group_id, user_id, team_name) not found in Stripe session.');
-    return redirect('/');
-  }
-
-  // Set the cookies using the IDs from metadata
-  const isProduction = process.env.NODE_ENV === "production";
-  const expires = 60 * 60 * 24;
-
-  cookieStore.set("group_id", groupIdFromMetadata, {
-    maxAge: expires,
-    path: "/",
-    sameSite: "lax",
-    secure: isProduction,
-  });
-
-  cookieStore.set("user_id", userIdFromMetadata, {
-    maxAge: expires,
-    path: "/",
-    sameSite: "lax",
-    secure: isProduction,
-  });
-
-  cookieStore.set("team_name", teamNameFromMetadata, {
-    maxAge: expires,
-    path: "/",
-    sameSite: "lax",
-    secure: isProduction,
-  });
-
-  console.log("✅ Cookies set on StartPage:", {
-    groupId: groupIdFromMetadata,
-    userId: userIdFromMetadata,
-    teamName: teamNameFromMetadata
-  });
-
-  // Verify existing group and leader status
-  const { data: existingGroup, error: groupFetchError } = await supabase
-    .from('groups')
-    .select('id, current_riddle_id, track_id')
-    .eq('id', groupIdFromMetadata)
-    .eq('created_by', userIdFromMetadata)
-    .single();
-
-  if (groupFetchError || !existingGroup) {
-    console.error('❌ Existing group not found or not created by this leader:', groupFetchError);
-    return redirect('/');
-  }
-
-  const { data: memberData, error: memberFetchError } = await supabase
-    .from('group_members')
-    .select('is_leader')
-    .eq('group_id', groupIdFromMetadata)
-    .eq('user_id', userIdFromMetadata)
-    .single();
-
-  if (memberFetchError || !memberData || !memberData.is_leader) {
-    console.error('❌ User is not recognized as leader for this group:', memberFetchError);
-    return redirect('/');
-  }
-
-  // Redirect to the first riddle page using the current_riddle_id from the fetched group
-  return redirect(`/riddle/${existingGroup.current_riddle_id}`);
 }
