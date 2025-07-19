@@ -15,6 +15,7 @@ export default function PreferencesPage() {
   const [emails, setEmails] = useState<string[]>(["", ""]);
   const [loading, setLoading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showEmails, setShowEmails] = useState(false);
 
   // Function to capitalize first letter
   const capitalize = (str: string) => {
@@ -268,18 +269,13 @@ export default function PreferencesPage() {
                 required
               />
             </div>
-            {!teamName.trim() && (
-              <p className="text-red-400 text-sm">
-                ⚠️ Team name is required to continue
-              </p>
-            )}
             <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={getRandomSuggestion}
                 className="text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200"
               >
-                💡 Get random suggestion
+                💡 Random name suggestion
               </button>
               <span className="text-xs text-white/50">
                 {teamName.length}/30
@@ -288,21 +284,33 @@ export default function PreferencesPage() {
           </div>
         </div>
 
-        {/* Email fields */}
+        {/* Collapsible Email fields */}
         <div className="space-y-4">
-          <label className="block text-lg font-medium">
-            Player emails (optional):
-          </label>
-          {emails.map((email, index) => (
-            <input
-              key={index}
-              type="email"
-              placeholder={`Email for Player ${index + 1} (optional)`}
-              value={email}
-              onChange={(e) => handleEmailChange(index, e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          ))}
+          <button
+            type="button"
+            onClick={() => setShowEmails(!showEmails)}
+            className="flex items-center gap-2 text-lg font-medium text-white/80 hover:text-white transition-colors duration-200"
+          >
+            <span className={`transform transition-transform duration-200 ${showEmails ? 'rotate-90' : 'rotate-0'}`}>
+              ▶
+            </span>
+            Enter Player Emails (Optional)
+          </button>
+          
+          {showEmails && (
+            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+              {emails.map((email, index) => (
+                <input
+                  key={index}
+                  type="email"
+                  placeholder={`Email for Player ${index + 1}`}
+                  value={email}
+                  onChange={(e) => handleEmailChange(index, e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Submit button */}
