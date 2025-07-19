@@ -190,18 +190,6 @@ export default async function RiddlePage({ params }: Props) {
         />
       </div>
 
-      {/* Logo */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={80}
-          height={80}
-          className="md:w-[100px] md:h-[100px] drop-shadow-lg"
-          priority
-        />
-      </div>
-
       {/* Game Progress - only show if in a group */}
       {groupId && gameStartTime && (
         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
@@ -214,7 +202,7 @@ export default async function RiddlePage({ params }: Props) {
       )}
 
       {/* Main content - centered with mobile-friendly spacing */}
-      <div className="flex-1 flex flex-col items-center justify-center pt-24 md:pt-28 pb-32 px-4 z-10">
+      <div className="flex-1 flex flex-col items-center justify-center pt-16 md:pt-20 pb-32 px-4 z-10">
         {/* Riddle text - better mobile width control */}
         <div className="max-w-4xl w-full text-center">
           <div className="max-w-3xl mx-auto mb-8 md:mb-12">

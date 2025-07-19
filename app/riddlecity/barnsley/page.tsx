@@ -3,19 +3,7 @@ import Image from "next/image";
 
 export default function BarnsleyModesPage() {
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative overflow-hidden">
-      {/* Background maze logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
-        <Image
-          src="/riddle-city-logo2.png"
-          alt=""
-          width={600}
-          height={600}
-          className="w-[500px] h-[500px] md:w-[700px] md:h-[700px] object-contain"
-          priority={false}
-        />
-      </div>
-
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
       {/* Header with logo and title */}
       <div className="relative z-10 text-center mb-12 md:mb-16">
         <div className="flex flex-col items-center gap-4 md:gap-6">
@@ -37,7 +25,7 @@ export default function BarnsleyModesPage() {
           </div>
         </div>
       </div>
-
+      
       {/* Adventure options */}
       <div className="grid gap-6 w-full max-w-sm relative z-10">
         <Link
@@ -55,7 +43,7 @@ export default function BarnsleyModesPage() {
           </span>
         </div>
       </div>
-
+      
       {/* Back link */}
       <div className="mt-12 relative z-10">
         <Link
