@@ -249,8 +249,8 @@ export default async function RiddlePage({ params }: Props) {
         </div>
       )}
 
-      {/* Main riddle content - centered */}
-      <div className="min-h-screen flex items-center justify-center px-4 z-10 relative">
+      {/* Main riddle content - moved up with less spacing */}
+      <div className="min-h-screen flex items-center justify-center px-4 z-10 relative pt-20 pb-32">
         <div className="w-full max-w-4xl text-center">
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight drop-shadow-lg">
             {riddle_text}
@@ -258,9 +258,9 @@ export default async function RiddlePage({ params }: Props) {
         </div>
       </div>
 
-      {/* Hint section - centered below riddle */}
+      {/* Hint section - positioned below riddle with less gap */}
       {qr_hint && (
-        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-lg px-4">
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-lg px-4">
           <details className="group">
             <summary className="cursor-pointer text-white/50 hover:text-white/70 transition-colors duration-200 text-center text-sm font-normal bg-white/10 rounded-lg px-4 py-3 hover:bg-white/20">
               💡 Need a hint?
@@ -279,14 +279,12 @@ export default async function RiddlePage({ params }: Props) {
 
       {/* Skip button - Bottom Right */}
       {groupId && userId && isLeader && (
-        <div className="absolute bottom-4 right-4 z-10">
-          <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
-        </div>
+        <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
       )}
 
       {/* Last riddle message */}
       {isLastRiddle && isLeader && (
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-lg px-4">
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-lg px-4">
           <div className="bg-gradient-to-r from-green-600/20 to-blue-600/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 text-center">
             <div className="text-4xl mb-4">🏁</div>
             <h2 className="text-xl font-bold text-white mb-3">Final Challenge Complete!</h2>
