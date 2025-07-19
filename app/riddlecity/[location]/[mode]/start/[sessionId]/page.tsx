@@ -165,32 +165,13 @@ export default async function StartPage({ params, searchParams }: Props) {
     // Continue anyway
   }
 
-  // Step 8: Set game cookies using API route
-  console.log('🍪 START PAGE: Setting game cookies...');
-  const cookieUrl = `${baseUrl}/api/set-game-cookies`;
-  console.log('🔗 START PAGE: Cookie URL:', cookieUrl);
-  
+  // Step 8: Set game cookies using Server Action
+  console.log('🍪 START PAGE: Setting game cookies via Server Action...');
   try {
-    const cookieResponse = await fetch(cookieUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ groupId, userId, teamName }),
-      cache: 'no-store'
-    });
-
-    console.log('🍪 START PAGE: Cookie response status:', cookieResponse.status);
-
-    if (!cookieResponse.ok) {
-      console.error('❌ START PAGE: Failed to set game cookies - status:', cookieResponse.status);
-      const errorText = await cookieResponse.text();
-      console.error('❌ START PAGE: Cookie error details:', errorText);
-      redirect('/riddlecity');
-    }
-
-    const cookieResult = await cookieResponse.json();
-    console.log('✅ START PAGE: Cookies set successfully:', cookieResult);
+    await setGameCookies(groupId, userId, teamName || '');
+    console.log('✅ START PAGE: Cookies set via Server Action:', { groupId, userId, teamName });
   } catch (error) {
-    console.error('💥 START PAGE: Error setting cookies:', error);
+    console.error('💥 START PAGE: Error setting cookies via Server Action:', error);
     redirect('/riddlecity');
   }
 
