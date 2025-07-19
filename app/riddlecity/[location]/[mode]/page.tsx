@@ -1,18 +1,34 @@
 "use client";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function PreferencesPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const location = (params?.location as string) || "unknown";
-const mode = (params?.mode as string) || "unknown";
+  const mode = (params?.mode as string) || "unknown";
   const [players, setPlayers] = useState(2);
   const [teamName, setTeamName] = useState("");
   const [emails, setEmails] = useState<string[]>(["", ""]);
   const [loading, setLoading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Function to capitalize first letter
+  const capitalize = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  // Handle logo click with confirmation
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const confirmed = window.confirm("Are you sure you want to return to About Us? This will cancel your current adventure setup.");
+    if (confirmed) {
+      router.push('/');
+    }
+  };
 
   // Fun team name suggestions
   const teamSuggestions = [
@@ -30,9 +46,8 @@ const mode = (params?.mode as string) || "unknown";
   // Check if we're returning from successful payment
   useEffect(() => {
     const sessionId = searchParams?.get('session_id');
-const success = searchParams?.get('success');
+    const success = searchParams?.get('success');
 
-    
     if (sessionId && success === 'true') {
       handlePaymentSuccess(sessionId);
     }
@@ -171,9 +186,34 @@ const success = searchParams?.get('success');
   }
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
+      {/* Logo in top-left with confirmation dialog */}
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+        <button onClick={handleLogoClick} className="focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo - Return to About Us"
+            width={80}
+            height={80}
+            className="md:w-[100px] md:h-[100px] drop-shadow-lg hover:scale-105 transition-transform duration-200 cursor-pointer"
+            priority
+          />
+        </button>
+      </div>
+
+      {/* Back to Choose Adventure link */}
+      <div className="absolute top-6 right-6">
+        <Link
+          href={`/riddlecity/${location}`}
+          className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 text-sm font-medium"
+        >
+          <span className="text-lg">←</span>
+          Back to Choose Adventure
+        </Link>
+      </div>
+
       <h1 className="text-4xl sm:text-5xl font-extrabold mb-10 text-center tracking-tight">
-        Start your {mode} in {location}
+        Start your {mode} in {capitalize(location)}
       </h1>
       
       <div className="w-full max-w-lg space-y-6">
