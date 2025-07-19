@@ -1,3 +1,4 @@
+// components/RestrictedSkipRiddleForm.tsx
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -10,41 +11,41 @@ interface Props {
 export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
-  console.log('Skip button render:', { groupId, isLeader, loading });
-
+  
   if (!isLeader) return null;
 
   const handleSkip = async (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('Skip button clicked!');
+    
+    // Confirm the penalty
+    const confirmed = window.confirm(
+      "Are you sure you want to skip this riddle?\n\n⚠️ This will add a 20-minute penalty to your final time."
+    );
+    
+    if (!confirmed) return;
     
     setLoading(true);
     
     try {
-      console.log('Sending skip request...');
       const res = await fetch('/api/skip-riddle', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ groupId }), // Send as JSON instead of FormData
+        body: JSON.stringify({ groupId }),
       });
-
+      
       const data = await res.json();
-      console.log('Skip response:', data);
-
+      
       if (!res.ok) {
         throw new Error(data.error || 'Failed to skip riddle');
       }
-
+      
       if (data.completed) {
         // Adventure is complete, redirect to completion page
-        console.log('Adventure completed! Redirecting to completion page...');
         router.push(`/adventure-complete/${groupId}`);
       } else if (data.nextRiddleId) {
         // Normal skip to next riddle
-        console.log('Redirecting to:', data.nextRiddleId);
         router.push(`/riddle/${data.nextRiddleId}`);
       } else {
         console.error('Unexpected response format:', data);
@@ -72,7 +73,7 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
               {loading ? "Skipping..." : "QR Code not working?"}
             </div>
             <div className="text-xs text-white/50 group-hover:text-white/70 leading-tight">
-              {loading ? "Please wait..." : "Skip to next riddle"}
+              {loading ? "Please wait..." : "Skip to next riddle (20 min penalty)"}
             </div>
           </div>
         </div>

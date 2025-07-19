@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 
 export default function ShareLink({ groupId }: { groupId: string }) {
@@ -9,7 +8,6 @@ export default function ShareLink({ groupId }: { groupId: string }) {
   
   useEffect(() => {
     const origin = window?.location?.origin || "";
-    // 🔧 FIX: Use the correct join URL format
     setFullUrl(`${origin}/join/${groupId}`);
   }, [groupId]);
   
@@ -53,12 +51,6 @@ export default function ShareLink({ groupId }: { groupId: string }) {
           {copied ? "Copied!" : copyError ? "Failed" : "Copy Invite Link"}
         </span>
       </button>
-      
-      {/* Debug info for testing */}
-      <details className="mt-4">
-        <summary className="text-xs text-white/40 cursor-pointer">Debug URL</summary>
-        <p className="text-xs text-white/30 mt-1 font-mono break-all">{fullUrl}</p>
-      </details>
     </div>
   );
 }
