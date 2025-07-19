@@ -17,35 +17,66 @@ export const metadata: Metadata = {
   title: "Riddle",
 };
 
+async function getCookiesWithRetry(maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`🍪 RIDDLE PAGE: Cookie read attempt ${attempt}/${maxRetries}`);
+    
+    const cookieStore = await cookies();
+    const groupId = cookieStore.get("group_id")?.value;
+    const userId = cookieStore.get("user_id")?.value;
+    const teamName = cookieStore.get("team_name")?.value;
+    
+    console.log(`🍪 RIDDLE PAGE: Attempt ${attempt} cookies:`, { groupId, userId, teamName });
+    
+    // If we have the essential cookies, return them
+    if (groupId && userId) {
+      console.log(`✅ RIDDLE PAGE: Cookies found on attempt ${attempt}`);
+      return { groupId, userId, teamName };
+    }
+    
+    // If this isn't the last attempt, wait a bit
+    if (attempt < maxRetries) {
+      console.log(`⏳ RIDDLE PAGE: Waiting before retry attempt ${attempt + 1}`);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+    }
+  }
+  
+  console.log(`❌ RIDDLE PAGE: No cookies found after ${maxRetries} attempts`);
+  return { groupId: undefined, userId: undefined, teamName: undefined };
+}
+
 export default async function RiddlePage({ params }: Props) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const supabase = await createClient(); // ✅ FIX: Await it
+  console.log(`🎯 RIDDLE PAGE: Loading riddle ${id}`);
+  
+  const supabase = await createClient();
 
-const { data, error } = await supabase
-  .from("riddles")
-  .select("riddle_text, qr_hint, order_index, track_id")
-  .eq("id", id)
-  .single();
+  const { data, error } = await supabase
+    .from("riddles")
+    .select("riddle_text, qr_hint, order_index, track_id")
+    .eq("id", id)
+    .single();
 
   if (error || !data) {
-    console.error('Riddle fetch error:', error);
+    console.error('❌ RIDDLE PAGE: Riddle fetch error:', error);
     notFound();
   }
 
   const { riddle_text, qr_hint, order_index, track_id } = data;
+  console.log(`📋 RIDDLE PAGE: Riddle data loaded for ${id}`);
 
-  // Get user info from cookies
-  const groupId = cookieStore.get("group_id")?.value;
-  const userId = cookieStore.get("user_id")?.value;
+  // Get user info from cookies with retry logic
+  const { groupId, userId, teamName } = await getCookiesWithRetry();
 
-  console.log("RIDDLE PAGE COOKIES", {
+  console.log("🍪 RIDDLE PAGE: Final cookies result:", {
     groupId,
-    userId
+    userId,
+    teamName
   });
 
   // Anti-cheat: Check if user should be on this riddle
   if (groupId && userId) {
+    console.log(`🔍 RIDDLE PAGE: Running anti-cheat check for group ${groupId}`);
     const { data: group } = await supabase
       .from("groups")
       .select("current_riddle_id")
@@ -53,9 +84,13 @@ const { data, error } = await supabase
       .single();
 
     if (group && group.current_riddle_id !== id) {
-      // User is trying to access wrong riddle - redirect to lock page
+      console.log(`❌ RIDDLE PAGE: Anti-cheat triggered - user on ${id} but should be on ${group.current_riddle_id}`);
       redirect(`/riddle-locked?current=${group.current_riddle_id}&attempted=${id}`);
+    } else {
+      console.log(`✅ RIDDLE PAGE: Anti-cheat passed - user on correct riddle`);
     }
+  } else {
+    console.log(`⚠️ RIDDLE PAGE: Skipping anti-cheat - no group/user cookies`);
   }
 
   // Get progress data if user is in a group
@@ -65,6 +100,8 @@ const { data, error } = await supabase
   let isLastRiddle = false;
   
   if (groupId && userId) {
+    console.log(`📊 RIDDLE PAGE: Loading progress data for group ${groupId}`);
+    
     // Get total riddles for this track
     const { data: riddleCount } = await supabase
       .from("riddles")
@@ -72,6 +109,7 @@ const { data, error } = await supabase
       .eq("track_id", track_id);
     
     totalRiddles = riddleCount?.length || 0;
+    console.log(`📊 RIDDLE PAGE: Total riddles: ${totalRiddles}`);
 
     // Get game start time
     const { data: groupData } = await supabase
@@ -81,6 +119,7 @@ const { data, error } = await supabase
       .single();
     
     gameStartTime = groupData?.created_at || '';
+    console.log(`⏱️ RIDDLE PAGE: Game start time: ${gameStartTime}`);
 
     // Check if this is the last riddle
     const { data: nextRiddleCheck } = await supabase
@@ -90,11 +129,13 @@ const { data, error } = await supabase
       .single();
     
     isLastRiddle = !nextRiddleCheck?.next_riddle_id;
+    console.log(`🏁 RIDDLE PAGE: Is last riddle: ${isLastRiddle}`);
   }
 
   // Check if user is marked as leader in group_members
   let isLeader = false;
   if (groupId && userId) {
+    console.log(`👑 RIDDLE PAGE: Checking leadership for user ${userId} in group ${groupId}`);
     const { data: memberData } = await supabase
       .from("group_members")
       .select("is_leader")
@@ -103,10 +144,12 @@ const { data, error } = await supabase
       .single();
     
     isLeader = memberData?.is_leader || false;
+    console.log(`👑 RIDDLE PAGE: Is leader: ${isLeader}`);
   }
 
   // If this is the last riddle, check if group is already finished and redirect to completion
   if (isLastRiddle && groupId) {
+    console.log(`🏁 RIDDLE PAGE: Checking if group already finished`);
     const { data: groupStatus } = await supabase
       .from("groups")
       .select("finished")
@@ -114,9 +157,19 @@ const { data, error } = await supabase
       .single();
     
     if (groupStatus?.finished) {
+      console.log(`✅ RIDDLE PAGE: Group already finished - redirecting to completion`);
       redirect(`/adventure-complete/${groupId}`);
     }
   }
+
+  console.log(`🎮 RIDDLE PAGE: Rendering riddle with state:`, {
+    groupId: !!groupId,
+    userId: !!userId,
+    isLeader,
+    isLastRiddle,
+    totalRiddles,
+    currentRiddleOrder
+  });
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
