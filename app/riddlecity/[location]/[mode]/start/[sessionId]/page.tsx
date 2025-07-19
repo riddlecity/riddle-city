@@ -11,7 +11,7 @@ interface Props {
 export default async function StartPage({ params, searchParams }: Props) {
   const awaitedParams = await params;
   const awaitedSearchParams = await searchParams;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const stripeSessionId = awaitedSearchParams.session_id as string;
   const successFlag = awaitedSearchParams.success;
