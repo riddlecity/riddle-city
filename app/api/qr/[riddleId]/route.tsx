@@ -18,8 +18,7 @@ function generateQRToken(riddleId: string, timestamp: number): string {
 // Verify QR validation token
 function verifyQRToken(riddleId: string, timestamp: number, token: string): boolean {
   const expectedToken = generateQRToken(riddleId, timestamp);
-  const tokenAge = Date.now() - timestamp;
-  const maxAge = 365 * 24 * 60 * 60 * 1000; // 1 YEAR (effectively permanent)
+  // NO EXPIRATION - QR codes are permanent for fixed locations
   
   console.log('🔧 TOKEN DEBUG:', {
     riddleId,
@@ -28,13 +27,11 @@ function verifyQRToken(riddleId: string, timestamp: number, token: string): bool
     expectedToken,
     data: `${riddleId}-${timestamp}`,
     secret: process.env.QR_SECRET?.substring(0, 5) + '...',
-    tokenAge,
-    maxAge,
     tokenValid: expectedToken === token,
-    ageValid: tokenAge < maxAge
+    permanent: true
   });
   
-  return expectedToken === token && tokenAge < maxAge;
+  return expectedToken === token; // Only check token validity, no expiration
 }
 
 export async function GET(request: NextRequest, { params }: Props) {
