@@ -60,11 +60,11 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
   };
 
   return (
-    <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+    <div className="fixed bottom-4 right-4 z-20">
       <button
         onClick={handleSkip}
         disabled={loading}
-        className="group bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-3 py-2 text-white/70 hover:text-white/90 transition-all duration-200 text-xs md:text-sm shadow-lg hover:shadow-xl disabled:opacity-50"
+        className="group bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-white/70 hover:text-white/90 transition-all duration-200 text-xs md:text-sm shadow-lg hover:shadow-xl disabled:opacity-50"
       >
         <div className="flex flex-col items-center text-center">
           <span className="text-sm mb-1">📱</span>

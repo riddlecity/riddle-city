@@ -5,8 +5,8 @@ import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import ShareLink from "@/components/ShareLink";
 import RestrictedSkipRiddleForm from "@/components/RestrictedSkipRiddleForm";
-import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import GameProgress from "@/components/GameProgress";
+import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import CookieHandler from "@/components/CookieHandler";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -222,7 +222,7 @@ export default async function RiddlePage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
+    <main className="min-h-screen bg-neutral-900 text-white relative overflow-hidden">
       {/* Handle cookie setting from URL parameters */}
       <CookieHandler />
       
@@ -238,88 +238,68 @@ export default async function RiddlePage({ params }: Props) {
         />
       </div>
 
-      {/* Game Progress - forced to top left */}
+      {/* Game Progress - Clean and centered at top */}
       {groupId && gameStartTime && (
-        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-          <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-white text-xs md:text-sm">
-            <GameProgress 
-              currentRiddleOrder={currentRiddleOrder}
-              totalRiddles={totalRiddles}
-              gameStartTime={gameStartTime}
-            />
-          </div>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-80">
+          <GameProgress 
+            currentRiddleOrder={currentRiddleOrder}
+            totalRiddles={totalRiddles}
+            gameStartTime={gameStartTime}
+          />
         </div>
       )}
 
-      {/* Main content - split layout with riddle centered in logo */}
-      <div className="flex-1 flex flex-col px-4 z-10">
-        {/* Much larger top spacer to push riddle way down */}
-        <div className="flex-[3]"></div>
-        
-        {/* Riddle text - centered in the logo */}
-        <div className="w-full text-center">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight drop-shadow-lg">
-              {riddle_text}
-            </h1>
-          </div>
-        </div>
-
-        {/* Much smaller bottom spacer and content below logo */}
-        <div className="flex-[1] flex flex-col justify-end pb-8">
-          <div className="w-full max-w-lg mx-auto text-center space-y-6">
-            {/* Hint section */}
-            {qr_hint && (
-              <details className="group">
-                <summary className="cursor-pointer text-white/50 hover:text-white/70 transition-colors duration-200 mb-4 text-sm md:text-base font-normal bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 border border-white/10">
-                  💡 Need a hint?
-                </summary>
-                <div className="text-white/70 text-sm md:text-base leading-relaxed bg-black/20 backdrop-blur-sm rounded-lg p-4 md:p-6 border border-white/10">
-                  {qr_hint}
-                </div>
-              </details>
-            )}
-
-            {/* Share link - only show for leaders */}
-            {groupId && isLeader && !isLastRiddle && (
-              <div className="w-full">
-                <ShareLink groupId={groupId} />
-              </div>
-            )}
-
-            {/* Last riddle message for leaders */}
-            {isLastRiddle && isLeader && (
-              <div className="text-center">
-                <div className="bg-gradient-to-r from-green-600/20 to-blue-600/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 md:p-8">
-                  <div className="text-4xl md:text-6xl mb-4">🏁</div>
-                  <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-                    Final Challenge Complete!
-                  </h2>
-                  <p className="text-white/80 text-sm md:text-base mb-4">
-                    You've reached the end of your adventure. Skip this riddle to complete your journey and see your results!
-                  </p>
-                  <div className="text-xs md:text-sm text-white/60">
-                    Use the skip button to finish your adventure →
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+      {/* Main riddle content - centered */}
+      <div className="min-h-screen flex items-center justify-center px-4 z-10 relative">
+        <div className="w-full max-w-4xl text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight drop-shadow-lg">
+            {riddle_text}
+          </h1>
         </div>
       </div>
 
+      {/* Hint section - centered below riddle */}
+      {qr_hint && (
+        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-lg px-4">
+          <details className="group">
+            <summary className="cursor-pointer text-white/50 hover:text-white/70 transition-colors duration-200 text-center text-sm font-normal bg-white/10 rounded-lg px-4 py-3 hover:bg-white/20">
+              💡 Need a hint?
+            </summary>
+            <div className="text-white/70 text-sm leading-relaxed bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-white/10 mt-2">
+              {qr_hint}
+            </div>
+          </details>
+        </div>
+      )}
+
+      {/* Copy Link - Bottom Left */}
+      {groupId && isLeader && !isLastRiddle && (
+        <ShareLink groupId={groupId} />
+      )}
+
+      {/* Skip button - Bottom Right */}
+      {groupId && userId && isLeader && (
+        <div className="absolute bottom-4 right-4 z-10">
+          <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
+        </div>
+      )}
+
+      {/* Last riddle message */}
+      {isLastRiddle && isLeader && (
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-lg px-4">
+          <div className="bg-gradient-to-r from-green-600/20 to-blue-600/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 text-center">
+            <div className="text-4xl mb-4">🏁</div>
+            <h2 className="text-xl font-bold text-white mb-3">Final Challenge Complete!</h2>
+            <p className="text-white/80 text-sm mb-4">
+              You've reached the end of your adventure. Skip this riddle to complete your journey and see your results!
+            </p>
+            <div className="text-xs text-white/60">Use the skip button to finish your adventure →</div>
+          </div>
+        </div>
+      )}
+
       {/* Real-time sync */}
       {groupId && <RealTimeRiddleSync groupId={groupId} />}
-
-      {/* Skip button - show for leaders on non-completed adventures */}
-      {groupId && userId && isLeader && (
-        <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
-      )}
-
-      {/* Skip button with penalty notice - show for leaders on non-completed adventures */}
-      {groupId && userId && isLeader && (
-        <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
-      )}
     </main>
   );
 }

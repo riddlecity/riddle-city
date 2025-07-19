@@ -1,40 +1,55 @@
-// components/SkipRiddleForm.tsx
+// components/RestrictedSkipRiddleForm.tsx
 'use client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-interface SkipRiddleFormProps {
+interface Props {
   groupId: string;
+  isLeader: boolean;
 }
 
-export default function SkipRiddleForm({ groupId }: SkipRiddleFormProps) {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
+  const [isSkipping, setIsSkipping] = useState(false);
+  const router = useRouter();
+
+  if (!isLeader) {
+    return null; // Only show to leaders
+  }
+
+  const handleSkip = async () => {
+    if (isSkipping) return;
     
+    setIsSkipping(true);
     try {
-      const res = await fetch("/api/skip-riddle", {
-        method: "POST",
-        body: new URLSearchParams({ groupId }),
+      const response = await fetch('/api/skip-riddle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId }),
       });
-      
-      const data = await res.json();
-      
-      if (res.ok && data.nextRiddleId) {
-        window.location.href = `/riddle/${data.nextRiddleId}`;
+
+      if (response.ok) {
+        // Don't redirect here - let real-time sync handle it
+        console.log('Skip successful, waiting for real-time update...');
       } else {
-        alert("Could not skip riddle: " + (data.error || "Unknown error"));
+        console.error('Skip failed');
+        setIsSkipping(false);
       }
     } catch (error) {
-      alert("Error skipping riddle: " + error);
+      console.error('Skip error:', error);
+      setIsSkipping(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="absolute bottom-4 right-4">
-      <button
-        type="submit"
-        className="text-xs text-white/60 hover:text-white transition"
-      >
-        🚧 Skip this riddle
-      </button>
-    </form>
+    <button
+      onClick={handleSkip}
+      disabled={isSkipping}
+      className="text-white text-right"
+    >
+      <div className="text-xs text-white/60 mb-1">QR not working?</div>
+      <div className="text-sm font-medium">
+        {isSkipping ? 'Skipping...' : 'Skip (20min penalty)'}
+      </div>
+    </button>
   );
 }
