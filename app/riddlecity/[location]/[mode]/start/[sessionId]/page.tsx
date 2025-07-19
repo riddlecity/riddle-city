@@ -1,7 +1,6 @@
 // app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { setGameCookies } from '@/app/actions';
 
 interface Props {
   params: Promise<{ location: string; mode: string; sessionId: string }>;
@@ -102,8 +101,21 @@ export default async function StartPage({ params, searchParams }: Props) {
       // Continue anyway - the game can still work
     }
 
-    // Set game cookies using Server Action
-    await setGameCookies(groupId, userId, teamName);
+    // Set game cookies using API route
+    const cookieResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/set-game-cookies`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId, userId, teamName }),
+        cache: 'no-store'
+      }
+    );
+
+    if (!cookieResponse.ok) {
+      console.error('❌ Failed to set game cookies');
+      return redirect('/riddlecity');
+    }
 
     console.log("✅ Payment successful - redirecting to first riddle");
     
