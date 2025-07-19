@@ -1,6 +1,7 @@
 // app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 
 interface Props {
   params: Promise<{ location: string; mode: string; sessionId: string }>;
@@ -164,32 +165,48 @@ export default async function StartPage({ params, searchParams }: Props) {
     // Continue anyway
   }
 
-  // Step 8: Set game cookies using API route
-  console.log('🍪 START PAGE: Setting game cookies...');
-  const cookieUrl = `${baseUrl}/api/set-game-cookies`;
-  console.log('🔗 START PAGE: Cookie URL:', cookieUrl);
-  
+  // Step 8: Set game cookies DIRECTLY (no API call)
+  console.log('🍪 START PAGE: Setting game cookies directly...');
   try {
-    const cookieResponse = await fetch(cookieUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ groupId, userId, teamName }),
-      cache: 'no-store'
+    const cookieStore = await cookies();
+    
+    const isProduction = process.env.NODE_ENV === "production";
+    const expires = 60 * 60 * 24; // 24 hours
+    
+    console.log('🔧 START PAGE: Cookie settings:', { isProduction, expires });
+
+    // Set essential game cookies
+    cookieStore.set("group_id", groupId, {
+      maxAge: expires,
+      path: "/",
+      sameSite: "lax",
+      secure: isProduction,
+      httpOnly: false, // Allow client-side access
     });
 
-    console.log('🍪 START PAGE: Cookie response status:', cookieResponse.status);
+    cookieStore.set("user_id", userId, {
+      maxAge: expires,
+      path: "/",
+      sameSite: "lax", 
+      secure: isProduction,
+      httpOnly: false,
+    });
 
-    if (!cookieResponse.ok) {
-      console.error('❌ START PAGE: Failed to set game cookies - status:', cookieResponse.status);
-      const errorText = await cookieResponse.text();
-      console.error('❌ START PAGE: Cookie error details:', errorText);
-      redirect('/riddlecity');
+    // Set team name if provided
+    if (teamName && teamName.trim()) {
+      cookieStore.set("team_name", teamName.trim(), {
+        maxAge: expires,
+        path: "/",
+        sameSite: "lax",
+        secure: isProduction,
+        httpOnly: false,
+      });
     }
 
-    const cookieResult = await cookieResponse.json();
-    console.log('✅ START PAGE: Cookies set successfully:', cookieResult);
+    console.log('✅ START PAGE: Cookies set directly:', { groupId, userId, teamName });
+
   } catch (error) {
-    console.error('💥 START PAGE: Error setting cookies:', error);
+    console.error('💥 START PAGE: Error setting cookies directly:', error);
     redirect('/riddlecity');
   }
 
