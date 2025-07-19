@@ -19,11 +19,14 @@ export async function POST(req: Request) {
     }
     
     if (!groupId) {
+      console.error("❌ JOIN GROUP: No group ID provided");
       return NextResponse.json({ error: "Group ID is required" }, { status: 400 });
     }
     
+    console.log("🔗 JOIN GROUP: Attempting to join group:", groupId);
+    
     const cookieStore = await cookies();
-    const supabase = await createClient(); // Add await here
+    const supabase = await createClient();
     
     // Get or create user
     let userId = cookieStore.get("user_id")?.value;
@@ -31,10 +34,26 @@ export async function POST(req: Request) {
     if (!userId) {
       // Create anonymous user if none exists
       userId = uuidv4();
-      console.log("Created new anonymous user:", userId);
+      console.log("👤 JOIN GROUP: Created new anonymous user:", userId);
+    } else {
+      console.log("👤 JOIN GROUP: Using existing user:", userId);
     }
     
+    // 🔧 FIX: Ensure profile exists for this user
+    console.log("👤 JOIN GROUP: Ensuring profile exists for user:", userId);
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({ id: userId }, { onConflict: 'id' });
+    
+    if (profileError) {
+      console.error("❌ JOIN GROUP: Failed to create/update profile:", profileError);
+      return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 });
+    }
+    
+    console.log("✅ JOIN GROUP: Profile ensured for user:", userId);
+    
     // Check if group exists
+    console.log("🔍 JOIN GROUP: Checking if group exists:", groupId);
     const { data: group, error: groupError } = await supabase
       .from("groups")
       .select("player_limit, current_riddle_id, track_id, group_members(*)")
@@ -42,9 +61,11 @@ export async function POST(req: Request) {
       .single();
       
     if (groupError || !group) {
-      console.error("Group fetch error:", groupError);
+      console.error("❌ JOIN GROUP: Group fetch error:", groupError);
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
+    
+    console.log("✅ JOIN GROUP: Group found, current members:", group.group_members?.length || 0);
     
     // Check if user is already a member
     const existingMember = group.group_members?.find(
@@ -53,7 +74,7 @@ export async function POST(req: Request) {
     
     if (existingMember) {
       // User is already a member, let them rejoin
-      console.log("User rejoining group");
+      console.log("🔄 JOIN GROUP: User rejoining group");
       
       // Set cookies and return success
       const response = NextResponse.json({
@@ -63,27 +84,33 @@ export async function POST(req: Request) {
       });
       
       response.cookies.set("user_id", userId, {
-        httpOnly: true,
+        httpOnly: false, // Allow client-side access
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: "/"
       });
       response.cookies.set("group_id", groupId, {
-        httpOnly: true,
+        httpOnly: false, // Allow client-side access
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 60 * 60 * 24, // 1 day
+        path: "/"
       });
+      
+      console.log("✅ JOIN GROUP: User rejoined successfully");
       return response;
     }
     
     // Check if group is full (only for new members)
     const currentMemberCount = group.group_members?.length || 0;
     if (currentMemberCount >= group.player_limit) {
+      console.log("❌ JOIN GROUP: Group is full:", currentMemberCount, ">=", group.player_limit);
       return NextResponse.json({ error: "Group is full" }, { status: 403 });
     }
     
     // Add new member to group
+    console.log("➕ JOIN GROUP: Adding new member to group");
     const { error: insertError } = await supabase
       .from("group_members")
       .insert({
@@ -93,11 +120,11 @@ export async function POST(req: Request) {
       });
       
     if (insertError) {
-      console.error("Failed to add member:", insertError);
+      console.error("❌ JOIN GROUP: Failed to add member:", insertError);
       return NextResponse.json({ error: "Failed to join group" }, { status: 500 });
     }
     
-    console.log("Successfully added user to group");
+    console.log("✅ JOIN GROUP: Successfully added user to group");
     
     // Set cookies and return success
     const response = NextResponse.json({
@@ -107,21 +134,25 @@ export async function POST(req: Request) {
     });
     
     response.cookies.set("user_id", userId, {
-      httpOnly: true,
+      httpOnly: false, // Allow client-side access for game logic
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: "/"
     });
     response.cookies.set("group_id", groupId, {
-      httpOnly: true,
+      httpOnly: false, // Allow client-side access for game logic
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24, // 1 day
+      path: "/"
     });
     
+    console.log("✅ JOIN GROUP: Join process completed successfully");
     return response;
+    
   } catch (error) {
-    console.error("Join group error:", error);
+    console.error("💥 JOIN GROUP: Unexpected error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

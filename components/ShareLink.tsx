@@ -6,12 +6,13 @@ export default function ShareLink({ groupId }: { groupId: string }) {
   const [fullUrl, setFullUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
-
+  
   useEffect(() => {
     const origin = window?.location?.origin || "";
-    setFullUrl(`${origin}/riddlecity/join/${groupId}`);
+    // 🔧 FIX: Use the correct join URL format
+    setFullUrl(`${origin}/join/${groupId}`);
   }, [groupId]);
-
+  
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(fullUrl);
@@ -24,9 +25,9 @@ export default function ShareLink({ groupId }: { groupId: string }) {
       setTimeout(() => setCopyError(false), 2000);
     }
   };
-
+  
   if (!fullUrl) return null;
-
+  
   return (
     <div className="text-center">
       <p className="text-white/60 text-sm mb-4 font-medium">
@@ -52,6 +53,12 @@ export default function ShareLink({ groupId }: { groupId: string }) {
           {copied ? "Copied!" : copyError ? "Failed" : "Copy Invite Link"}
         </span>
       </button>
+      
+      {/* Debug info for testing */}
+      <details className="mt-4">
+        <summary className="text-xs text-white/40 cursor-pointer">Debug URL</summary>
+        <p className="text-xs text-white/30 mt-1 font-mono break-all">{fullUrl}</p>
+      </details>
     </div>
   );
 }
