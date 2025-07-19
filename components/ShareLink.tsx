@@ -30,7 +30,7 @@ export default function ShareLink({ groupId }: { groupId: string }) {
     <div className="fixed bottom-4 left-4 z-20">
       <div className="text-left">
         <p className="text-white/60 text-xs mb-2 font-medium">
-          Share this link to let teammates join:
+          Invite your team:
         </p>
         
         <button
