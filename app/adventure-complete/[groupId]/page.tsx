@@ -12,7 +12,7 @@ interface Props {
 export default async function AdventureCompletePage({ params }: Props) {
   const { groupId } = await params;
   const cookieStore = await cookies();
-  const supabase = await createClient(); // Added await here
+  const supabase = await createClient();
 
   // Get group details with completion info
   const { data: group, error: groupError } = await supabase
@@ -28,26 +28,83 @@ export default async function AdventureCompletePage({ params }: Props) {
     .single();
 
   if (groupError || !group) {
+    console.error('Adventure complete page - group not found:', groupError);
     notFound();
   }
 
+  console.log('Adventure complete - group data:', {
+    finished: group.finished,
+    completed_at: group.completed_at,
+    created_at: group.created_at,
+    riddles_skipped: group.riddles_skipped
+  });
+
   // Calculate completion time with skip penalty
   const startTime = new Date(group.created_at);
-  const endTime = group.completed_at ? new Date(group.completed_at) : new Date();
+  let endTime: Date;
+  let timeCalculationNote = '';
+
+  if (group.completed_at) {
+    // Use stored completion time
+    endTime = new Date(group.completed_at);
+    timeCalculationNote = 'Final completion time';
+    console.log('Using stored completion time:', group.completed_at);
+  } else {
+    // Group finished but no completion time stored - mark it now and use current time
+    const now = new Date();
+    endTime = now;
+    timeCalculationNote = 'Completion time (calculated now)';
+    console.log('No completion time stored, using current time');
+    
+    // Update the group with completion timestamp
+    try {
+      const { error: updateError } = await supabase
+        .from('groups')
+        .update({ 
+          completed_at: now.toISOString(),
+          finished: true 
+        })
+        .eq('id', groupId);
+        
+      if (updateError) {
+        console.error('Failed to update completion time:', updateError);
+      } else {
+        console.log('Updated group with completion timestamp');
+      }
+    } catch (error) {
+      console.error('Error updating completion time:', error);
+    }
+  }
+
   const actualTimeMs = endTime.getTime() - startTime.getTime();
-  
   const skipsUsed = group.riddles_skipped || 0;
   const skipPenaltyMs = skipsUsed * 20 * 60 * 1000; // 20 minutes per skip
   const totalTimeMs = actualTimeMs + skipPenaltyMs;
-  
-  const totalMinutes = Math.floor(totalTimeMs / (1000 * 60));
-  const totalSeconds = Math.floor((totalTimeMs % (1000 * 60)) / 1000);
-  const formattedTime = `${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
 
-  // Also calculate actual time without penalty for display
-  const actualMinutes = Math.floor(actualTimeMs / (1000 * 60));
-  const actualSecondsOnly = Math.floor((actualTimeMs % (1000 * 60)) / 1000);
-  const actualTimeFormatted = `${actualMinutes}:${actualSecondsOnly.toString().padStart(2, '0')}`;
+  // Format times properly
+  function formatTime(milliseconds: number): string {
+    const totalMinutes = Math.floor(milliseconds / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    
+    if (totalMinutes >= 60) {
+      const hours = Math.floor(totalMinutes / 60);
+      const remainingMinutes = totalMinutes % 60;
+      return `${hours}h ${remainingMinutes}m ${seconds}s`;
+    } else {
+      return `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+  }
+
+  const formattedTime = formatTime(totalTimeMs);
+  const actualTimeFormatted = formatTime(actualTimeMs);
+
+  console.log('Time calculations:', {
+    actualTimeMs,
+    skipPenaltyMs,
+    totalTimeMs,
+    formattedTime,
+    actualTimeFormatted
+  });
 
   // Get track info to show adventure type
   const trackParts = group.track_id?.split('_') || [];
@@ -74,30 +131,31 @@ export default async function AdventureCompletePage({ params }: Props) {
     .eq("track_id", group.track_id)
     .eq("finished", true)
     .not("team_name", "is", null)
+    .not("completed_at", "is", null) // Only include groups with completion times
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(20); // Get more entries for better leaderboard
 
   // Calculate times for leaderboard with skip penalties
   const leaderboard = leaderboardData?.map(entry => {
+    if (!entry.completed_at) return null; // Skip entries without completion time
+    
     const startTime = new Date(entry.created_at);
-    const endTime = new Date(entry.completed_at || new Date());
+    const endTime = new Date(entry.completed_at);
     const actualTimeMs = endTime.getTime() - startTime.getTime();
     const skipPenaltyMs = (entry.riddles_skipped || 0) * 20 * 60 * 1000;
     const totalTimeMs = actualTimeMs + skipPenaltyMs;
     
-    const minutes = Math.floor(totalTimeMs / (1000 * 60));
-    const seconds = Math.floor((totalTimeMs % (1000 * 60)) / 1000);
-    const timeFormatted = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    
     return {
       team_name: entry.team_name,
-      time: timeFormatted,
+      time: formatTime(totalTimeMs),
       totalTimeMs,
       skips: entry.riddles_skipped || 0,
       members: entry.group_members?.length || 0,
       isCurrentTeam: entry.team_name === group.team_name
     };
-  }).sort((a, b) => a.totalTimeMs - b.totalTimeMs) || [];
+  })
+  .filter(entry => entry !== null) // Remove null entries
+  .sort((a, b) => a!.totalTimeMs - b!.totalTimeMs) || [];
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
@@ -142,13 +200,13 @@ export default async function AdventureCompletePage({ params }: Props) {
           {/* Stats */}
           <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-2xl p-6 md:p-8 mb-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {/* Completion Time */}
+              {/* Final Completion Time */}
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-white mb-2">
                   ⏱️ {formattedTime}
                 </div>
                 <div className="text-white/60 text-sm">
-                  Total Time
+                  {timeCalculationNote}
                   {skipsUsed > 0 && (
                     <div className="text-xs text-orange-300 mt-1">
                       (+{skipsUsed * 20}min penalty)
@@ -180,10 +238,10 @@ export default async function AdventureCompletePage({ params }: Props) {
               {/* Adventure Type */}
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-white mb-2">
-                  💘 {adventureType === 'Date Day Adventure' ? 'Date' : '🎮 Adventure'}
+                  {adventureType === 'Date Day Adventure' ? '💘' : '🎮'}
                 </div>
                 <div className="text-white/60 text-sm">
-                  Adventure Type
+                  {adventureType === 'Date Day Adventure' ? 'Date Day' : 'Adventure'}
                 </div>
               </div>
             </div>
@@ -202,7 +260,7 @@ export default async function AdventureCompletePage({ params }: Props) {
           {leaderboard.length > 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-2xl p-6 md:p-8 mb-8">
               <h3 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center justify-center gap-2">
-                🏆 {adventureType} Leaderboard
+                🏆 {adventureType} Leaderboard - {cityName}
               </h3>
               <div className="space-y-3">
                 {leaderboard.slice(0, 5).map((entry, index) => (
@@ -237,6 +295,16 @@ export default async function AdventureCompletePage({ params }: Props) {
                   </div>
                 ))}
               </div>
+              {leaderboard.length > 5 && (
+                <div className="mt-4 text-center">
+                  <Link
+                    href={`/leaderboard/${group.track_id}`}
+                    className="text-white/60 hover:text-white/80 text-sm underline"
+                  >
+                    View all {leaderboard.length} teams →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -278,6 +346,18 @@ export default async function AdventureCompletePage({ params }: Props) {
               📱 Share on WhatsApp
             </a>
           </div>
+
+          {/* Debug info for development */}
+          <details className="mt-6 text-left">
+            <summary className="text-white/40 text-xs cursor-pointer">Debug Info</summary>
+            <div className="mt-2 text-xs text-white/30 bg-black/20 rounded p-3 font-mono">
+              <div>Group ID: {groupId}</div>
+              <div>Finished: {group.finished ? 'Yes' : 'No'}</div>
+              <div>Completed At: {group.completed_at || 'Not set'}</div>
+              <div>Riddles Skipped: {skipsUsed}</div>
+              <div>Time Calculation: {timeCalculationNote}</div>
+            </div>
+          </details>
         </div>
       </div>
     </main>

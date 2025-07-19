@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     // Create both regular and service role clients
-    const supabase = await createClient(); // Add await here
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -88,17 +88,19 @@ export async function POST(req: Request) {
       riddles_skipped: (group.riddles_skipped || 0) + 1
     };
 
-    // If this is the last riddle, mark as completed
+    // 🔧 FIX: If this is the last riddle, mark as completed with timestamp
     if (isLastRiddle) {
+      const completionTime = new Date().toISOString();
       updateData.finished = true;
-      // Don't try to update completed_at since it doesn't exist
+      updateData.completed_at = completionTime;
+      console.log("Marking group as completed at:", completionTime);
     }
 
     const { data: updateResult, error: updateError } = await serviceSupabase
       .from("groups")
       .update(updateData)
       .eq("id", groupId)
-      .select("current_riddle_id, riddles_skipped, finished");
+      .select("current_riddle_id, riddles_skipped, finished, completed_at");
 
     if (updateError) {
       console.error("Failed to update group:", updateError);
@@ -118,7 +120,8 @@ export async function POST(req: Request) {
             groupId,
             newRiddleId: nextRiddleId,
             skippedCount: updateData.riddles_skipped,
-            isCompleted: isLastRiddle
+            isCompleted: isLastRiddle,
+            completedAt: isLastRiddle ? updateData.completed_at : null
           }
         });
       console.log("Broadcast sent successfully");
@@ -130,11 +133,13 @@ export async function POST(req: Request) {
 
     // Return appropriate response
     if (isLastRiddle) {
+      console.log("Adventure completed! Returning completion response.");
       return NextResponse.json({
         success: true,
         completed: true,
         message: "Adventure completed!",
-        groupId: groupId
+        groupId: groupId,
+        completedAt: updateData.completed_at
       });
     } else {
       return NextResponse.json({

@@ -86,7 +86,8 @@ export default async function RiddlePage({ params }: Props) {
 
     if (group && group.current_riddle_id !== id) {
       console.log(`❌ RIDDLE PAGE: Anti-cheat triggered - user on ${id} but should be on ${group.current_riddle_id}`);
-      redirect(`/riddle-locked?current=${group.current_riddle_id}&attempted=${id}`);
+      // Redirect to the correct riddle instead of a non-existent lock page
+      redirect(`/riddle/${group.current_riddle_id}`);
     } else {
       console.log(`✅ RIDDLE PAGE: Anti-cheat passed - user on correct riddle`);
     }
