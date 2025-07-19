@@ -22,15 +22,6 @@ export default function PreferencesPage() {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  // Handle logo click with confirmation
-  const handleLogoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const confirmed = window.confirm("Are you sure you want to return to About Us? This will cancel your current adventure setup.");
-    if (confirmed) {
-      router.push('/');
-    }
-  };
-
   // Expanded team name suggestions
   const teamSuggestions = [
     'Mystery Masters', 'The Puzzle Squad', 'Riddle Runners', 'Code Crackers',
@@ -196,18 +187,16 @@ export default function PreferencesPage() {
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
-      {/* Logo in top-left with confirmation dialog */}
+      {/* Logo in top-left (no hyperlink) */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-        <button onClick={handleLogoClick} className="focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg">
-          <Image
-            src="/riddle-city-logo.png"
-            alt="Riddle City Logo - Return to About Us"
-            width={60}
-            height={60}
-            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200 cursor-pointer"
-            priority
-          />
-        </button>
+        <Image
+          src="/riddle-city-logo.png"
+          alt="Riddle City Logo"
+          width={60}
+          height={60}
+          className="md:w-[80px] md:h-[80px] drop-shadow-lg"
+          priority
+        />
       </div>
 
       {/* Back to Choose Adventure link */}
@@ -222,8 +211,8 @@ export default function PreferencesPage() {
         </Link>
       </div>
 
-      {/* Main heading with better mobile spacing */}
-      <div className="w-full text-center mt-16 sm:mt-8 mb-10">
+      {/* Main heading with better spacing */}
+      <div className="w-full text-center mt-8 sm:mt-4 mb-10">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center tracking-tight leading-tight">
           Start your {mode} in {capitalize(location)}
         </h1>
