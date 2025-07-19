@@ -19,7 +19,7 @@ function generateQRToken(riddleId: string, timestamp: number): string {
 function verifyQRToken(riddleId: string, timestamp: number, token: string): boolean {
   const expectedToken = generateQRToken(riddleId, timestamp);
   const tokenAge = Date.now() - timestamp;
-  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  const maxAge = 365 * 24 * 60 * 60 * 1000; // 1 YEAR (effectively permanent)
   
   console.log('🔧 TOKEN DEBUG:', {
     riddleId,
