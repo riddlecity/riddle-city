@@ -7,6 +7,7 @@ import ShareLink from "@/components/ShareLink";
 import RestrictedSkipRiddleForm from "@/components/RestrictedSkipRiddleForm";
 import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import GameProgress from "@/components/GameProgress";
+import CookieHandler from "@/components/CookieHandler";
 import { notFound, redirect } from "next/navigation";
 
 interface Props {
@@ -173,6 +174,9 @@ export default async function RiddlePage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
+      {/* Handle cookie setting from URL parameters */}
+      <CookieHandler />
+      
       {/* Background maze logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-5 z-0">
         <Image

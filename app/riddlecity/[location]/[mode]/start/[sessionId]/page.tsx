@@ -165,15 +165,18 @@ export default async function StartPage({ params, searchParams }: Props) {
     // Continue anyway
   }
 
-  // Step 8: Set game cookies using Server Action
-  console.log('🍪 START PAGE: Setting game cookies via Server Action...');
-  try {
-    await setGameCookies(groupId, userId, teamName || '');
-    console.log('✅ START PAGE: Cookies set via Server Action:', { groupId, userId, teamName });
-  } catch (error) {
-    console.error('💥 START PAGE: Error setting cookies via Server Action:', error);
-    redirect('/riddlecity');
-  }
+  // Step 8: Redirect with cookie data as URL parameters (temporary workaround)
+  console.log('🔄 START PAGE: Redirecting with cookie data in URL...');
+  
+  // Encode the data to pass via URL
+  const cookieData = {
+    groupId,
+    userId,
+    teamName: teamName || ''
+  };
+  
+  const encodedData = btoa(JSON.stringify(cookieData));
+  console.log('✅ START PAGE: Cookie data encoded for URL transfer');
 
   // Step 9: Final validation and redirect
   if (!group.current_riddle_id) {
@@ -181,8 +184,8 @@ export default async function StartPage({ params, searchParams }: Props) {
     redirect('/riddlecity');
   }
 
-  console.log("🎯 START PAGE: Payment successful - redirecting to first riddle:", group.current_riddle_id);
+  console.log("🎯 START PAGE: Payment successful - redirecting to first riddle with cookie data:", group.current_riddle_id);
   
-  // Redirect to the first riddle
-  redirect(`/riddle/${group.current_riddle_id}`);
+  // Redirect to the first riddle with cookie data
+  redirect(`/riddle/${group.current_riddle_id}?game_data=${encodedData}`);
 }
