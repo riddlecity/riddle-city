@@ -9,13 +9,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 export async function POST(req: Request) {
   try {
     const { players, location, mode, teamName, emails } = await req.json();
-
+    
     if (!teamName || !teamName.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
 
     const supabase = await createClient();
-
+    
     const { data: track, error: trackError } = await supabase
       .from("tracks")
       .select("id, location, mode, name, price_per_person, start_riddle_id")
@@ -82,12 +82,13 @@ export async function POST(req: Request) {
       mode: "payment",
       metadata: {
         group_id: group.id,
-        user_id: userId, // Fallback use
+        user_id: userId,
         team_name: teamName.trim(),
         track_id: track.id,
         player_count: players.toString()
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}/start/${group.id}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      // 🔧 FIX: Use session.id in the URL path, not group.id
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}/start/{CHECKOUT_SESSION_ID}?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}`,
     });
 
@@ -95,15 +96,12 @@ export async function POST(req: Request) {
       throw new Error("Stripe session URL was not returned");
     }
 
-    // --- REMOVED COOKIE SETTING FROM HERE ---
-    // The cookies are now set on the /riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
-    // after the Stripe redirect, for more reliable persistence.
-
     console.log("✅ Checkout session created successfully:", {
       groupId: group.id,
       userId,
       teamName: teamName.trim(),
-      sessionId: session.id
+      sessionId: session.id,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}/start/${session.id}?session_id=${session.id}&success=true`
     });
 
     // Return the response with the session URL and group/team info
