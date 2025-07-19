@@ -298,7 +298,7 @@ export default async function AdventureCompletePage({ params }: Props) {
               {leaderboard.length > 5 && (
                 <div className="mt-4 text-center">
                   <Link
-                    href={`/leaderboard/${group.track_id}`}
+                    href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
                     className="text-white/60 hover:text-white/80 text-sm underline"
                   >
                     View all {leaderboard.length} teams →

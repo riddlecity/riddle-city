@@ -3,15 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import BackButton from "@/components/BackButton";
 
 interface Props {
   params: Promise<{ trackId: string }>;
 }
 
-export default async function LeaderboardPage({ params }: Props) {
+export default async function LeaderboardPage({ params, searchParams }: { 
+  params: Promise<{ trackId: string }>;
+  searchParams?: Promise<{ from_group?: string }>;
+}) {
   const { trackId } = await params;
-  const cookieStore = await cookies();
   const supabase = await createClient(); // ✅ Await the client
 
 const { data: track, error: trackError } = await supabase
@@ -24,9 +26,6 @@ const { data: track, error: trackError } = await supabase
   if (trackError || !track) {
     notFound();
   }
-
-  // Get current user's group ID from cookies to highlight their entry
-  const currentGroupId = cookieStore.get("group_id")?.value;
 
   // Get leaderboard data for this track
   const { data: leaderboardData } = await supabase
@@ -44,9 +43,6 @@ const { data: track, error: trackError } = await supabase
     .not("team_name", "is", null)
     .order("created_at", { ascending: false })
     .limit(50); // Show top 50 teams
-
-  // Check if current user's team has completed this track
-  const currentTeamCompleted = leaderboardData?.some(entry => entry.id === currentGroupId);
 
   // Calculate times for leaderboard with skip penalties
   const leaderboard = leaderboardData?.map(entry => {
@@ -74,7 +70,6 @@ const { data: track, error: trackError } = await supabase
       totalTimeMs,
       skips: entry.riddles_skipped || 0,
       members: entry.group_members?.length || 0,
-      isCurrentTeam: entry.id === currentGroupId,
       completedDate: new Date(entry.created_at).toLocaleDateString()
     };
   }).sort((a, b) => a.totalTimeMs - b.totalTimeMs) || [];
@@ -109,15 +104,7 @@ const { data: track, error: trackError } = await supabase
         />
       </div>
 
-      {/* Back button */}
-      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
-        <Link
-          href="/riddlecity"
-          className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-4 py-2 text-white/70 hover:text-white transition-all duration-200 text-sm"
-        >
-          ← Back to Riddle City
-        </Link>
-      </div>
+      {/* Back button - removed from top right */}
 
       {/* Leaderboard content */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10 max-w-4xl mx-auto pt-20">
@@ -134,16 +121,7 @@ const { data: track, error: trackError } = await supabase
           </p>
 
           {/* Show completion link for current team if they completed this track */}
-          {currentTeamCompleted && currentGroupId && (
-            <div className="mb-6">
-              <Link
-                href={`/adventure-complete/${currentGroupId}`}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                🎉 View Your Completion Page
-              </Link>
-            </div>
-          )}
+          {/* Removed complex completion detection - using back button instead */}
 
           {/* Leaderboard */}
           {leaderboard.length > 0 ? (
@@ -157,11 +135,9 @@ const { data: track, error: trackError } = await supabase
                     <div 
                       key={entry.id}
                       className={`flex items-center justify-between p-4 rounded-lg transition-all duration-200 ${
-                        entry.isCurrentTeam 
-                          ? 'bg-yellow-500/20 border border-yellow-500/30 scale-[1.02]' 
-                          : isTopThree
-                          ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30'
-                          : 'bg-white/5 hover:bg-white/10'
+                        isTopThree
+                        ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30'
+                        : 'bg-white/5 hover:bg-white/10'
                       }`}
                     >
                       <div className="flex items-center gap-4">
@@ -171,10 +147,8 @@ const { data: track, error: trackError } = await supabase
                           {isTopThree ? medals[index] : `${index + 1}.`}
                         </div>
                         <div className="text-left">
-                          <div className={`font-semibold text-lg ${
-                            entry.isCurrentTeam ? 'text-yellow-200' : 'text-white'
-                          }`}>
-                            {entry.team_name} {entry.isCurrentTeam && '(You!)'}
+                          <div className={`font-semibold text-lg text-white`}>
+                            {entry.team_name}
                           </div>
                           <div className="text-sm text-white/60">
                             {entry.members} member{entry.members !== 1 ? 's' : ''} • 
@@ -183,9 +157,7 @@ const { data: track, error: trackError } = await supabase
                           </div>
                         </div>
                       </div>
-                      <div className={`font-mono font-bold text-xl ${
-                        entry.isCurrentTeam ? 'text-yellow-200' : 'text-white'
-                      }`}>
+                      <div className={`font-mono font-bold text-xl text-white`}>
                         {entry.time}
                       </div>
                     </div>
@@ -213,18 +185,22 @@ const { data: track, error: trackError } = await supabase
 
           {/* Action buttons */}
           <div className="space-y-4">
-            <Link
-              href={`/riddlecity/${cityName.toLowerCase()}`}
-              className="block w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              🎮 Play This Adventure
-            </Link>
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+              <BackButton />
+            </div>
             
             <Link
               href="/riddlecity"
+              className="block w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🏠 Return to Riddle City
+            </Link>
+            
+            <Link
+              href={`/riddlecity/${cityName.toLowerCase()}`}
               className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30"
             >
-              🏠 Back to Riddle City
+              🔄 Try Another Adventure
             </Link>
           </div>
         </div>
