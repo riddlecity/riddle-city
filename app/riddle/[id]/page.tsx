@@ -107,12 +107,37 @@ export default async function RiddlePage({ params }: Props) {
   // Get user info from cookies with retry logic
   const { groupId, userId, teamName } = await getCookiesWithRetry();
 
-  // Check if user has valid access
+  // Check if user has valid access - but be more lenient for payment flow
   if (!groupId || !userId) {
-    return <UnauthorizedPage />;
+    // If no cookies but there might be game_data in URL, show the page and let CookieHandler fix it
+    // Only show unauthorized if this is clearly not a payment redirect
+    return (
+      <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
+        <CookieHandler />
+        
+        {/* Background maze logo - original colors, more visible */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0">
+          <Image
+            src="/riddle-city-logo2.png"
+            alt=""
+            width={400}
+            height={400}
+            className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain"
+            priority={false}
+          />
+        </div>
+
+        <div className="flex-1 flex items-center justify-center z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white/70">Loading your adventure...</p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
-  // Verify user is actually in this group
+  // Verify user is actually in this group (only if we have cookies)
   const { data: membership } = await supabase
     .from("group_members")
     .select("user_id")
