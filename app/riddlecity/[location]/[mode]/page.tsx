@@ -30,12 +30,20 @@ export default function PreferencesPage() {
     }
   };
 
-  // Fun team name suggestions
+  // Expanded team name suggestions
   const teamSuggestions = [
     'Mystery Masters', 'The Puzzle Squad', 'Riddle Runners', 'Code Crackers',
     'Date Detectives', 'Adventure Squad', 'The Explorers', 'Barnsley Bunch',
     'Riddle Rebels', 'Mystery Makers', 'Puzzle Partners', 'The Think Tank',
-    'Dream Team', 'The Sleuths', 'Quest Squad', 'Brain Trust'
+    'Dream Team', 'The Sleuths', 'Quest Squad', 'Brain Trust',
+    'Clue Crew', 'The Masterminds', 'Secret Solvers', 'Enigma Engineers',
+    'Detective Duo', 'Puzzle Pirates', 'The Riddlers', 'Mystery Machine',
+    'Code Breakers', 'The Hunters', 'Adventure Angels', 'Treasure Trackers',
+    'The Investigators', 'Riddle Raiders', 'Mystery Maniacs', 'Puzzle Pros',
+    'The Deciphers', 'Clue Crushers', 'Adventure Addicts', 'The Seekers',
+    'Mystery Mavericks', 'Puzzle Panthers', 'The Challengers', 'Quest Queens',
+    'Riddle Rockstars', 'The Game Changers', 'Mystery Ninjas', 'Puzzle Wizards',
+    'The Escape Artists', 'Adventure Alliance', 'Mystery Squad', 'The Solvers'
   ];
 
   const getRandomSuggestion = () => {
@@ -110,7 +118,7 @@ export default function PreferencesPage() {
   const handleStart = async () => {
     // Validate team name
     if (!teamName.trim()) {
-      alert('Please enter a team name!');
+      alert('Please enter a team name to continue!');
       return;
     }
 
@@ -193,9 +201,9 @@ export default function PreferencesPage() {
           <Image
             src="/riddle-city-logo.png"
             alt="Riddle City Logo - Return to About Us"
-            width={80}
-            height={80}
-            className="md:w-[100px] md:h-[100px] drop-shadow-lg hover:scale-105 transition-transform duration-200 cursor-pointer"
+            width={60}
+            height={60}
+            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200 cursor-pointer"
             priority
           />
         </button>
@@ -208,13 +216,17 @@ export default function PreferencesPage() {
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 text-sm font-medium"
         >
           <span className="text-lg">←</span>
-          Back to Choose Adventure
+          <span className="hidden sm:inline">Back to Choose Adventure</span>
+          <span className="sm:hidden">Back</span>
         </Link>
       </div>
 
-      <h1 className="text-4xl sm:text-5xl font-extrabold mb-10 text-center tracking-tight">
-        Start your {mode} in {capitalize(location)}
-      </h1>
+      {/* Main heading with better mobile spacing */}
+      <div className="w-full text-center mt-16 sm:mt-8 mb-10">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center tracking-tight leading-tight">
+          Start your {mode} in {capitalize(location)}
+        </h1>
+      </div>
       
       <div className="w-full max-w-lg space-y-6">
         {/* Number of players */}
@@ -227,7 +239,7 @@ export default function PreferencesPage() {
             onChange={(e) => handlePlayerChange(parseInt(e.target.value))}
             className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
-            {Array.from({ length: 5 }, (_, i) => i + 2).map((n) => (
+            {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
               <option key={n} value={n} className="bg-neutral-800">
                 {n}
               </option>
@@ -235,21 +247,32 @@ export default function PreferencesPage() {
           </select>
         </div>
 
-        {/* Team Name */}
+        {/* Team Name - Required with purple styling */}
         <div>
           <label className="block text-lg font-medium mb-2">
-            Team Name:
+            Team Name: <span className="text-red-400">*</span>
           </label>
           <div className="space-y-3">
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Enter your team name..."
-              maxLength={30}
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              required
-            />
+            <div className={`border-2 rounded-lg transition-colors duration-200 ${
+              teamName.trim() 
+                ? 'border-purple-500 bg-purple-500/10' 
+                : 'border-red-400 bg-red-400/10'
+            }`}>
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="Enter your team name to proceed..."
+                maxLength={30}
+                className="w-full bg-transparent px-4 py-3 text-white placeholder:text-white/50 focus:outline-none"
+                required
+              />
+            </div>
+            {!teamName.trim() && (
+              <p className="text-red-400 text-sm">
+                ⚠️ Team name is required to continue
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <button
                 type="button"
@@ -267,6 +290,9 @@ export default function PreferencesPage() {
 
         {/* Email fields */}
         <div className="space-y-4">
+          <label className="block text-lg font-medium">
+            Player emails (optional):
+          </label>
           {emails.map((email, index) => (
             <input
               key={index}
