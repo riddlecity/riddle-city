@@ -36,6 +36,7 @@ const { data: track, error: trackError } = await supabase
       team_name, 
       created_at, 
       riddles_skipped,
+      finished,
       group_members(user_id)
     `)
     .eq("track_id", trackId)
@@ -43,6 +44,9 @@ const { data: track, error: trackError } = await supabase
     .not("team_name", "is", null)
     .order("created_at", { ascending: false })
     .limit(50); // Show top 50 teams
+
+  // Check if current user's team has completed this track
+  const currentTeamCompleted = leaderboardData?.some(entry => entry.id === currentGroupId);
 
   // Calculate times for leaderboard with skip penalties
   const leaderboard = leaderboardData?.map(entry => {
@@ -128,6 +132,18 @@ const { data: track, error: trackError } = await supabase
           <p className="text-lg md:text-xl text-white/70 mb-8">
             {adventureType} - {cityName}
           </p>
+
+          {/* Show completion link for current team if they completed this track */}
+          {currentTeamCompleted && currentGroupId && (
+            <div className="mb-6">
+              <Link
+                href={`/adventure-complete/${currentGroupId}`}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                🎉 View Your Completion Page
+              </Link>
+            </div>
+          )}
 
           {/* Leaderboard */}
           {leaderboard.length > 0 ? (

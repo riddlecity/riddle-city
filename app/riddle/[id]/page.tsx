@@ -238,14 +238,16 @@ export default async function RiddlePage({ params }: Props) {
         />
       </div>
 
-      {/* Game Progress - only show if in a group */}
+      {/* Game Progress - forced to top left */}
       {groupId && gameStartTime && (
-        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
-          <GameProgress 
-            currentRiddleOrder={currentRiddleOrder}
-            totalRiddles={totalRiddles}
-            gameStartTime={gameStartTime}
-          />
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+          <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 text-white text-xs md:text-sm">
+            <GameProgress 
+              currentRiddleOrder={currentRiddleOrder}
+              totalRiddles={totalRiddles}
+              gameStartTime={gameStartTime}
+            />
+          </div>
         </div>
       )}
 
@@ -308,6 +310,11 @@ export default async function RiddlePage({ params }: Props) {
 
       {/* Real-time sync */}
       {groupId && <RealTimeRiddleSync groupId={groupId} />}
+
+      {/* Skip button - show for leaders on non-completed adventures */}
+      {groupId && userId && isLeader && (
+        <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
+      )}
 
       {/* Skip button with penalty notice - show for leaders on non-completed adventures */}
       {groupId && userId && isLeader && (

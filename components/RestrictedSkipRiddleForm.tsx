@@ -60,20 +60,20 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-30">
+    <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
       <button
         onClick={handleSkip}
         disabled={loading}
-        className="group bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-xl px-3 py-2.5 md:px-4 md:py-3 text-white/70 hover:text-white/90 transition-all duration-200 text-xs md:text-sm shadow-lg hover:shadow-xl disabled:opacity-50"
+        className="group bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 hover:border-white/30 rounded-lg px-3 py-2 text-white/70 hover:text-white/90 transition-all duration-200 text-xs md:text-sm shadow-lg hover:shadow-xl disabled:opacity-50"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-base md:text-lg">📱</span>
-          <div className="text-left">
-            <div className="font-medium leading-tight">
-              {loading ? "Skipping..." : "QR Code not working?"}
+        <div className="flex flex-col items-center text-center">
+          <span className="text-sm mb-1">📱</span>
+          <div className="leading-tight">
+            <div className="font-medium text-xs">
+              {loading ? "Skipping..." : "QR not working?"}
             </div>
-            <div className="text-xs text-white/50 group-hover:text-white/70 leading-tight">
-              {loading ? "Please wait..." : "Skip to next riddle (20 min penalty)"}
+            <div className="text-xs text-white/50 group-hover:text-white/70">
+              {loading ? "Please wait..." : "Skip (20 min penalty)"}
             </div>
           </div>
         </div>

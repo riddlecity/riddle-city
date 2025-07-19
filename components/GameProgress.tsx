@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 
 interface GameProgressProps {
@@ -35,7 +34,7 @@ export default function GameProgress({ currentRiddleOrder, totalRiddles, gameSta
   const progressPercentage = Math.round((currentRiddleOrder / totalRiddles) * 100);
 
   return (
-    <div className="fixed top-4 right-4 md:top-6 md:right-6 z-20">
+    <div className="fixed top-4 left-4 md:top-6 md:left-6 z-20">
       <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 text-white shadow-lg">
         {/* Progress indicator */}
         <div className="flex items-center gap-3 mb-2">
