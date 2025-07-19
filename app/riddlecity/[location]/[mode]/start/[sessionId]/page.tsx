@@ -1,7 +1,6 @@
 // app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { setGameCookies } from '@/app/actions';
 
 interface Props {
   params: Promise<{ location: string; mode: string; sessionId: string }>;
@@ -92,7 +91,7 @@ export default async function StartPage({ params, searchParams }: Props) {
   try {
     const { data: groupData, error: groupError } = await supabase
       .from('groups')
-      .select('id, current_riddle_id, track_id, created_by')
+      .select('id, current_riddle_id, track_id, created_by, finished')
       .eq('id', groupId)
       .single();
 
@@ -146,26 +145,44 @@ export default async function StartPage({ params, searchParams }: Props) {
     redirect('/riddlecity');
   }
 
-  // Step 7: Mark group as paid
-  console.log('💰 START PAGE: Marking group as paid...');
+  // Step 7: RESET GROUP TO FRESH START after payment
+  console.log('🔄 START PAGE: Resetting group to fresh start after payment...');
   try {
+    // Get the track's start riddle to ensure we start at the beginning
+    const { data: trackData } = await supabase
+      .from('tracks')
+      .select('start_riddle_id')
+      .eq('id', group.track_id)
+      .single();
+    
+    const startRiddleId = trackData?.start_riddle_id || 'barnsley_r1'; // Fallback
+    console.log('🎯 START PAGE: Start riddle ID:', startRiddleId);
+    
     const { error: updateError } = await supabase
       .from('groups')
-      .update({ paid: true })
+      .update({ 
+        paid: true,
+        current_riddle_id: startRiddleId, // Reset to first riddle
+        riddles_skipped: 0, // Reset skips
+        finished: false, // Reset finished status
+        completed_at: null // Clear completion timestamp
+      })
       .eq('id', groupId);
 
     if (updateError) {
-      console.error('❌ START PAGE: Failed to mark group as paid:', updateError);
-      // Continue anyway - the game can still work
+      console.error('❌ START PAGE: Failed to reset group:', updateError);
+      redirect('/riddlecity');
     } else {
-      console.log('✅ START PAGE: Group marked as paid successfully');
+      console.log('✅ START PAGE: Group reset to fresh start - riddle:', startRiddleId);
+      // Update our local group object
+      group.current_riddle_id = startRiddleId;
     }
   } catch (error) {
-    console.error('💥 START PAGE: Error updating group payment status:', error);
-    // Continue anyway
+    console.error('💥 START PAGE: Error resetting group:', error);
+    redirect('/riddlecity');
   }
 
-  // Step 8: Redirect with cookie data as URL parameters (temporary workaround)
+  // Step 8: Redirect with cookie data as URL parameters
   console.log('🔄 START PAGE: Redirecting with cookie data in URL...');
   
   // Encode the data to pass via URL
@@ -178,13 +195,7 @@ export default async function StartPage({ params, searchParams }: Props) {
   const encodedData = btoa(JSON.stringify(cookieData));
   console.log('✅ START PAGE: Cookie data encoded for URL transfer');
 
-  // Step 9: Final validation and redirect
-  if (!group.current_riddle_id) {
-    console.error('❌ START PAGE: No current_riddle_id found for group');
-    redirect('/riddlecity');
-  }
-
-  console.log("🎯 START PAGE: Payment successful - redirecting to first riddle with cookie data:", group.current_riddle_id);
+  console.log("🎯 START PAGE: Payment successful - redirecting to first riddle with reset group:", group.current_riddle_id);
   
   // Redirect to the first riddle with cookie data
   redirect(`/riddle/${group.current_riddle_id}?game_data=${encodedData}`);

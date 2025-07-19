@@ -21,7 +21,14 @@ export default function CookieHandler() {
         const { groupId, userId, teamName } = decoded;
         
         if (groupId && userId) {
-          // Set cookies client-side
+          console.log('🍪 COOKIE HANDLER: Setting new cookies, clearing old ones first...');
+          
+          // 🔧 FIX: Clear old cookies first
+          document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'team_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          
+          // Set new cookies
           const expires = new Date();
           expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); // 24 hours
           const cookieOptions = `expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
@@ -33,7 +40,7 @@ export default function CookieHandler() {
             document.cookie = `team_name=${teamName}; ${cookieOptions}`;
           }
           
-          console.log('✅ COOKIE HANDLER: Cookies set successfully:', { groupId, userId, teamName });
+          console.log('✅ COOKIE HANDLER: Old cookies cleared, new cookies set:', { groupId, userId, teamName });
           
           // Clean up the URL by removing the game_data parameter
           const url = new URL(window.location.href);
