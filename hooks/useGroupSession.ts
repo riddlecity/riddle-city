@@ -1,5 +1,3 @@
-// hooks/useGroupSession.ts
-
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -69,11 +67,8 @@ export function useGroupSession(): GroupSession & { checkSession: () => void } {
             hasActiveGroup: true
           })
           
-          // Auto-redirect if not already on riddle page
-          if (data.currentRiddleId && !window.location.pathname.includes('/riddle/')) {
-            console.log('✅ SESSION: Auto-redirecting to active game:', data.currentRiddleId)
-            router.push(`/riddle/${data.currentRiddleId}`)
-          }
+          // REMOVED: No more auto-redirect! Just set the session state
+          console.log('✅ SESSION: Active game found but NOT auto-redirecting:', data.currentRiddleId)
         } else {
           // Clear invalid cookies
           document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'

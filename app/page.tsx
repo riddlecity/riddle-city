@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useGroupSession } from "@/hooks/useGroupSession";
 
 export default function Home() {
-  const { loading, hasActiveGroup, currentRiddleId } = useGroupSession();
+  const { loading, hasActiveGroup, currentRiddleId, groupId } = useGroupSession();
 
   // Show loading state while checking session
   if (loading) {
@@ -26,9 +26,6 @@ export default function Home() {
     );
   }
 
-  // If user has active group, the hook will auto-redirect them
-  // This content only shows for users without active groups
-  
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16">
       <Image
@@ -36,23 +33,40 @@ export default function Home() {
         alt="Riddle City Logo"
         width={300}
         height={300}
-        className="mb-4 drop-shadow-xl" // reduced gap from image to headline
+        className="mb-4 drop-shadow-xl"
         priority
       />
       <h1 className="text-4xl sm:text-5xl font-extrabold mb-10 text-center tracking-tight">
         Your Mystery Awaits
       </h1>
       
-      {/* Show resume button if user has active group but auto-redirect didn't work */}
+      {/* Show rejoin options if user has active group - NO AUTO-REDIRECT */}
       {hasActiveGroup && currentRiddleId && (
-        <div className="mb-6 p-4 bg-green-600/20 border border-green-600/50 rounded-lg text-center">
-          <p className="text-green-300 mb-3">You have an active adventure!</p>
-          <Link
-            href={`/riddle/${currentRiddleId}`}
-            className="bg-green-600 hover:bg-green-500 transition-colors duration-200 text-white font-semibold px-6 py-3 rounded-full shadow-md"
-          >
-            Resume Your Adventure →
-          </Link>
+        <div className="mb-8 p-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl text-center max-w-md w-full">
+          <div className="text-3xl mb-3">🎮</div>
+          <h3 className="text-lg font-bold text-blue-200 mb-2">Welcome Back, Detective!</h3>
+          <p className="text-blue-200/80 text-sm mb-4">
+            You have an ongoing adventure waiting for you
+          </p>
+          <div className="space-y-3">
+            <Link
+              href={`/riddle/${currentRiddleId}`}
+              className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🔍 Resume Adventure
+            </Link>
+            <button
+              onClick={() => {
+                // Clear cookies to start fresh
+                document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                window.location.reload();
+              }}
+              className="block w-full bg-gray-600/50 hover:bg-gray-600/70 text-white/90 font-medium py-2 px-6 rounded-lg transition-all duration-200 text-sm border border-gray-500/30"
+            >
+              🆕 Start Fresh Instead
+            </button>
+          </div>
         </div>
       )}
       

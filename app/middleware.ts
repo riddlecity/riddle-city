@@ -1,3 +1,5 @@
+// middleware.ts (correct version - keeps session logic, removes auto-redirect)
+
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -27,13 +29,13 @@ export async function middleware(request: NextRequest) {
         if (!error && group && group.paid) {
           // Check if group is finished
           if (group.finished) {
-            console.log('🏁 MIDDLEWARE: Group is finished, not redirecting to game')
+            console.log('🏁 MIDDLEWARE: Group is finished, session still valid but game over')
             return NextResponse.next()
           }
           
           // Check if group is inactive (closed after 15 minutes)
           if (group.active === false) {
-            console.log('🔒 MIDDLEWARE: Group is closed, not redirecting to game')
+            console.log('🔒 MIDDLEWARE: Group is closed, session expired')
             return NextResponse.next()
           }
           
@@ -68,11 +70,12 @@ export async function middleware(request: NextRequest) {
             .single()
           
           if (membership && group.current_riddle_id) {
-            // User has active, ongoing group - redirect to current riddle
-            if (!request.nextUrl.pathname.includes('/riddle/')) {
-              console.log('✅ MIDDLEWARE: Redirecting to active game:', group.current_riddle_id)
-              return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}`, request.url))
-            }
+            // User has active, ongoing group - but DON'T auto-redirect anymore
+            // Just log that they have an active session - let pages handle it
+            console.log('✅ MIDDLEWARE: User has active game but NOT auto-redirecting:', group.current_riddle_id)
+            
+            // REMOVED: The auto-redirect code that was here
+            // return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}`, request.url))
           }
         }
       } catch (error) {
