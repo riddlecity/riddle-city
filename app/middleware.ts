@@ -16,8 +16,8 @@ export async function middleware(request: NextRequest) {
     
     if (userId && groupId) {
       try {
-        // Create Supabase client for server-side request
-        const supabase = createClient()
+        // Create Supabase client for server-side request (await for Next.js 15)
+        const supabase = await createClient()
         
         // Check if user is still in an active group
         const { data: groupMember, error } = await supabase
