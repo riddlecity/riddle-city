@@ -137,9 +137,6 @@ export default function ManualAnswerForm({
             </button>
           </div>
         </div>
-        
-        <p className="text-white/50 text-xs text-center">
-          💡 Need help? Check the hint above for clues
         </p>
       </form>
     </div>
