@@ -107,34 +107,10 @@ export async function GET(request: NextRequest, { params }: Props) {
       locationId
     });
     
-    // Find the riddle for this location in the team's current track
-    const { data: targetRiddle, error: riddleError } = await supabase
-      .from("riddles")
-      .select("id, order_index, next_riddle_id, title")
-      .eq("location_id", locationId)
-      .eq("track_id", group.track_id)
-      .single();
-    
-    if (riddleError || !targetRiddle) {
-      console.log('🌍 LOCATION QR: No riddle found for this location in current track:', {
-        locationId,
-        trackId: group.track_id,
-        error: riddleError
-      });
-      return NextResponse.redirect(new URL('/riddle-unauthorized?reason=location_not_in_track', request.url));
-    }
-    
-    console.log('🌍 LOCATION QR: Found riddle for location:', {
-      locationId,
-      riddleId: targetRiddle.id,
-      riddleTitle: targetRiddle.title,
-      trackId: group.track_id
-    });
-    
-    // Get current riddle details
+    // Get the current riddle to find what the next riddle should be
     const { data: currentRiddle, error: currentError } = await supabase
       .from("riddles")
-      .select("order_index")
+      .select("id, order_index, next_riddle_id, location_id")
       .eq("id", group.current_riddle_id)
       .eq("track_id", group.track_id)
       .single();
@@ -144,72 +120,48 @@ export async function GET(request: NextRequest, { params }: Props) {
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=current_riddle_error', request.url));
     }
     
-    const currentOrder = currentRiddle.order_index;
-    const targetOrder = targetRiddle.order_index;
+    // Check if we're at the correct location for the current riddle
+    if (currentRiddle.location_id !== locationId) {
+      console.log('🌍 LOCATION QR: Wrong location for current riddle:', {
+        currentRiddleLocation: currentRiddle.location_id,
+        scannedLocation: locationId
+      });
+      return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}?error=wrong_location`, request.url));
+    }
     
-    console.log('🌍 LOCATION QR: Order comparison:', {
-      locationId,
-      currentRiddleId: group.current_riddle_id,
-      currentOrder,
-      targetRiddleId: targetRiddle.id,
-      targetOrder,
-      difference: targetOrder - currentOrder
-    });
-    
-    // Location-based progression logic
-    if (targetOrder === currentOrder) {
-      // Re-scanning current location
-      console.log('🌍 LOCATION QR: Re-scanning current location - allowed');
-      return NextResponse.redirect(new URL(`/riddle/${targetRiddle.id}`, request.url));
+    // Check if there's a next riddle
+    if (!currentRiddle.next_riddle_id) {
+      console.log('🌍 LOCATION QR: Final riddle completed');
       
-    } else if (targetOrder === currentOrder + 1) {
-      // Scanning next location - progress the group
-      console.log('🌍 LOCATION QR: Scanning next location - progressing group');
-      
-      // Update group's current riddle
-      const { error: updateError } = await supabase
+      const { error: finishError } = await supabase
         .from("groups")
-        .update({ current_riddle_id: targetRiddle.id })
+        .update({ 
+          finished: true,
+          completed_at: new Date().toISOString()
+        })
         .eq("id", groupId);
       
-      if (updateError) {
-        console.error('🌍 LOCATION QR: Failed to update group:', updateError);
-        return NextResponse.redirect(new URL('/riddle-unauthorized?reason=update_failed', request.url));
+      if (finishError) {
+        console.error('🌍 LOCATION QR: Failed to mark finished:', finishError);
       }
       
-      console.log('🌍 LOCATION QR: Successfully progressed to:', targetRiddle.id);
-      
-      // Check if this was the final riddle
-      if (!targetRiddle.next_riddle_id) {
-        console.log('🌍 LOCATION QR: Final location completed');
-        
-        const { error: finishError } = await supabase
-          .from("groups")
-          .update({ 
-            finished: true,
-            completed_at: new Date().toISOString()
-          })
-          .eq("id", groupId);
-        
-        if (finishError) {
-          console.error('🌍 LOCATION QR: Failed to mark finished:', finishError);
-        }
-        
-        return NextResponse.redirect(new URL(`/adventure-complete/${groupId}`, request.url));
-      }
-      
-      return NextResponse.redirect(new URL(`/riddle/${targetRiddle.id}`, request.url));
-      
-    } else if (targetOrder < currentOrder) {
-      // Scanning previous location
-      console.log('🌍 LOCATION QR: Scanning previous location - redirecting to current');
-      return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}?error=old_location`, request.url));
-      
-    } else {
-      // Scanning future location
-      console.log('🌍 LOCATION QR: Scanning future location - blocked');
-      return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}?error=skip_ahead`, request.url));
+      return NextResponse.redirect(new URL(`/adventure-complete/${groupId}`, request.url));
     }
+    
+    // Progress to the next riddle
+    const { error: updateError } = await supabase
+      .from("groups")
+      .update({ current_riddle_id: currentRiddle.next_riddle_id })
+      .eq("id", groupId);
+    
+    if (updateError) {
+      console.error('🌍 LOCATION QR: Failed to update group:', updateError);
+      return NextResponse.redirect(new URL('/riddle-unauthorized?reason=update_failed', request.url));
+    }
+    
+    console.log('🌍 LOCATION QR: Successfully progressed from', currentRiddle.id, 'to', currentRiddle.next_riddle_id);
+    
+    return NextResponse.redirect(new URL(`/riddle/${currentRiddle.next_riddle_id}`, request.url));
     
   } catch (error) {
     console.error('🌍 LOCATION QR: Error:', error);
