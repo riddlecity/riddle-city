@@ -137,7 +137,6 @@ export default function ManualAnswerForm({
             </button>
           </div>
         </div>
-        </p>
       </form>
     </div>
   )
