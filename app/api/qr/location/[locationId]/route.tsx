@@ -151,7 +151,7 @@ export async function GET(request: NextRequest, { params }: Props) {
       locationId,
       currentRiddleId: group.current_riddle_id,
       currentOrder,
-      targetRiddleId,
+      targetRiddleId: targetRiddle.id,
       targetOrder,
       difference: targetOrder - currentOrder
     });
