@@ -1,4 +1,4 @@
-// middleware.ts (correct version - keeps session logic, removes auto-redirect)
+// middleware.ts (complete version with 48-hour expiry)
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -22,11 +22,29 @@ export async function middleware(request: NextRequest) {
         // Check if group is active and not finished
         const { data: group, error } = await supabase
           .from('groups')
-          .select('id, current_riddle_id, finished, paid, active, completed_at')
+          .select('id, current_riddle_id, finished, paid, active, completed_at, expires_at')
           .eq('id', groupId)
           .single()
         
         if (!error && group && group.paid) {
+          // Check if group has expired (48 hours after payment)
+          if (group.expires_at) {
+            const expiresAt = new Date(group.expires_at);
+            const now = new Date();
+            
+            if (now > expiresAt) {
+              console.log('🚫 MIDDLEWARE: Group expired after 48 hours');
+              
+              // Mark group as inactive
+              await supabase
+                .from('groups')
+                .update({ active: false })
+                .eq('id', groupId);
+                
+              return NextResponse.next(); // Don't redirect to expired games
+            }
+          }
+          
           // Check if group is finished
           if (group.finished) {
             console.log('🏁 MIDDLEWARE: Group is finished, session still valid but game over')
