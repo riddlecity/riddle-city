@@ -20,28 +20,29 @@ export async function middleware(request: NextRequest) {
         const supabase = await createClient()
         
         // Check if user is still in an active group
-        const { data: groupMember, error } = await supabase
-          .from('group_members')
-          .select(`
-            group_id,
-            groups (
-              id,
-              current_riddle_id,
-              finished,
-              paid
-            )
-          `)
-          .eq('user_id', userId)
-          .eq('group_id', groupId)
+        const { data: group, error } = await supabase
+          .from('groups')
+          .select('id, current_riddle_id, finished, paid')
+          .eq('id', groupId)
           .single()
         
-        if (!error && groupMember?.groups && !groupMember.groups.finished && groupMember.groups.paid) {
-          // User has active group - redirect to current riddle
-          const currentRiddleId = groupMember.groups.current_riddle_id
+        if (!error && group && !group.finished && group.paid) {
+          // Verify user is actually a member of this group
+          const { data: membership } = await supabase
+            .from('group_members')
+            .select('user_id')
+            .eq('group_id', groupId)
+            .eq('user_id', userId)
+            .single()
           
-          if (currentRiddleId && !request.nextUrl.pathname.includes('/riddle/')) {
-            console.log('✅ MIDDLEWARE: Redirecting to active game:', currentRiddleId)
-            return NextResponse.redirect(new URL(`/riddle/${currentRiddleId}`, request.url))
+          if (membership) {
+            // User has active group - redirect to current riddle
+            const currentRiddleId = group.current_riddle_id
+          
+            if (currentRiddleId && !request.nextUrl.pathname.includes('/riddle/')) {
+              console.log('✅ MIDDLEWARE: Redirecting to active game:', currentRiddleId)
+              return NextResponse.redirect(new URL(`/riddle/${currentRiddleId}`, request.url))
+            }
           }
         }
       } catch (error) {
