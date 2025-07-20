@@ -9,6 +9,22 @@ interface Props {
   params: Promise<{ groupId: string }>;
 }
 
+// Client component for cookie clearing
+function CookieCleaner() {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+          // Clear group-related cookies when reaching completion page
+          document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          console.log('🧹 ADVENTURE COMPLETE: Cleared user session cookies');
+        `,
+      }}
+    />
+  );
+}
+
 export default async function AdventureCompletePage({ params }: Props) {
   const { groupId } = await params;
   const cookieStore = await cookies();
@@ -32,11 +48,40 @@ export default async function AdventureCompletePage({ params }: Props) {
     notFound();
   }
 
+  // Check if group should be auto-closed (15 minutes after completion)
+  const now = new Date();
+  const completionTime = group.completed_at ? new Date(group.completed_at) : null;
+  const FIFTEEN_MINUTES = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+  if (completionTime) {
+    const timeSinceCompletion = now.getTime() - completionTime.getTime();
+    
+    if (timeSinceCompletion > FIFTEEN_MINUTES && group.active !== false) {
+      // Group should be closed - mark it as inactive
+      console.log('🔒 ADVENTURE COMPLETE: Auto-closing group after 15 minutes');
+      
+      try {
+        await supabase
+          .from('groups')
+          .update({ 
+            active: false,
+            closed_at: now.toISOString()
+          })
+          .eq('id', groupId);
+          
+        console.log('✅ ADVENTURE COMPLETE: Group marked as inactive');
+      } catch (error) {
+        console.error('❌ ADVENTURE COMPLETE: Failed to close group:', error);
+      }
+    }
+  }
+
   console.log('Adventure complete - group data:', {
     finished: group.finished,
     completed_at: group.completed_at,
     created_at: group.created_at,
-    riddles_skipped: group.riddles_skipped
+    riddles_skipped: group.riddles_skipped,
+    active: group.active
   });
 
   // Calculate completion time with skip penalty
@@ -159,6 +204,9 @@ export default async function AdventureCompletePage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
+      {/* Clear cookies when page loads */}
+      <CookieCleaner />
+      
       {/* Background maze logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-5">
         <Image
@@ -192,6 +240,13 @@ export default async function AdventureCompletePage({ params }: Props) {
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
             Adventure Complete!
           </h1>
+          
+          {/* Show session cleanup notice */}
+          <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-3 mb-6">
+            <p className="text-blue-200 text-sm">
+              🧹 Your session has been cleared! You can now start a new adventure.
+            </p>
+          </div>
           
           <p className="text-lg md:text-xl text-white/70 mb-6">
             {group.team_name ? `Well done ${group.team_name}!` : 'Congratulations!'} You completed the {adventureType} in {cityName}!
@@ -311,17 +366,17 @@ export default async function AdventureCompletePage({ params }: Props) {
           {/* Action buttons */}
           <div className="space-y-4">
             <Link
+              href="/riddlecity"
+              className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🚀 Start New Adventure
+            </Link>
+            
+            <Link
               href={`/leaderboard/${group.track_id}`}
               className="block w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               🏆 View Full Leaderboard
-            </Link>
-            
-            <Link
-              href="/riddlecity"
-              className="block w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              🏠 Return to Riddle City
             </Link>
             
             <Link

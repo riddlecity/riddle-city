@@ -1,5 +1,3 @@
-// middleware.ts (place in your project root, same level as app/)
-
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -19,14 +17,48 @@ export async function middleware(request: NextRequest) {
         // Create Supabase client for server-side request (await for Next.js 15)
         const supabase = await createClient()
         
-        // Check if user is still in an active group
+        // Check if group is active and not finished
         const { data: group, error } = await supabase
           .from('groups')
-          .select('id, current_riddle_id, finished, paid')
+          .select('id, current_riddle_id, finished, paid, active, completed_at')
           .eq('id', groupId)
           .single()
         
-        if (!error && group && !group.finished && group.paid) {
+        if (!error && group && group.paid) {
+          // Check if group is finished
+          if (group.finished) {
+            console.log('🏁 MIDDLEWARE: Group is finished, not redirecting to game')
+            return NextResponse.next()
+          }
+          
+          // Check if group is inactive (closed after 15 minutes)
+          if (group.active === false) {
+            console.log('🔒 MIDDLEWARE: Group is closed, not redirecting to game')
+            return NextResponse.next()
+          }
+          
+          // Auto-close group if finished > 15 minutes ago
+          if (group.completed_at) {
+            const completionTime = new Date(group.completed_at)
+            const now = new Date()
+            const timeSinceCompletion = now.getTime() - completionTime.getTime()
+            const FIFTEEN_MINUTES = 15 * 60 * 1000
+            
+            if (timeSinceCompletion > FIFTEEN_MINUTES && group.active !== false) {
+              console.log('🔒 MIDDLEWARE: Auto-closing group after 15 minutes')
+              
+              await supabase
+                .from('groups')
+                .update({ 
+                  active: false,
+                  closed_at: now.toISOString()
+                })
+                .eq('id', groupId)
+                
+              return NextResponse.next()
+            }
+          }
+          
           // Verify user is actually a member of this group
           const { data: membership } = await supabase
             .from('group_members')
@@ -35,13 +67,11 @@ export async function middleware(request: NextRequest) {
             .eq('user_id', userId)
             .single()
           
-          if (membership) {
-            // User has active group - redirect to current riddle
-            const currentRiddleId = group.current_riddle_id
-          
-            if (currentRiddleId && !request.nextUrl.pathname.includes('/riddle/')) {
-              console.log('✅ MIDDLEWARE: Redirecting to active game:', currentRiddleId)
-              return NextResponse.redirect(new URL(`/riddle/${currentRiddleId}`, request.url))
+          if (membership && group.current_riddle_id) {
+            // User has active, ongoing group - redirect to current riddle
+            if (!request.nextUrl.pathname.includes('/riddle/')) {
+              console.log('✅ MIDDLEWARE: Redirecting to active game:', group.current_riddle_id)
+              return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}`, request.url))
             }
           }
         }
