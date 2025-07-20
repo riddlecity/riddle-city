@@ -8,6 +8,7 @@ import RestrictedSkipRiddleForm from "@/components/RestrictedSkipRiddleForm";
 import GameProgress from "@/components/GameProgress";
 import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import CookieHandler from "@/components/CookieHandler";
+import ManualAnswerForm from "@/components/ManualAnswerForm";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -92,9 +93,10 @@ export default async function RiddlePage({ params }: Props) {
   
   const supabase = await createClient();
 
+  // UPDATED: Add manual answer fields to the query
   const { data, error } = await supabase
     .from("riddles")
-    .select("riddle_text, qr_hint, order_index, track_id")
+    .select("riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id")
     .eq("id", id)
     .single();
 
@@ -102,7 +104,8 @@ export default async function RiddlePage({ params }: Props) {
     notFound();
   }
 
-  const { riddle_text, qr_hint, order_index, track_id } = data;
+  // UPDATED: Destructure the new fields
+  const { riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id } = data;
 
   // Get user info from cookies with retry logic
   const { groupId, userId, teamName } = await getCookiesWithRetry();
@@ -185,14 +188,8 @@ export default async function RiddlePage({ params }: Props) {
     
     gameStartTime = groupData?.created_at || '';
 
-    // Check if this is the last riddle
-    const { data: nextRiddleCheck } = await supabase
-      .from("riddles")
-      .select("next_riddle_id")
-      .eq("id", id)
-      .single();
-    
-    isLastRiddle = !nextRiddleCheck?.next_riddle_id;
+    // UPDATED: Use next_riddle_id from query instead of separate check
+    isLastRiddle = !next_riddle_id;
   }
 
   // Check if user is marked as leader in group_members
@@ -255,6 +252,19 @@ export default async function RiddlePage({ params }: Props) {
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight drop-shadow-lg mb-8">
             {riddle_text}
           </h1>
+          
+          {/* NEW: Manual Answer Form - Shows when has_manual_answer is true */}
+          {has_manual_answer && groupId && (
+            <div className="mt-8 mb-8">
+              <ManualAnswerForm 
+                riddleId={id}
+                groupId={groupId}
+                correctAnswer={answer}
+                nextRiddleId={next_riddle_id}
+                isLastRiddle={isLastRiddle}
+              />
+            </div>
+          )}
           
           {/* Hint section - right below riddle */}
           {qr_hint && (
