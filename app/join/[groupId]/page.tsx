@@ -11,6 +11,7 @@ export default function JoinGroupPage() {
   const [error, setError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [statusMessage, setStatusMessage] = useState<string>("Checking your group status...");
 
   const groupId =
     typeof params?.groupId === "string"
@@ -26,12 +27,61 @@ export default function JoinGroupPage() {
       return;
     }
 
-    const joinGroup = async () => {
+    const handleJoin = async () => {
       try {
         setIsJoining(true);
         setError(null);
         
         console.log('🔗 JOIN PAGE: Attempting to join group:', groupId);
+        
+        // First check if user already has cookies for this group
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift();
+          return null;
+        }
+        
+        const existingUserId = getCookie('user_id')
+        const existingGroupId = getCookie('group_id')
+        
+        if (existingUserId && existingGroupId === groupId) {
+          // User has cookies for this group - verify they're still valid
+          setStatusMessage('Welcome back! Verifying your group membership...')
+          
+          console.log('🔍 JOIN PAGE: Found existing cookies, checking active game');
+          
+          const statusResponse = await fetch(`/api/check-active-game?userId=${existingUserId}&groupId=${groupId}`, {
+            method: 'GET'
+          })
+          
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json()
+            
+            if (statusData.isActive && statusData.currentRiddleId) {
+              // Valid session - redirect to current riddle
+              console.log('✅ JOIN PAGE: Valid session found, rejoining game');
+              setStatusMessage('Rejoining your adventure...')
+              setSuccessMessage('Welcome back to your group!')
+              setIsJoining(false)
+              
+              // Small delay to show success message
+              setTimeout(() => {
+                console.log('🎯 JOIN PAGE: Redirecting to active riddle:', statusData.currentRiddleId);
+                router.replace(`/riddle/${statusData.currentRiddleId}`);
+              }, 1500);
+              return
+            } else {
+              // Invalid session - clear cookies and proceed with fresh join
+              console.log('⚠️ JOIN PAGE: Invalid session, clearing cookies');
+              document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+              document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+            }
+          }
+        }
+
+        // Proceed with joining the group (new or fresh join)
+        setStatusMessage('Joining your group...')
         
         const res = await fetch("/api/join-group", {
           method: "POST",
@@ -76,7 +126,9 @@ export default function JoinGroupPage() {
         }
 
         console.log('✅ JOIN PAGE: Success! Riddle ID:', riddleId);
-        setSuccessMessage(data.message || "Successfully joined group!");
+        
+        const welcomeMessage = data.isRejoining ? 'Welcome back!' : 'Successfully joined!'
+        setSuccessMessage(`${welcomeMessage} ${data.message || ''}`.trim())
         setIsJoining(false);
 
         // Wait a moment to show success message, then redirect
@@ -92,7 +144,7 @@ export default function JoinGroupPage() {
       }
     };
 
-    joinGroup();
+    handleJoin();
   }, [groupId, router]);
 
   return (
@@ -125,17 +177,23 @@ export default function JoinGroupPage() {
         {isJoining && (
           <>
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">Joining Group...</h1>
-            <p className="text-white/70">Please wait while we add you to the team.</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-4">
+              {statusMessage.includes('Welcome back') ? 'Welcome Back!' : 'Joining Group...'}
+            </h1>
+            <p className="text-white/70">{statusMessage}</p>
           </>
         )}
         
         {successMessage && !isJoining && !error && (
           <>
             <div className="text-6xl mb-6">🎉</div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-4 text-green-400">Success!</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-4 text-green-400">
+              {successMessage.includes('Welcome back') ? 'Welcome Back!' : 'Success!'}
+            </h1>
             <p className="text-white/80 mb-4">{successMessage}</p>
-            <p className="text-white/60 text-sm">Redirecting you to the game...</p>
+            <p className="text-white/60 text-sm">
+              {successMessage.includes('Welcome back') ? 'Returning to your adventure...' : 'Redirecting you to the game...'}
+            </p>
             <div className="mt-4">
               <div className="animate-pulse bg-green-500/20 rounded-lg p-2">
                 <div className="text-sm text-green-300">Taking you to your riddle...</div>
