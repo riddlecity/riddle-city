@@ -16,7 +16,7 @@ export default function GameLayoutWrapper({ children }: GameLayoutWrapperProps) 
     '/riddle/',
     '/adventure-complete/',
     '/api/',
-    '/riddlecity/barnsley/date/start/',
+    '/barnsley/date/start/',
   ];
   
   const shouldShowBanner = !excludedPaths.some(path => pathname.startsWith(path));

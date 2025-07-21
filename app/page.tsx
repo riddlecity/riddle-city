@@ -72,7 +72,7 @@ export default function Home() {
       )}
       
       <Link
-        href="/riddlecity"
+        href="/locations"
         className="bg-red-600 hover:bg-red-500 transition-colors duration-200 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl mb-8"
       >
         See Locations →

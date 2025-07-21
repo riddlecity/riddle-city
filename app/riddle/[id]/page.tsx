@@ -77,7 +77,7 @@ function UnauthorizedPage() {
           </Link>
           
           <Link
-            href="/riddlecity"
+            href="/locations"
             className="block w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-white/20 hover:border-white/40"
           >
             Start Your Adventure

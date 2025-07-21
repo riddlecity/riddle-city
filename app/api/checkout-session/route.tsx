@@ -92,8 +92,8 @@ export async function POST(req: Request) {
         player_count: players.toString()
       },
       // 🔧 FIX: Use session.id in the URL path, not group.id
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}/start/{CHECKOUT_SESSION_ID}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/{CHECKOUT_SESSION_ID}?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}`,
     });
     
     if (!session?.url) {

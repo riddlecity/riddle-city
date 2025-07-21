@@ -213,7 +213,7 @@ export default function JoinGroupPage() {
               </button>
               
               <button
-                onClick={() => router.push('/riddlecity')}
+                onClick={() => router.push('/locations')}
                 className="block w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
               >
                 Go to Riddle City

@@ -71,7 +71,7 @@ function UnauthorizedContent() {
             {/* For people discovering QR codes */}
             <div className="space-y-4">
               <Link
-                href="/riddlecity"
+                href="/locations"
                 className="block w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 🚀 Start Your Adventure
@@ -99,14 +99,14 @@ function UnauthorizedContent() {
             <div className="space-y-4">
               {reason === 'wrong_location' ? (
                 <Link
-                  href="/riddlecity"
+                  href="/locations"
                   className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
                 >
                   🧭 Back to My Adventure
                 </Link>
               ) : (
                 <Link
-                  href="/riddlecity"
+                  href="/locations"
                   className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   🆕 Start New Adventure

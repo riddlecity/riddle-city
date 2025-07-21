@@ -37,7 +37,7 @@ export default async function GameConfirmationPage({ params }: Props) {
 
   // Check if payment was successful
   if (!group.paid) {
-    redirect(`/riddlecity/${group.tracks?.location || 'barnsley'}/${group.tracks?.mode || 'date'}`);
+    redirect(`/${group.tracks?.location || 'barnsley'}/${group.tracks?.mode || 'date'}`);
   }
 
   // Check if game has already started
@@ -64,7 +64,7 @@ export default async function GameConfirmationPage({ params }: Props) {
             This game session expired 48 hours after payment. Please purchase a new adventure to play.
           </p>
           <Link
-            href="/riddlecity"
+            href="/locations"
             className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
           >
             Book New Adventure

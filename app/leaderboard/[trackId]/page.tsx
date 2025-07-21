@@ -251,14 +251,14 @@ export default async function LeaderboardPage({ params, searchParams }: {
             </div>
             
             <Link
-              href="/riddlecity"
+              href="/locations"
               className="block w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
             >
               🏠 Return to Riddle City
             </Link>
             
             <Link
-              href={`/riddlecity/${cityName.toLowerCase()}`}
+              href={`/${cityName.toLowerCase()}`}
               className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30 text-sm md:text-base"
             >
               🔄 Try Another Adventure

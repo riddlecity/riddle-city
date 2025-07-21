@@ -136,7 +136,7 @@ export default async function AdventureCompletePage({ params }: Props) {
   ];
   
   const randomMessage = funMessages[Math.floor(Math.random() * funMessages.length)];
-  const shareMessage = `${randomMessage} ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/riddlecity/${cityName.toLowerCase()}`;
+  const shareMessage = `${randomMessage} ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${cityName.toLowerCase()}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
 
   // Get leaderboard data for this track
@@ -338,7 +338,7 @@ export default async function AdventureCompletePage({ params }: Props) {
           {/* Action buttons */}
           <div className="space-y-4">
             <Link
-              href="/riddlecity"
+              href="/locations"
               className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               🚀 Start New Adventure
@@ -352,7 +352,7 @@ export default async function AdventureCompletePage({ params }: Props) {
             </Link>
             
             <Link
-              href={`/riddlecity/${cityName.toLowerCase()}`}
+              href={`/${cityName.toLowerCase()}`}
               className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30"
             >
               🔄 Try Another Adventure

@@ -1,4 +1,4 @@
-// app/riddlecity/[location]/[mode]/start/[sessionId]/page.tsx
+// app/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
@@ -35,7 +35,7 @@ export default async function StartPage({ params, searchParams }: Props) {
   if (!stripeSessionId || successFlag !== 'true') {
     console.error('❌ START PAGE: Invalid payment confirmation - missing session_id or success flag');
     console.error('❌ START PAGE: sessionId:', stripeSessionId, 'success:', successFlag);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
   console.log('✅ START PAGE: Payment confirmation flags valid');
 
@@ -54,20 +54,20 @@ export default async function StartPage({ params, searchParams }: Props) {
       console.error('❌ START PAGE: Failed to fetch Stripe session - status:', stripeResponse.status);
       const errorText = await stripeResponse.text();
       console.error('❌ START PAGE: Stripe error details:', errorText);
-      redirect('/riddlecity');
+      redirect('/locations');
     }
 
     stripeSession = await stripeResponse.json();
     console.log('✅ START PAGE: Stripe session retrieved:', JSON.stringify(stripeSession, null, 2));
   } catch (error) {
     console.error('💥 START PAGE: Error fetching Stripe session:', error);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
   
   // Step 3: Verify payment was successful
   if (stripeSession.payment_status !== 'paid') {
     console.error('❌ START PAGE: Payment not completed - status:', stripeSession.payment_status);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
   console.log('✅ START PAGE: Payment status confirmed as paid');
 
@@ -81,7 +81,7 @@ export default async function StartPage({ params, searchParams }: Props) {
   if (!groupId || !userId) {
     console.error('❌ START PAGE: Missing essential metadata from Stripe session');
     console.error('❌ START PAGE: groupId:', groupId, 'userId:', userId);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
   console.log('✅ START PAGE: Essential metadata present');
 
@@ -97,12 +97,12 @@ export default async function StartPage({ params, searchParams }: Props) {
 
     if (groupError) {
       console.error('❌ START PAGE: Database error querying group:', groupError);
-      redirect('/riddlecity');
+      redirect('/locations');
     }
 
     if (!groupData) {
       console.error('❌ START PAGE: Group not found in database with ID:', groupId);
-      redirect('/riddlecity');
+      redirect('/locations');
     }
 
     group = groupData;
@@ -111,12 +111,12 @@ export default async function StartPage({ params, searchParams }: Props) {
     if (group.created_by !== userId) {
       console.error('❌ START PAGE: User is not the creator of this group');
       console.error('❌ START PAGE: group.created_by:', group.created_by, 'userId:', userId);
-      redirect('/riddlecity');
+      redirect('/locations');
     }
     console.log('✅ START PAGE: User confirmed as group creator');
   } catch (error) {
     console.error('💥 START PAGE: Error querying group:', error);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
 
   // Step 6: Verify user is marked as leader in group_members
@@ -131,18 +131,18 @@ export default async function StartPage({ params, searchParams }: Props) {
 
     if (memberError) {
       console.error('❌ START PAGE: Database error querying group membership:', memberError);
-      redirect('/riddlecity');
+      redirect('/locations');
     }
 
     if (!memberData?.is_leader) {
       console.error('❌ START PAGE: User is not marked as leader');
       console.error('❌ START PAGE: memberData:', memberData);
-      redirect('/riddlecity');
+      redirect('/locations');
     }
     console.log('✅ START PAGE: User confirmed as group leader');
   } catch (error) {
     console.error('💥 START PAGE: Error checking membership:', error);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
 
   // Step 7: RESET GROUP TO FRESH START after payment
@@ -171,7 +171,7 @@ export default async function StartPage({ params, searchParams }: Props) {
 
     if (updateError) {
       console.error('❌ START PAGE: Failed to reset group:', updateError);
-      redirect('/riddlecity');
+      redirect('/locations');
     } else {
       console.log('✅ START PAGE: Group reset to fresh start - riddle:', startRiddleId);
       // Update our local group object
@@ -179,7 +179,7 @@ export default async function StartPage({ params, searchParams }: Props) {
     }
   } catch (error) {
     console.error('💥 START PAGE: Error resetting group:', error);
-    redirect('/riddlecity');
+    redirect('/locations');
   }
 
   // Step 8: Redirect with cookie data as URL parameters

@@ -202,7 +202,7 @@ export default function PreferencesPage() {
       {/* Back to Choose Adventure link */}
       <div className="absolute top-6 right-6">
         <Link
-          href={`/riddlecity/${location}`}
+          href={`/${location}`}
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 text-sm font-medium"
         >
           <span className="text-lg">←</span>

@@ -14,7 +14,7 @@ export default function LocationPage({ params }: Props) {
   const location = resolvedParams.location.charAt(0).toUpperCase() + resolvedParams.location.slice(1);
   
   const handleModeSelect = (mode: string) => {
-    router.push(`/riddlecity/${resolvedParams.location}/${mode}`);
+    router.push(`/${resolvedParams.location}/${mode}`);
   };
   
   return (
@@ -36,7 +36,7 @@ export default function LocationPage({ params }: Props) {
       {/* Back link in top-right */}
       <div className="absolute top-6 right-6">
         <Link
-          href="/riddlecity"
+          href="/locations"
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 text-sm font-medium"
         >
           <span className="text-lg">←</span>

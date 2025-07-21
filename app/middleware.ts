@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function middleware(request: NextRequest) {
   // Only run on specific paths
-  if (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/riddlecity')) {
+  if (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/locations')) {
     
     // Get cookies
     const userId = request.cookies.get('user_id')?.value
@@ -107,5 +107,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/riddlecity/:path*']
+  matcher: ['/', '/locations/:path*']
+}
 }
