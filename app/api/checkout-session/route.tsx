@@ -10,10 +10,16 @@ export async function POST(req: Request) {
   try {
     const { players, location, mode, teamName, emails } = await req.json();
     
+    // Basic input validation
     if (!teamName || !teamName.trim()) {
       return NextResponse.json({ error: "Team name is required" }, { status: 400 });
     }
-
+    
+    // Basic sanity check for player count
+    if (!Number.isInteger(players) || players < 1 || players > 20) {
+      return NextResponse.json({ error: "Invalid player count" }, { status: 400 });
+    }
+    
     const supabase = await createClient();
     
     const { data: track, error: trackError } = await supabase
@@ -22,16 +28,16 @@ export async function POST(req: Request) {
       .eq("location", location)
       .eq("mode", mode)
       .single();
-
+      
     if (trackError || !track) {
       const { data: allTracks } = await supabase.from("tracks").select("id, location, mode, name");
       return NextResponse.json({ error: "Track not found", availableTracks: allTracks }, { status: 400 });
     }
-
+    
     // 🔑 Generate and persist user ID early
     const userId = uuidv4();
     await supabase.from("profiles").upsert({ id: userId });
-
+    
     const groupData = {
       track_id: track.id,
       player_limit: players,
@@ -43,29 +49,27 @@ export async function POST(req: Request) {
       team_name: teamName.trim(),
       riddles_skipped: 0
     };
-
+    
     const { data: group, error: groupError } = await supabase
       .from("groups")
       .insert(groupData)
       .select("id")
       .single();
-
+      
     if (groupError || !group) {
-      console.error("Group creation error:", groupError);
       return NextResponse.json({ error: "Group creation failed" }, { status: 500 });
     }
-
+    
     const { error: memberInsertError } = await supabase.from("group_members").insert({
       group_id: group.id,
       user_id: userId,
       is_leader: true,
     });
-
+    
     if (memberInsertError) {
-      console.error("Member insert error:", memberInsertError);
       return NextResponse.json({ error: "Failed to assign group leader" }, { status: 500 });
     }
-
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [{
@@ -91,28 +95,19 @@ export async function POST(req: Request) {
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}/start/{CHECKOUT_SESSION_ID}?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}`,
     });
-
+    
     if (!session?.url) {
       throw new Error("Stripe session URL was not returned");
     }
-
-    console.log("✅ Checkout session created successfully:", {
-      groupId: group.id,
-      userId,
-      teamName: teamName.trim(),
-      sessionId: session.id,
-      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/riddlecity/${location}/${mode}/start/${session.id}?session_id=${session.id}&success=true`
-    });
-
+    
     // Return the response with the session URL and group/team info
     return NextResponse.json({
       sessionUrl: session.url,
       groupId: group.id,
       teamName: teamName.trim()
     });
-
+    
   } catch (err) {
-    console.error("Checkout session creation failed:", err);
     return NextResponse.json(
       { error: "Something went wrong starting the game. Please try again." },
       { status: 500 }

@@ -10,25 +10,25 @@ interface Props {
 
 // Generate QR validation token
 function generateQRToken(locationId: string, timestamp: number): string {
-  const secret = process.env.QR_SECRET || 'your-secret-key-here';
+  const secret = process.env.QR_SECRET;
+  
+  // 🔒 SECURITY: Ensure QR_SECRET is set
+  if (!secret) {
+    throw new Error('QR_SECRET environment variable is not set');
+  }
+  
   const data = `location-${locationId}-${timestamp}`;
   return crypto.createHmac('sha256', secret).update(data).digest('hex').substring(0, 16);
 }
 
 // Verify QR validation token
 function verifyQRToken(locationId: string, timestamp: number, token: string): boolean {
-  const expectedToken = generateQRToken(locationId, timestamp);
-  
-  console.log('🔧 LOCATION TOKEN DEBUG:', {
-    locationId,
-    timestamp,
-    receivedToken: token,
-    expectedToken,
-    data: `location-${locationId}-${timestamp}`,
-    tokenValid: expectedToken === token
-  });
-  
-  return expectedToken === token; // Permanent QR codes
+  try {
+    const expectedToken = generateQRToken(locationId, timestamp);
+    return expectedToken === token;
+  } catch (error) {
+    return false; // Invalid if secret not set
+  }
 }
 
 export async function GET(request: NextRequest, { params }: Props) {
@@ -36,27 +36,16 @@ export async function GET(request: NextRequest, { params }: Props) {
     const { locationId } = await params;
     const { searchParams } = new URL(request.url);
     
-    console.log('🌍 LOCATION QR: Attempting to access location:', locationId);
-    
-    // Check for QR validation token
+    // 🔒 SECURITY: Enable QR token validation (no more bypass!)
     const qrToken = searchParams.get('token');
     const qrTimestamp = searchParams.get('ts');
     
-    // TEMPORARY: Skip token validation for debugging
-    const skipTokenValidation = true; // Change to false once working
+    if (!qrToken || !qrTimestamp) {
+      return NextResponse.redirect(new URL('/riddle-unauthorized?reason=invalid_qr', request.url));
+    }
     
-    if (!skipTokenValidation) {
-      if (!qrToken || !qrTimestamp) {
-        console.log('🚫 LOCATION QR: Missing QR validation token');
-        return NextResponse.redirect(new URL('/riddle-unauthorized?reason=invalid_qr', request.url));
-      }
-      
-      if (!verifyQRToken(locationId, parseInt(qrTimestamp), qrToken)) {
-        console.log('🚫 LOCATION QR: Invalid QR token');
-        return NextResponse.redirect(new URL('/riddle-unauthorized?reason=invalid_qr', request.url));
-      }
-    } else {
-      console.log('⚠️ LOCATION QR: TOKEN VALIDATION TEMPORARILY DISABLED');
+    if (!verifyQRToken(locationId, parseInt(qrTimestamp), qrToken)) {
+      return NextResponse.redirect(new URL('/riddle-unauthorized?reason=invalid_qr', request.url));
     }
     
     const cookieStore = await cookies();
@@ -64,7 +53,6 @@ export async function GET(request: NextRequest, { params }: Props) {
     const userId = cookieStore.get("user_id")?.value;
     
     if (!groupId || !userId) {
-      console.log('🌍 LOCATION QR: No valid cookies');
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=no_session', request.url));
     }
     
@@ -79,7 +67,6 @@ export async function GET(request: NextRequest, { params }: Props) {
       .single();
     
     if (memberError || !membership) {
-      console.log('🌍 LOCATION QR: User not member of group');
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=not_member', request.url));
     }
     
@@ -91,21 +78,12 @@ export async function GET(request: NextRequest, { params }: Props) {
       .single();
     
     if (groupError || !group) {
-      console.log('🌍 LOCATION QR: Group not found');
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=group_not_found', request.url));
     }
     
     if (group.finished) {
-      console.log('🌍 LOCATION QR: Group already finished');
       return NextResponse.redirect(new URL(`/adventure-complete/${groupId}`, request.url));
     }
-    
-    console.log('🌍 LOCATION QR: Group info:', {
-      groupId,
-      trackId: group.track_id,
-      currentRiddleId: group.current_riddle_id,
-      locationId
-    });
     
     // Get the current riddle to find what the next riddle should be
     const { data: currentRiddle, error: currentError } = await supabase
@@ -116,23 +94,17 @@ export async function GET(request: NextRequest, { params }: Props) {
       .single();
     
     if (currentError || !currentRiddle) {
-      console.log('🌍 LOCATION QR: Current riddle not found');
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=current_riddle_error', request.url));
     }
     
-    // Check if we're at the correct location for the current riddle
+    // 🔒 ANTI-CHEAT: Check if we're at the correct location for the current riddle
     if (currentRiddle.location_id !== locationId) {
-      console.log('🌍 LOCATION QR: Wrong location for current riddle:', {
-        currentRiddleLocation: currentRiddle.location_id,
-        scannedLocation: locationId
-      });
       return NextResponse.redirect(new URL(`/riddle/${group.current_riddle_id}?error=wrong_location`, request.url));
     }
     
     // Check if there's a next riddle
     if (!currentRiddle.next_riddle_id) {
-      console.log('🌍 LOCATION QR: Final riddle completed');
-      
+      // Final riddle completed
       const { error: finishError } = await supabase
         .from("groups")
         .update({ 
@@ -142,7 +114,7 @@ export async function GET(request: NextRequest, { params }: Props) {
         .eq("id", groupId);
       
       if (finishError) {
-        console.error('🌍 LOCATION QR: Failed to mark finished:', finishError);
+        // Silently handle error - don't expose details
       }
       
       return NextResponse.redirect(new URL(`/adventure-complete/${groupId}`, request.url));
@@ -155,16 +127,12 @@ export async function GET(request: NextRequest, { params }: Props) {
       .eq("id", groupId);
     
     if (updateError) {
-      console.error('🌍 LOCATION QR: Failed to update group:', updateError);
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=update_failed', request.url));
     }
-    
-    console.log('🌍 LOCATION QR: Successfully progressed from', currentRiddle.id, 'to', currentRiddle.next_riddle_id);
     
     return NextResponse.redirect(new URL(`/riddle/${currentRiddle.next_riddle_id}`, request.url));
     
   } catch (error) {
-    console.error('🌍 LOCATION QR: Error:', error);
     return NextResponse.redirect(new URL('/riddle-unauthorized?reason=server_error', request.url));
   }
 }
