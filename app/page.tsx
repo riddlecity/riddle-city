@@ -28,17 +28,17 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-12">
-      {/* Large logo for impact */}
+      {/* Large logo for impact - MUCH BIGGER */}
       <Image
         src="/riddle-city-logo.png"
         alt="Riddle City Logo"
-        width={200}
-        height={200}
-        className="mb-6 drop-shadow-xl sm:w-[240px] sm:h-[240px]"
+        width={300}
+        height={300}
+        className="mb-8 drop-shadow-xl sm:w-[350px] sm:h-[350px] md:w-[400px] md:h-[400px]"
         priority
       />
 
-      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-8 text-center tracking-tight">
         Your Mystery Awaits
       </h1>
       
