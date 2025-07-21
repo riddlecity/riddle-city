@@ -1,8 +1,8 @@
 // components/GameLayoutWrapper.tsx
 'use client';
-
 import ResumeGameBanner from './ResumeGameBanner';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 interface GameLayoutWrapperProps {
   children: React.ReactNode;
@@ -10,21 +10,23 @@ interface GameLayoutWrapperProps {
 
 export default function GameLayoutWrapper({ children }: GameLayoutWrapperProps) {
   const pathname = usePathname();
+  const [bannerVisible, setBannerVisible] = useState(false);
   
-  // Don't show banner on these pages (already in game or payment flow)
   const excludedPaths = [
     '/riddle/',
     '/adventure-complete/',
     '/api/',
-    '/riddlecity/barnsley/date/start/', // Payment success flow
+    '/riddlecity/barnsley/date/start/',
   ];
-
+  
   const shouldShowBanner = !excludedPaths.some(path => pathname.startsWith(path));
 
   return (
     <>
-      {shouldShowBanner && <ResumeGameBanner />}
-      <div className={shouldShowBanner ? 'pt-16' : ''}> {/* Add padding if banner is shown */}
+      {shouldShowBanner && (
+        <ResumeGameBanner onVisibilityChange={setBannerVisible} />
+      )}
+      <div className={bannerVisible ? 'pt-16' : ''}> {/* Only add padding if banner is actually visible */}
         {children}
       </div>
     </>

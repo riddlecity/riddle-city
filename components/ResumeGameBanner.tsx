@@ -12,7 +12,11 @@ interface ActiveGame {
   isFinished: boolean;
 }
 
-export default function ResumeGameBanner() {
+interface ResumeGameBannerProps {
+  onVisibilityChange: (visible: boolean) => void;
+}
+
+export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBannerProps) {
   const [activeGame, setActiveGame] = useState<ActiveGame | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +24,11 @@ export default function ResumeGameBanner() {
   useEffect(() => {
     checkForActiveGame();
   }, []);
+
+  // Notify parent when visibility changes
+  useEffect(() => {
+    onVisibilityChange(isVisible);
+  }, [isVisible, onVisibilityChange]);
 
   const checkForActiveGame = async () => {
     try {
@@ -64,9 +73,11 @@ export default function ResumeGameBanner() {
         if (gameData.isFinished) {
           clearGameCookies();
         }
+        setIsVisible(false);
       }
     } catch (error) {
       console.error('❌ RESUME BANNER: Error checking active game:', error);
+      setIsVisible(false);
     } finally {
       setIsLoading(false);
     }
