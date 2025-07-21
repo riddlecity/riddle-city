@@ -38,6 +38,71 @@ export default function Home() {
         priority
       />
 
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
+        Your Mystery Awaits
+      </h1>
+      
+      {/* Show rejoin options if user has active group */}
+      {hasActiveGroup && currentRiddleId && (
+        <div className="mb-6 p-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl text-center max-w-md w-full">
+          <div className="text-2xl mb-2">🎮</div>
+          <h3 className="text-lg font-bold text-blue-200 mb-2">Welcome Back, Detective!</h3>
+          <p className="text-blue-200/80 text-sm mb-4">
+            You have an ongoing adventure waiting
+          </p>
+          <div className="space-y-3">
+            <Link
+              href={`/riddle/${currentRiddleId}`}
+              className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              🔍 Resume Adventure
+            </Link>
+            <button
+              onClick={() => {
+                document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                window.location.reload();
+              }}
+              className="block w-full bg-gray-600/50 hover:bg-gray-600/70 text-white/90 font-medium py-2 px-6 rounded-lg transition-all duration-200 text-sm border border-gray-500/30"
+            >
+              🆕 Start Fresh Instead
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <Link
+        href="/riddlecity"
+        className="bg-red-600 hover:bg-red-500 transition-colors duration-200 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl mb-8"
+      >
+        See Locations →
+      </Link>
+
+      {/* Collapsible info section */}
+      <div className="w-full max-w-2xl">
+        <button
+          onClick={() => setShowInfo(!showInfo)}
+          className="flex items-center justify-center gap-2 mx-auto text-lg font-medium text-white/80 hover:text-white transition-colors duration-200"
+        >
+          <span className={`transform transition-transform duration-200 ${showInfo ? 'rotate-90' : 'rotate-0'}`}>
+            ▶
+          </span>
+          What is Riddle City?
+        </button>
+        
+        {showInfo && (
+          <div className="mt-4 p-6 bg-white/5 border border-white/10 rounded-xl animate-in slide-in-from-top-2 duration-300">
+            <p className="text-lg text-neutral-300 text-center leading-relaxed">
+              Riddle City is a puzzle-based adventure through your town or city.  
+              Scan QR codes, solve unique riddles, and uncover your next destination.  
+              Whether you're planning a creative date or exploring the pub scene with friends, 
+              each trail collaborates with local businesses to make the journey unforgettable.
+            </p>
+          </div>
+        )}
+      </div>
+    </main>
+
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
           Your Mystery Awaits
         </h1>
