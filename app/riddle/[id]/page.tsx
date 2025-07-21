@@ -44,7 +44,7 @@ async function getCookiesWithRetry(maxRetries = 3) {
 // Unauthorized access page component
 function UnauthorizedPage() {
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
       {/* Background maze logo - more visible red tint */}
       <div className="absolute inset-0 flex items-center justify-center opacity-15 z-0">
         <Image

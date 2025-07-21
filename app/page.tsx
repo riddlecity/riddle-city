@@ -27,30 +27,16 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col">
-      {/* Logo in consistent top-left position */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={60}
-          height={60}
-          className="md:w-[80px] md:h-[80px] drop-shadow-lg"
-          priority
-        />
-      </div>
-
-      {/* Main content centered */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-        {/* Large logo for impact */}
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={200}
-          height={200}
-          className="mb-6 drop-shadow-xl sm:w-[240px] sm:h-[240px]"
-          priority
-        />
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-12">
+      {/* Large logo for impact */}
+      <Image
+        src="/riddle-city-logo.png"
+        alt="Riddle City Logo"
+        width={200}
+        height={200}
+        className="mb-6 drop-shadow-xl sm:w-[240px] sm:h-[240px]"
+        priority
+      />
 
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
           Your Mystery Awaits
