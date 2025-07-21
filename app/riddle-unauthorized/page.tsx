@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function RiddleUnauthorizedPage() {
+function UnauthorizedContent() {
   const searchParams = useSearchParams();
   const reason = searchParams?.get('reason');
   
@@ -52,33 +53,7 @@ export default function RiddleUnauthorizedPage() {
   const content = getContent();
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
-      {/* Logo in consistent top-left position */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-        <Link href="/">
-          <Image
-            src="/riddle-city-logo.png"
-            alt="Riddle City Logo"
-            width={60}
-            height={60}
-            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
-            priority
-          />
-        </Link>
-      </div>
-
-      {/* Background maze logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-15 z-0">
-        <Image
-          src="/riddle-city-logo2.png"
-          alt=""
-          width={400}
-          height={400}
-          className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain filter sepia hue-rotate-12 saturate-150"
-          priority={false}
-        />
-      </div>
-
+    <>
       <div className="text-center relative z-10 max-w-lg">
         <div className="text-6xl mb-6">{content.icon}</div>
         
@@ -148,6 +123,52 @@ export default function RiddleUnauthorizedPage() {
           </>
         )}
       </div>
+    </>
+  );
+}
+
+export default function RiddleUnauthorizedPage() {
+  return (
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
+      {/* Logo in consistent top-left position */}
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+        <Link href="/">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={60}
+            height={60}
+            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            priority
+          />
+        </Link>
+      </div>
+
+      {/* Background maze logo */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-15 z-0">
+        <Image
+          src="/riddle-city-logo2.png"
+          alt=""
+          width={400}
+          height={400}
+          className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain filter sepia hue-rotate-12 saturate-150"
+          priority={false}
+        />
+      </div>
+
+      <Suspense fallback={
+        <div className="text-center relative z-10 max-w-lg">
+          <div className="text-6xl mb-6">🔒</div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Adventure Locked
+          </h1>
+          <p className="text-lg text-white/70 mb-8">
+            Loading...
+          </p>
+        </div>
+      }>
+        <UnauthorizedContent />
+      </Suspense>
     </main>
   );
 }
