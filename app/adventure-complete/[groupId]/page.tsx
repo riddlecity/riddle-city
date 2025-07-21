@@ -18,7 +18,6 @@ function CookieCleaner() {
           // Clear group-related cookies when reaching completion page
           document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
           document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          console.log('🧹 ADVENTURE COMPLETE: Cleared user session cookies');
         `,
       }}
     />
@@ -44,7 +43,6 @@ export default async function AdventureCompletePage({ params }: Props) {
     .single();
 
   if (groupError || !group) {
-    console.error('Adventure complete page - group not found:', groupError);
     notFound();
   }
 
@@ -58,8 +56,6 @@ export default async function AdventureCompletePage({ params }: Props) {
     
     if (timeSinceCompletion > FIFTEEN_MINUTES && group.active !== false) {
       // Group should be closed - mark it as inactive
-      console.log('🔒 ADVENTURE COMPLETE: Auto-closing group after 15 minutes');
-      
       try {
         await supabase
           .from('groups')
@@ -68,21 +64,11 @@ export default async function AdventureCompletePage({ params }: Props) {
             closed_at: now.toISOString()
           })
           .eq('id', groupId);
-          
-        console.log('✅ ADVENTURE COMPLETE: Group marked as inactive');
       } catch (error) {
-        console.error('❌ ADVENTURE COMPLETE: Failed to close group:', error);
+        // Silently handle error
       }
     }
   }
-
-  console.log('Adventure complete - group data:', {
-    finished: group.finished,
-    completed_at: group.completed_at,
-    created_at: group.created_at,
-    riddles_skipped: group.riddles_skipped,
-    active: group.active
-  });
 
   // Calculate completion time with skip penalty
   const startTime = new Date(group.created_at);
@@ -93,13 +79,11 @@ export default async function AdventureCompletePage({ params }: Props) {
     // Use stored completion time
     endTime = new Date(group.completed_at);
     timeCalculationNote = 'Final completion time';
-    console.log('Using stored completion time:', group.completed_at);
   } else {
     // Group finished but no completion time stored - mark it now and use current time
     const now = new Date();
     endTime = now;
     timeCalculationNote = 'Completion time (calculated now)';
-    console.log('No completion time stored, using current time');
     
     // Update the group with completion timestamp
     try {
@@ -110,14 +94,8 @@ export default async function AdventureCompletePage({ params }: Props) {
           finished: true 
         })
         .eq('id', groupId);
-        
-      if (updateError) {
-        console.error('Failed to update completion time:', updateError);
-      } else {
-        console.log('Updated group with completion timestamp');
-      }
     } catch (error) {
-      console.error('Error updating completion time:', error);
+      // Silently handle error
     }
   }
 
@@ -142,14 +120,6 @@ export default async function AdventureCompletePage({ params }: Props) {
 
   const formattedTime = formatTime(totalTimeMs);
   const actualTimeFormatted = formatTime(actualTimeMs);
-
-  console.log('Time calculations:', {
-    actualTimeMs,
-    skipPenaltyMs,
-    totalTimeMs,
-    formattedTime,
-    actualTimeFormatted
-  });
 
   // Get track info to show adventure type
   const trackParts = group.track_id?.split('_') || [];
@@ -221,14 +191,16 @@ export default async function AdventureCompletePage({ params }: Props) {
 
       {/* Logo */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={80}
-          height={80}
-          className="md:w-[100px] md:h-[100px] drop-shadow-lg"
-          priority
-        />
+        <Link href="/">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={60}
+            height={60}
+            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            priority
+          />
+        </Link>
       </div>
 
       {/* Completion content */}
@@ -261,7 +233,7 @@ export default async function AdventureCompletePage({ params }: Props) {
                   ⏱️ {formattedTime}
                 </div>
                 <div className="text-white/60 text-sm">
-                  {timeCalculationNote}
+                  Final Time
                   {skipsUsed > 0 && (
                     <div className="text-xs text-orange-300 mt-1">
                       (+{skipsUsed * 20}min penalty)
@@ -401,18 +373,6 @@ export default async function AdventureCompletePage({ params }: Props) {
               📱 Share on WhatsApp
             </a>
           </div>
-
-          {/* Debug info for development */}
-          <details className="mt-6 text-left">
-            <summary className="text-white/40 text-xs cursor-pointer">Debug Info</summary>
-            <div className="mt-2 text-xs text-white/30 bg-black/20 rounded p-3 font-mono">
-              <div>Group ID: {groupId}</div>
-              <div>Finished: {group.finished ? 'Yes' : 'No'}</div>
-              <div>Completed At: {group.completed_at || 'Not set'}</div>
-              <div>Riddles Skipped: {skipsUsed}</div>
-              <div>Time Calculation: {timeCalculationNote}</div>
-            </div>
-          </details>
         </div>
       </div>
     </main>

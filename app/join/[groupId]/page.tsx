@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function JoinGroupPage() {
   const router = useRouter();
@@ -32,8 +33,6 @@ export default function JoinGroupPage() {
         setIsJoining(true);
         setError(null);
         
-        console.log('🔗 JOIN PAGE: Attempting to join group:', groupId);
-        
         // First check if user already has cookies for this group
         const getCookie = (name: string) => {
           const value = `; ${document.cookie}`;
@@ -49,8 +48,6 @@ export default function JoinGroupPage() {
           // User has cookies for this group - verify they're still valid
           setStatusMessage('Welcome back! Verifying your group membership...')
           
-          console.log('🔍 JOIN PAGE: Found existing cookies, checking active game');
-          
           const statusResponse = await fetch(`/api/check-active-game?userId=${existingUserId}&groupId=${groupId}`, {
             method: 'GET'
           })
@@ -60,20 +57,17 @@ export default function JoinGroupPage() {
             
             if (statusData.isActive && statusData.currentRiddleId) {
               // Valid session - redirect to current riddle
-              console.log('✅ JOIN PAGE: Valid session found, rejoining game');
               setStatusMessage('Rejoining your adventure...')
               setSuccessMessage('Welcome back to your group!')
               setIsJoining(false)
               
               // Small delay to show success message
               setTimeout(() => {
-                console.log('🎯 JOIN PAGE: Redirecting to active riddle:', statusData.currentRiddleId);
                 router.replace(`/riddle/${statusData.currentRiddleId}`);
               }, 1500);
               return
             } else {
               // Invalid session - clear cookies and proceed with fresh join
-              console.log('⚠️ JOIN PAGE: Invalid session, clearing cookies');
               document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
               document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
             }
@@ -92,24 +86,17 @@ export default function JoinGroupPage() {
           body: JSON.stringify({ groupId }),
         });
 
-        console.log('📡 JOIN PAGE: Response status:', res.status);
-
         // Check if response is actually JSON
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          console.error('❌ JOIN PAGE: Response is not JSON, content-type:', contentType);
-          const textResponse = await res.text();
-          console.error('❌ JOIN PAGE: Response text:', textResponse.substring(0, 500));
           setError("Server error - please try again");
           setIsJoining(false);
           return;
         }
 
         const data = await res.json();
-        console.log('📡 JOIN PAGE: Join response data:', data);
 
         if (!res.ok) {
-          console.error("❌ JOIN PAGE: Join group error:", data.error);
           setError(data.error || "Failed to join group");
           setIsJoining(false);
           return;
@@ -119,13 +106,10 @@ export default function JoinGroupPage() {
         let riddleId = data.nextRiddle || data.currentRiddleId || data.nextRiddleId;
 
         if (!riddleId) {
-          console.error("❌ JOIN PAGE: No riddle ID returned:", data);
           setError("Group joined, but no starting riddle was found.");
           setIsJoining(false);
           return;
         }
-
-        console.log('✅ JOIN PAGE: Success! Riddle ID:', riddleId);
         
         const welcomeMessage = data.isRejoining ? 'Welcome back!' : 'Successfully joined!'
         setSuccessMessage(`${welcomeMessage} ${data.message || ''}`.trim())
@@ -133,12 +117,10 @@ export default function JoinGroupPage() {
 
         // Wait a moment to show success message, then redirect
         setTimeout(() => {
-          console.log('🎯 JOIN PAGE: Redirecting to riddle:', riddleId);
           router.replace(`/riddle/${riddleId}`);
         }, 2000);
         
       } catch (err) {
-        console.error("💥 JOIN PAGE: Unexpected error:", err);
         setError("Unexpected error joining group");
         setIsJoining(false);
       }
@@ -148,7 +130,21 @@ export default function JoinGroupPage() {
   }, [groupId, router]);
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
+      {/* Logo in consistent top-left position */}
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+        <Link href="/">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={60}
+            height={60}
+            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            priority
+          />
+        </Link>
+      </div>
+
       {/* Background logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-5">
         <Image
@@ -223,19 +219,6 @@ export default function JoinGroupPage() {
                 Go to Riddle City
               </button>
             </div>
-            
-            {/* Debug info */}
-            <details className="mt-6 text-left">
-              <summary className="cursor-pointer text-white/60 text-sm border border-white/20 rounded px-3 py-2 hover:text-white/80 hover:border-white/40 transition-colors">
-                Debug Info ▼
-              </summary>
-              <div className="mt-2 text-xs text-white/50 bg-black/20 rounded p-3 font-mono text-left">
-                <div>Group ID: {groupId}</div>
-                <div>Error: {error}</div>
-                <div>Path: /join/{groupId}</div>
-                <div>Timestamp: {new Date().toISOString()}</div>
-              </div>
-            </details>
           </>
         )}
       </div>
