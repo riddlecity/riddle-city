@@ -204,7 +204,11 @@ export async function POST(request: NextRequest) {
       emailsSent.push({ email: teamLeaderEmail, type: 'confirmation' });
     } catch (error) {
       console.error('Failed to send confirmation email:', error);
-      emailsFailsed.push({ email: teamLeaderEmail, type: 'confirmation', error: error.message });
+      emailsFailsed.push({ 
+        email: teamLeaderEmail, 
+        type: 'confirmation', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
     }
 
     // Send invites to team members
@@ -231,7 +235,11 @@ export async function POST(request: NextRequest) {
             emailsSent.push({ email: email.trim(), type: 'invite' });
           } catch (error) {
             console.error(`Failed to send invite to ${email}:`, error);
-            emailsFailsed.push({ email: email.trim(), type: 'invite', error: error.message });
+            emailsFailsed.push({ 
+              email: email.trim(), 
+              type: 'invite', 
+              error: error instanceof Error ? error.message : 'Unknown error' 
+            });
           }
         }
       }
