@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       .single();
       
     if (groupError || !group) {
+      console.error("Group creation error:", groupError);
       return NextResponse.json({ error: "Group creation failed" }, { status: 500 });
     }
     
@@ -67,16 +68,23 @@ export async function POST(req: Request) {
     });
     
     if (memberInsertError) {
+      console.error("Member insert error:", memberInsertError);
       return NextResponse.json({ error: "Failed to assign group leader" }, { status: 500 });
     }
     
-    // Process and validate emails
+    // Process and validate emails with duplicate prevention
     const validEmails: string[] = [];
+    const emailSet = new Set<string>(); // Track unique emails
+    
     if (emails && Array.isArray(emails)) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       for (const email of emails) {
         if (email && typeof email === 'string' && email.trim() && emailRegex.test(email.trim())) {
-          validEmails.push(email.trim());
+          const normalizedEmail = email.trim().toLowerCase(); // Normalize to lowercase
+          if (!emailSet.has(normalizedEmail)) {
+            emailSet.add(normalizedEmail);
+            validEmails.push(email.trim()); // Keep original casing for display
+          }
         }
       }
     }
@@ -106,8 +114,8 @@ export async function POST(req: Request) {
         location: location,
         mode: mode
       },
-      // Set 48-hour expiration
-      expires_at: Math.floor(Date.now() / 1000) + (48 * 60 * 60), // 48 hours from now
+      // Set 24-hour expiration (maximum allowed by Stripe)
+      expires_at: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours from now
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/{CHECKOUT_SESSION_ID}?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}`,
     });

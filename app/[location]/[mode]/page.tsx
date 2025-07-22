@@ -16,6 +16,7 @@ export default function PreferencesPage() {
   const [loading, setLoading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showEmails, setShowEmails] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
 
   // Function to capitalize first letter
   const capitalize = (str: string) => {
@@ -157,9 +158,34 @@ export default function PreferencesPage() {
     }
   };
 
+  // Enhanced email change handler with duplicate prevention
   const handleEmailChange = (index: number, value: string) => {
     const newEmails = [...emails];
     newEmails[index] = value;
+    
+    // Check for duplicates (case-insensitive)
+    if (value.trim()) {
+      const normalizedValue = value.trim().toLowerCase();
+      const duplicateIndex = newEmails.findIndex((email, i) => 
+        i !== index && email.trim().toLowerCase() === normalizedValue
+      );
+      
+      if (duplicateIndex !== -1) {
+        setDuplicateWarning(`This email is already entered for Player ${duplicateIndex + 1}`);
+        // Clear the duplicate after a short delay
+        setTimeout(() => {
+          const clearedEmails = [...newEmails];
+          clearedEmails[index] = "";
+          setEmails(clearedEmails);
+          setDuplicateWarning(null);
+        }, 2000);
+      } else {
+        setDuplicateWarning(null);
+      }
+    } else {
+      setDuplicateWarning(null);
+    }
+    
     setEmails(newEmails);
   };
 
@@ -170,6 +196,15 @@ export default function PreferencesPage() {
       while (updated.length < value) updated.push("");
       return updated.slice(0, value);
     });
+    // Clear duplicate warning when player count changes
+    setDuplicateWarning(null);
+  };
+
+  // Check if there are any duplicate emails
+  const hasDuplicateEmails = () => {
+    const filledEmails = emails.filter(email => email.trim());
+    const normalizedEmails = filledEmails.map(email => email.trim().toLowerCase());
+    return normalizedEmails.length !== new Set(normalizedEmails).size;
   };
 
   // Show processing state when handling payment success
@@ -288,16 +323,46 @@ export default function PreferencesPage() {
           
           {showEmails && (
             <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-              {emails.map((email, index) => (
-                <input
-                  key={index}
-                  type="email"
-                  placeholder={`Email for Player ${index + 1}`}
-                  value={email}
-                  onChange={(e) => handleEmailChange(index, e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              ))}
+              {/* Duplicate warning */}
+              {duplicateWarning && (
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-red-200 text-sm">
+                  ⚠️ {duplicateWarning}
+                </div>
+              )}
+              
+              {emails.map((email, index) => {
+                // Check if this email is a duplicate
+                const normalizedEmail = email.trim().toLowerCase();
+                const isDuplicate = email.trim() && emails.some((otherEmail, otherIndex) => 
+                  otherIndex !== index && otherEmail.trim().toLowerCase() === normalizedEmail
+                );
+                
+                return (
+                  <div key={index} className="relative">
+                    <input
+                      type="email"
+                      placeholder={`Email for Player ${index + 1}`}
+                      value={email}
+                      onChange={(e) => handleEmailChange(index, e.target.value)}
+                      className={`w-full rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 transition-all duration-200 ${
+                        isDuplicate 
+                          ? 'bg-red-500/10 border border-red-500/50 focus:ring-red-500' 
+                          : 'bg-white/10 border border-white/20 focus:ring-purple-500 focus:border-transparent'
+                      }`}
+                    />
+                    {isDuplicate && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <span className="text-red-400 text-sm">⚠️</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              
+              {/* Helpful tip */}
+              <div className="text-xs text-white/50 text-center">
+                💡 Each email can only be used once per team
+              </div>
             </div>
           )}
         </div>
@@ -305,15 +370,22 @@ export default function PreferencesPage() {
         {/* Submit button */}
         <button
           onClick={handleStart}
-          disabled={loading || !teamName.trim()}
+          disabled={loading || !teamName.trim() || hasDuplicateEmails()}
           className={`w-full font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg ${
-            loading || !teamName.trim()
+            loading || !teamName.trim() || hasDuplicateEmails()
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
               : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:shadow-xl'
           } text-white`}
         >
           {loading ? "Loading..." : "Pay & Start Adventure"}
         </button>
+        
+        {/* Show warning if there are duplicates */}
+        {hasDuplicateEmails() && (
+          <div className="text-center text-red-400 text-sm">
+            ⚠️ Please remove duplicate emails before continuing
+          </div>
+        )}
       </div>
     </main>
   );
