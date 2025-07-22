@@ -76,9 +76,11 @@ export default async function StartPage({ params, searchParams }: Props) {
   const userId = stripeSession.metadata?.user_id;
   const teamName = stripeSession.metadata?.team_name;
   const playerCount = stripeSession.metadata?.player_count;
+  const location = stripeSession.metadata?.location;
+  const mode = stripeSession.metadata?.mode;
   
   // NEW: Extract emails from Stripe session
-  const teamLeaderEmail = stripeSession.customer_details?.email;
+  const teamLeaderEmail = stripeSession.customer_details?.email || ''; // May be empty
   const memberEmails = stripeSession.metadata?.emails ? 
     JSON.parse(stripeSession.metadata.emails).filter((email: string) => email && email.trim()) : [];
 
@@ -87,7 +89,9 @@ export default async function StartPage({ params, searchParams }: Props) {
     userId, 
     teamName, 
     teamLeaderEmail, 
-    memberEmailsCount: memberEmails.length 
+    memberEmailsCount: memberEmails.length,
+    location,
+    mode
   });
 
   if (!groupId || !userId) {
@@ -198,6 +202,10 @@ export default async function StartPage({ params, searchParams }: Props) {
   if (teamLeaderEmail || memberEmails.length > 0) {
     console.log('📧 START PAGE: Sending confirmation and invite emails...');
     try {
+      // Use the first member email as team leader email if no customer email
+      const effectiveLeaderEmail = teamLeaderEmail || (memberEmails.length > 0 ? memberEmails[0] : '');
+      const remainingEmails = teamLeaderEmail ? memberEmails : memberEmails.slice(1);
+      
       const emailResponse = await fetch(`${baseUrl}/api/send-invites`, {
         method: 'POST',
         headers: {
@@ -205,14 +213,14 @@ export default async function StartPage({ params, searchParams }: Props) {
         },
         body: JSON.stringify({
           groupId,
-          teamLeaderEmail: teamLeaderEmail || '',
+          teamLeaderEmail: effectiveLeaderEmail,
           teamLeaderName: 'Team Leader', // Could be enhanced to get actual name
           teamName: teamName || 'Adventure Team',
-          location: awaitedParams.location,
-          mode: awaitedParams.mode,
+          location: location || awaitedParams.location,
+          mode: mode || awaitedParams.mode,
           players: parseInt(playerCount || '2'),
           firstRiddleId: group.current_riddle_id,
-          memberEmails: memberEmails
+          memberEmails: remainingEmails
         }),
         cache: 'no-store'
       });
