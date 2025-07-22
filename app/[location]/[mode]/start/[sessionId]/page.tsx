@@ -75,8 +75,20 @@ export default async function StartPage({ params, searchParams }: Props) {
   const groupId = stripeSession.metadata?.group_id;
   const userId = stripeSession.metadata?.user_id;
   const teamName = stripeSession.metadata?.team_name;
+  const playerCount = stripeSession.metadata?.player_count;
+  
+  // NEW: Extract emails from Stripe session
+  const teamLeaderEmail = stripeSession.customer_details?.email;
+  const memberEmails = stripeSession.metadata?.emails ? 
+    JSON.parse(stripeSession.metadata.emails).filter((email: string) => email && email.trim()) : [];
 
-  console.log("💳 START PAGE: Stripe session metadata extracted:", { groupId, userId, teamName });
+  console.log("💳 START PAGE: Stripe session metadata extracted:", { 
+    groupId, 
+    userId, 
+    teamName, 
+    teamLeaderEmail, 
+    memberEmailsCount: memberEmails.length 
+  });
 
   if (!groupId || !userId) {
     console.error('❌ START PAGE: Missing essential metadata from Stripe session');
@@ -182,7 +194,47 @@ export default async function StartPage({ params, searchParams }: Props) {
     redirect('/locations');
   }
 
-  // Step 8: Redirect with cookie data as URL parameters
+  // Step 8: NEW - Send confirmation and invite emails
+  if (teamLeaderEmail || memberEmails.length > 0) {
+    console.log('📧 START PAGE: Sending confirmation and invite emails...');
+    try {
+      const emailResponse = await fetch(`${baseUrl}/api/send-invites`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          groupId,
+          teamLeaderEmail: teamLeaderEmail || '',
+          teamLeaderName: 'Team Leader', // Could be enhanced to get actual name
+          teamName: teamName || 'Adventure Team',
+          location: awaitedParams.location,
+          mode: awaitedParams.mode,
+          players: parseInt(playerCount || '2'),
+          firstRiddleId: group.current_riddle_id,
+          memberEmails: memberEmails
+        }),
+        cache: 'no-store'
+      });
+
+      if (emailResponse.ok) {
+        const emailResult = await emailResponse.json();
+        console.log('✅ START PAGE: Emails sent successfully:', emailResult);
+      } else {
+        const emailError = await emailResponse.text();
+        console.error('⚠️ START PAGE: Email sending failed:', emailError);
+        console.log('⚠️ START PAGE: Continuing with game start despite email failure');
+      }
+    } catch (emailError) {
+      console.error('⚠️ START PAGE: Email error:', emailError);
+      console.log('⚠️ START PAGE: Continuing with game start despite email failure');
+      // Don't redirect on email failure - the game should still start
+    }
+  } else {
+    console.log('📧 START PAGE: No emails to send (no team leader email or member emails provided)');
+  }
+
+  // Step 9: Redirect with cookie data as URL parameters
   console.log('🔄 START PAGE: Redirecting with cookie data in URL...');
   
   // Encode the data to pass via URL

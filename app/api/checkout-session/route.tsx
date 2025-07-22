@@ -70,6 +70,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to assign group leader" }, { status: 500 });
     }
     
+    // Process and validate emails
+    const validEmails: string[] = [];
+    if (emails && Array.isArray(emails)) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      for (const email of emails) {
+        if (email && typeof email === 'string' && email.trim() && emailRegex.test(email.trim())) {
+          validEmails.push(email.trim());
+        }
+      }
+    }
+    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [{
@@ -89,9 +100,14 @@ export async function POST(req: Request) {
         user_id: userId,
         team_name: teamName.trim(),
         track_id: track.id,
-        player_count: players.toString()
+        player_count: players.toString(),
+        // NEW: Store emails as JSON string in metadata
+        emails: JSON.stringify(validEmails),
+        location: location,
+        mode: mode
       },
-      // 🔧 FIX: Use session.id in the URL path, not group.id
+      // Set 48-hour expiration
+      expires_at: Math.floor(Date.now() / 1000) + (48 * 60 * 60), // 48 hours from now
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/{CHECKOUT_SESSION_ID}?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}`,
     });
@@ -99,6 +115,15 @@ export async function POST(req: Request) {
     if (!session?.url) {
       throw new Error("Stripe session URL was not returned");
     }
+    
+    console.log("✅ Checkout session created successfully:", {
+      groupId: group.id,
+      userId,
+      teamName: teamName.trim(),
+      sessionId: session.id,
+      emailCount: validEmails.length,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/${session.id}?session_id=${session.id}&success=true`
+    });
     
     // Return the response with the session URL and group/team info
     return NextResponse.json({
@@ -108,6 +133,7 @@ export async function POST(req: Request) {
     });
     
   } catch (err) {
+    console.error("Checkout session creation failed:", err);
     return NextResponse.json(
       { error: "Something went wrong starting the game. Please try again." },
       { status: 500 }
