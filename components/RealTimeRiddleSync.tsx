@@ -10,7 +10,7 @@ interface RealTimeRiddleSyncProps {
 
 export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps) {
   const lastSyncCheck = useRef<Date>(new Date());
-  const backupIntervalRef = useRef<NodeJS.Timeout>();
+  const backupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 🚨 NEW: Backup sync mechanism - checks every 30 seconds
   const performBackupSync = async () => {
@@ -147,6 +147,7 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
       console.log("=== REALTIME CLEANUP ===");
       if (backupIntervalRef.current) {
         clearInterval(backupIntervalRef.current);
+        backupIntervalRef.current = null;
         console.log("🔄 Backup sync interval cleared");
       }
       supabase.removeChannel(channel);
