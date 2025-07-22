@@ -43,28 +43,34 @@ export default function ManualAnswerForm({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          riddleId,
-          groupId,
           userAnswer: answer.trim(),
-          correctAnswer,
-          nextRiddleId,
-          isLastRiddle
+          currentRiddleId: riddleId // 🚨 NEW: Send current riddle ID for sync check
         }),
       })
 
-      const result = await response.json()
+      const data = await response.json()
+
+      // 🚨 NEW: Handle riddle mismatch - auto redirect
+      if (response.status === 409 && data.error === 'RIDDLE_MISMATCH') {
+        setError('Redirecting to correct riddle...')
+        // Redirect to the correct riddle page
+        router.push(`/riddle/${data.correctRiddleId}`)
+        return
+      }
 
       if (response.ok) {
-        if (result.correct) {
+        if (data.correct) {
           setIsCorrect(true)
           setError('')
           
           // Wait a moment to show success, then redirect
           setTimeout(() => {
-            if (isLastRiddle) {
-              router.push(`/adventure-complete/${groupId}`)
-            } else if (nextRiddleId) {
-              router.push(`/riddle/${nextRiddleId}`)
+            if (data.completed) {
+              // Use the group ID from the response or fall back to adventure-complete
+              const trackId = riddleId.split('_')[0]
+              router.push(`/adventure-complete/${trackId}?groupId=${groupId}`)
+            } else if (data.nextRiddleId) {
+              router.push(`/riddle/${data.nextRiddleId}`)
             }
           }, 1500)
         } else {
@@ -72,7 +78,7 @@ export default function ManualAnswerForm({
           setAnswer('') // Clear the input for retry
         }
       } else {
-        setError(result.error || 'Something went wrong. Please try again.')
+        setError(data.message || data.error || 'Something went wrong. Please try again.')
       }
     } catch (error) {
       console.error('Submit answer error:', error)

@@ -16,12 +16,18 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // 🔒 SECURITY: Only get user's answer from request
-    const { userAnswer } = await request.json();
+    // 🔒 SECURITY: Only get user's answer and current riddle from request
+    const { userAnswer, currentRiddleId } = await request.json();
 
     if (!userAnswer || typeof userAnswer !== 'string') {
       return NextResponse.json({ 
         error: 'Answer is required' 
+      }, { status: 400 });
+    }
+
+    if (!currentRiddleId || typeof currentRiddleId !== 'string') {
+      return NextResponse.json({ 
+        error: 'Current riddle ID is required' 
       }, { status: 400 });
     }
 
@@ -58,6 +64,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Adventure already completed' 
       }, { status: 400 });
+    }
+
+    // 🚨 NEW: Check if client is out of sync with database
+    if (group.current_riddle_id !== currentRiddleId) {
+      return NextResponse.json({ 
+        error: 'RIDDLE_MISMATCH',
+        correctRiddleId: group.current_riddle_id,
+        message: 'Your page is out of sync. Redirecting to correct riddle...'
+      }, { status: 409 }); // 409 Conflict
     }
 
     // 🔒 SECURITY: Get correct answer and next riddle from database (not client)

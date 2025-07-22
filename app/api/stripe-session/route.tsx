@@ -24,13 +24,16 @@ export async function GET(req: NextRequest) {
     console.log("✅ Stripe session retrieved successfully:", {
       id: session.id,
       payment_status: session.payment_status,
+      customer_email: session.customer_details?.email, // Add logging
       metadata: session.metadata
     });
 
     return NextResponse.json({
       id: session.id,
       payment_status: session.payment_status,
-      customer_email: session.customer_details?.email,
+      customer_details: {
+        email: session.customer_details?.email // ← FIX: Return in expected format
+      },
       metadata: session.metadata,
       amount_total: session.amount_total,
       currency: session.currency
