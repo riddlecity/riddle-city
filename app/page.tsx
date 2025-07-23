@@ -8,6 +8,20 @@ export default function Home() {
   const { loading, hasActiveGroup, currentRiddleId, groupId } = useGroupSession();
   const [showInfo, setShowInfo] = useState(false);
 
+  // WhatsApp share function
+  const shareOnWhatsApp = () => {
+    const messages = [
+      "Hey! Found this cool puzzle adventure where you solve riddles around the city 🕵️‍♀️ riddlecity.co.uk",
+      "Check this out - it's like a treasure hunt with riddles and QR codes! Perfect for a fun day out 🧩 riddlecity.co.uk",
+      "Discovered RiddleCity - puzzle adventures through real locations. Looks amazing! 🎯 riddlecity.co.uk",
+      "Found the perfect activity for us! It's called RiddleCity - solve riddles while exploring the city 🏙️ riddlecity.co.uk"
+    ];
+    
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(randomMessage)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   // Show loading state while checking session
   if (loading) {
     return (
@@ -71,12 +85,23 @@ export default function Home() {
         </div>
       )}
       
-      <Link
-        href="/locations"
-        className="bg-red-600 hover:bg-red-500 transition-colors duration-200 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl mb-8"
-      >
-        See Locations →
-      </Link>
+      <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+        <Link
+          href="/locations"
+          className="bg-red-600 hover:bg-red-500 transition-colors duration-200 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl"
+        >
+          See Locations →
+        </Link>
+        
+        {/* WhatsApp Share - Subtle and compact */}
+        <button
+          onClick={shareOnWhatsApp}
+          className="flex items-center gap-2 text-white/60 hover:text-white/80 transition-colors duration-200 text-sm"
+        >
+          <span className="text-green-500">📱</span>
+          Share via WhatsApp
+        </button>
+      </div>
 
       {/* Collapsible info section */}
       <div className="w-full max-w-2xl">
