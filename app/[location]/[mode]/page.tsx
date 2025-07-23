@@ -36,7 +36,7 @@ export default function PreferencesPage() {
     'f*ck', 'sh*t', 'b*tch', 'h*tler', 'f**k', 's**t', 'fck', 'sht', 'btch'
   ];
 
-  const containsOffensiveContent = (text: string) => {
+  const containsOffensiveContent = (text: string): boolean => {
     const lowerText = text.toLowerCase().replace(/[^a-z0-9]/g, ''); // Remove special chars and spaces
     return offensiveWords.some(word => lowerText.includes(word.replace(/[^a-z0-9]/g, '')));
   };
