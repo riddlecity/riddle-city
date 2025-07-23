@@ -1,4 +1,5 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import Link from "next/link";
@@ -56,15 +57,41 @@ export default function LocationPage({ params }: Props) {
           {/* Date Day Adventure */}
           <button
             onClick={() => handleModeSelect("date")}
-            className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-lg"
+            className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group"
           >
-            💘 Date Day Adventure
+            <div className="flex items-center justify-between">
+              <div className="text-left">
+                <div className="text-lg font-bold">💘 Date Day Adventure</div>
+                <div className="text-sm font-normal text-pink-100 mt-1">
+                  Perfect for couples exploring together
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-bold">£15</div>
+                <div className="text-xs font-normal text-pink-100">per person</div>
+              </div>
+            </div>
           </button>
           
           {/* Pub Crawl - Coming Soon */}
-          <div className="w-full bg-gray-600/30 text-gray-400 font-medium py-6 px-8 rounded-xl border border-gray-500/30 text-lg cursor-not-allowed">
-            🍻 Pub Crawl (Coming Soon)
+          <div className="w-full bg-gray-600/30 text-gray-400 font-medium py-6 px-8 rounded-xl border border-gray-500/30 cursor-not-allowed">
+            <div className="flex items-center justify-between">
+              <div className="text-left">
+                <div className="text-lg font-bold">🍻 Pub Crawl Adventure</div>
+                <div className="text-sm font-normal text-gray-500 mt-1">
+                  Explore local pubs and bars
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-500">Coming Soon</div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Additional info */}
+        <div className="mt-8 text-center text-white/60 text-sm max-w-lg mx-auto">
+          <p>🎯 Solve riddles, scan QR codes, and explore {location} in a whole new way!</p>
         </div>
       </div>
     </main>
