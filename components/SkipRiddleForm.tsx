@@ -1,5 +1,6 @@
 // components/RestrictedSkipRiddleForm.tsx
 'use client';
+
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -44,11 +45,11 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
     <button
       onClick={handleSkip}
       disabled={isSkipping}
-      className="text-white text-right"
+      className="text-white text-right hover:text-white/80 transition-colors duration-200"
     >
-      <div className="text-xs text-white/60 mb-1">QR not working?</div>
+      <div className="text-xs text-white/60 mb-1">QR missing? Not working?</div>
       <div className="text-sm font-medium">
-        {isSkipping ? 'Skipping...' : 'Skip (20min penalty)'}
+        {isSkipping ? 'Skipping...' : 'Skip to next riddle'}
       </div>
     </button>
   );
