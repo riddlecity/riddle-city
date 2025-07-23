@@ -120,7 +120,6 @@ export default function PrivacyPolicyPage() {
               <p>If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:</p>
               <div className="bg-neutral-800 rounded-lg p-4 mt-4">
                 <p><strong>Email:</strong> hello@riddlecity.co.uk</p>
-                <p><strong>Address:</strong> RiddleCity, Barnsley, South Yorkshire, United Kingdom</p>
               </div>
             </div>
           </section>
