@@ -8,7 +8,107 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export async function POST(req: Request) {
   try {
-    const { players, location, mode, teamName, emails } = await req.json();
+    const { players, location, mode, teamName, emails, adminKey } = await req.json();
+    
+    // 🔧 ADMIN BYPASS: Check for admin key first
+    const ADMIN_KEY = process.env.ADMIN_TEST_KEY; // Set this in your environment variables
+    const isAdminTest = adminKey && ADMIN_KEY && adminKey === ADMIN_KEY;
+
+    if (isAdminTest) {
+      console.log('🔧 ADMIN: Creating test group without payment...');
+      
+      // Basic validation for admin test
+      if (!teamName || !teamName.trim()) {
+        return NextResponse.json({ error: "Team name is required" }, { status: 400 });
+      }
+      
+      if (!Number.isInteger(players) || players < 1 || players > 20) {
+        return NextResponse.json({ error: "Invalid player count" }, { status: 400 });
+      }
+
+      const supabase = await createClient();
+      
+      // Get track info
+      const { data: track, error: trackError } = await supabase
+        .from("tracks")
+        .select("id, location, mode, name, start_riddle_id")
+        .eq("location", location)
+        .eq("mode", mode)
+        .single();
+        
+      if (trackError || !track) {
+        return NextResponse.json({ error: "Track not found" }, { status: 400 });
+      }
+      
+      // Create test user and group
+      const testUserId = uuidv4();
+      const testGroupId = uuidv4();
+      
+      // Create profile
+      await supabase.from("profiles").upsert({ id: testUserId });
+      
+      // Create test group (marked as paid)
+      const { error: groupError } = await supabase
+        .from("groups")
+        .insert({
+          id: testGroupId,
+          track_id: track.id,
+          player_limit: players,
+          paid: true, // ✅ Mark as paid for testing
+          finished: false,
+          is_versus: false,
+          current_riddle_id: track.start_riddle_id,
+          created_by: testUserId,
+          team_name: teamName.trim(),
+          riddles_skipped: 0,
+          game_started: false,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24-hour expiry
+        });
+
+      if (groupError) {
+        console.error('❌ ADMIN: Failed to create test group:', groupError);
+        return NextResponse.json({ error: 'Failed to create test group' }, { status: 500 });
+      }
+
+      // Add admin as group leader
+      const { error: memberError } = await supabase
+        .from("group_members")
+        .insert({
+          group_id: testGroupId,
+          user_id: testUserId,
+          is_leader: true
+        });
+
+      if (memberError) {
+        console.error('❌ ADMIN: Failed to add admin as leader:', memberError);
+        return NextResponse.json({ error: 'Failed to assign group leader' }, { status: 500 });
+      }
+
+      console.log('✅ ADMIN: Test group created successfully:', {
+        groupId: testGroupId,
+        userId: testUserId,
+        teamName: teamName.trim(),
+        trackId: track.id
+      });
+
+      // Return admin test response with direct game URL
+      const gameData = {
+        groupId: testGroupId,
+        userId: testUserId,
+        teamName: teamName.trim()
+      };
+
+      return NextResponse.json({
+        adminTest: true,
+        groupId: testGroupId,
+        userId: testUserId,
+        teamName: teamName.trim(),
+        directUrl: `/riddle/${track.start_riddle_id}?game_data=${btoa(JSON.stringify(gameData))}`
+      });
+    }
+
+    // 🎮 NORMAL FLOW: Continue with regular Stripe checkout
+    console.log('💳 Creating regular Stripe checkout session...');
     
     // Basic input validation
     if (!teamName || !teamName.trim()) {

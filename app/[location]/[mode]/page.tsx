@@ -17,6 +17,7 @@ export default function PreferencesPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showEmails, setShowEmails] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   // Function to capitalize first letter
   const capitalize = (str: string) => {
@@ -43,6 +44,15 @@ export default function PreferencesPage() {
     const randomSuggestion = teamSuggestions[Math.floor(Math.random() * teamSuggestions.length)];
     setTeamName(randomSuggestion);
   };
+
+  // 🔧 Check for admin mode on page load
+  useEffect(() => {
+    const adminParam = searchParams?.get('admin');
+    if (adminParam) {
+      setIsAdminMode(true);
+      console.log('🔧 Admin mode detected');
+    }
+  }, [searchParams]);
 
   // Check if we're returning from successful payment
   useEffect(() => {
@@ -117,16 +127,22 @@ export default function PreferencesPage() {
 
     setLoading(true);
     try {
+      // 🔧 Check for admin parameter
+      const adminParam = searchParams?.get('admin');
+      
+      const payload = {
+        location, 
+        mode, 
+        players, 
+        emails, 
+        teamName: teamName.trim(),
+        ...(adminParam && { adminKey: adminParam }) // 🔧 Add admin key if present
+      };
+
       const res = await fetch("/api/checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          location, 
-          mode, 
-          players, 
-          emails, 
-          teamName: teamName.trim() // Include team name in checkout
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -137,6 +153,15 @@ export default function PreferencesPage() {
 
       const body = await res.json();
       console.log("✅ Response from /api/checkout-session:", body);
+
+      // 🔧 Handle admin test response
+      if (body.adminTest) {
+        console.log('🔧 Admin test created, redirecting to game...');
+        router.push(body.directUrl);
+        return;
+      }
+
+      // 💳 Handle regular Stripe response
       const { sessionUrl, error } = body;
 
       if (error) {
@@ -246,6 +271,14 @@ export default function PreferencesPage() {
         </Link>
       </div>
 
+      {/* 🔧 Admin Mode Indicator */}
+      {isAdminMode && (
+        <div className="w-full max-w-lg mb-6 bg-yellow-600/20 border border-yellow-500/50 rounded-xl p-4 text-center">
+          <h2 className="text-yellow-300 font-bold">🔧 ADMIN TEST MODE</h2>
+          <p className="text-yellow-200 text-sm">Bypass payment for testing</p>
+        </div>
+      )}
+
       {/* Main heading with better spacing */}
       <div className="w-full text-center mt-8 sm:mt-4 mb-10">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center tracking-tight leading-tight">
@@ -318,7 +351,7 @@ export default function PreferencesPage() {
             <span className={`transform transition-transform duration-200 ${showEmails ? 'rotate-90' : 'rotate-0'}`}>
               ▶
             </span>
-            Enter Player Emails (Optional)
+            {isAdminMode ? 'Enter Player Emails (Optional for testing)' : 'Enter Player Emails (Optional)'}
           </button>
           
           {showEmails && (
@@ -374,10 +407,21 @@ export default function PreferencesPage() {
           className={`w-full font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg ${
             loading || !teamName.trim() || hasDuplicateEmails()
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
+              : isAdminMode
+              ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 hover:shadow-xl'
               : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:shadow-xl'
           } text-white`}
         >
-          {loading ? "Loading..." : "Pay & Start Adventure"}
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              {isAdminMode ? 'Creating Test Game...' : 'Processing...'}
+            </div>
+          ) : (
+            <>
+              {isAdminMode ? '🔧 Create Test Game' : 'Pay & Start Adventure'}
+            </>
+          )}
         </button>
         
         {/* Show warning if there are duplicates */}
