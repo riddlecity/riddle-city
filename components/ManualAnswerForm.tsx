@@ -66,9 +66,8 @@ export default function ManualAnswerForm({
           // Wait a moment to show success, then redirect
           setTimeout(() => {
             if (data.completed) {
-              // Use the group ID from the response or fall back to adventure-complete
-              const trackId = riddleId.split('_')[0]
-              router.push(`/adventure-complete/${trackId}?groupId=${groupId}`)
+              // Use the group ID directly, not track ID
+              router.push(`/adventure-complete/${groupId}`)
             } else if (data.nextRiddleId) {
               router.push(`/riddle/${data.nextRiddleId}`)
             }

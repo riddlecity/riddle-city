@@ -43,9 +43,8 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
         console.log(`🔄 BACKUP SYNC: Riddle mismatch detected! URL: ${currentUrlId}, DB: ${group.current_riddle_id}`);
         
         if (group.finished) {
-          const trackId = group.current_riddle_id?.split('_')[0] || 'unknown';
           console.log(`🔄 BACKUP SYNC: Adventure finished, redirecting to completion page`);
-          window.location.href = `/adventure-complete/${trackId}?groupId=${groupId}`;
+          window.location.href = `/adventure-complete/${groupId}`;
         } else {
           console.log(`🔄 BACKUP SYNC: Redirecting to correct riddle: ${group.current_riddle_id}`);
           window.location.href = `/riddle/${group.current_riddle_id}`;
@@ -99,9 +98,8 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
           
           if (newRiddleId && newRiddleId !== currentUrlId) {
             if (isFinished) {
-              const trackId = newRiddleId.split('_')[0];
-              console.log(`🔄 REDIRECTING TO COMPLETION: ${currentUrlId} → adventure-complete/${trackId}`);
-              window.location.href = `/adventure-complete/${trackId}?groupId=${groupId}`;
+              console.log(`🔄 REDIRECTING TO COMPLETION: ${currentUrlId} → adventure-complete/${groupId}`);
+              window.location.href = `/adventure-complete/${groupId}`;
             } else {
               console.log(`🔄 REDIRECTING: ${currentUrlId} → ${newRiddleId}`);
               window.location.href = `/riddle/${newRiddleId}`;
