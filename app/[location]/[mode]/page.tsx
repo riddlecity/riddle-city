@@ -259,7 +259,7 @@ export default function PreferencesPage() {
   };
 
   // Check if there are any duplicate emails
-  const hasDuplicateEmails = () => {
+  const hasDuplicateEmails = (): boolean => {
     const filledEmails = emails.filter(email => email.trim());
     const normalizedEmails = filledEmails.map(email => email.trim().toLowerCase());
     return normalizedEmails.length !== new Set(normalizedEmails).size;
@@ -455,9 +455,14 @@ export default function PreferencesPage() {
         {/* Submit button */}
         <button
           onClick={handleStart}
-          disabled={loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() && containsOffensiveContent(teamName))}
+          disabled={
+            loading || 
+            !teamName.trim() || 
+            hasDuplicateEmails() || 
+            (teamName.trim() !== '' && containsOffensiveContent(teamName))
+          }
           className={`w-full font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg ${
-            loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() && containsOffensiveContent(teamName))
+            loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() !== '' && containsOffensiveContent(teamName))
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
               : isAdminMode
               ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 hover:shadow-xl'
@@ -483,7 +488,7 @@ export default function PreferencesPage() {
           </div>
         )}
         
-        {teamName.trim() && containsOffensiveContent(teamName) && (
+        {teamName.trim() !== '' && containsOffensiveContent(teamName) && (
           <div className="text-center text-red-400 text-sm">
             ⚠️ Please choose a more appropriate team name
           </div>
