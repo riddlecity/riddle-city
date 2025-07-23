@@ -167,7 +167,6 @@ export default async function RiddlePage({ params }: Props) {
   // Get progress data if user is in a group
   let currentRiddleOrder = order_index;
   let totalRiddles = 0;
-  let gameStartTime = '';
   let isLastRiddle = false;
   
   if (groupId && userId) {
@@ -178,15 +177,6 @@ export default async function RiddlePage({ params }: Props) {
       .eq("track_id", track_id);
     
     totalRiddles = riddleCount?.length || 0;
-
-    // Get game start time
-    const { data: groupData } = await supabase
-      .from("groups")
-      .select("created_at")
-      .eq("id", groupId)
-      .single();
-    
-    gameStartTime = groupData?.created_at || '';
 
     // UPDATED: Use next_riddle_id from query instead of separate check
     isLastRiddle = !next_riddle_id;
@@ -235,13 +225,12 @@ export default async function RiddlePage({ params }: Props) {
         />
       </div>
 
-      {/* Game Progress - At the very top */}
-      {groupId && gameStartTime && (
+      {/* Game Progress - At the very top (NO TIMER) */}
+      {groupId && (
         <div className="w-full px-4 pt-4 z-10">
           <GameProgress 
             currentRiddleOrder={currentRiddleOrder}
             totalRiddles={totalRiddles}
-            gameStartTime={gameStartTime}
           />
         </div>
       )}
