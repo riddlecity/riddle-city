@@ -327,12 +327,12 @@ export default function PreferencesPage() {
               👥 This adventure is better with friends!
             </h3>
             <p className="text-sm text-white/70 leading-relaxed">
-              Choose how many people will be playing together. Your invite link will only allow that number of players to join—so make sure to select the full group now!.
+              Choose how many people will be playing together. Your invite link will only allow that number of players to join—so make sure to select the full group now!
             </p>
           </div>
           
           <label className="block text-lg font-medium mb-4">
-            Number of players (minimum 2):
+            Number of players:
           </label>
           <select
             value={players}
