@@ -3,22 +3,14 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-neutral-900 border-t border-neutral-800 py-8 px-4 mt-auto">
+    <footer className="bg-neutral-900 border-t border-neutral-800 py-6 px-4 mt-auto">
       <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Brand Section */}
-          <div>
-            <h3 className="font-bold text-lg mb-3 text-white">RiddleCity</h3>
-            <p className="text-neutral-400 text-sm">
-              Puzzle-based adventures through your city. Solve riddles, explore locations, and create unforgettable memories with friends.
-            </p>
-          </div>
-          
+        <div className="grid md:grid-cols-2 gap-6">
           {/* Contact Section */}
           <div>
-            <h4 className="font-semibold mb-3 text-white">Contact</h4>
-            <div className="space-y-2">
-              <p className="text-neutral-400 text-sm">
+            <h4 className="font-semibold mb-2 text-white text-sm">Contact</h4>
+            <div className="space-y-1">
+              <p className="text-neutral-400 text-xs">
                 <a 
                   href="mailto:hello@riddlecity.co.uk" 
                   className="hover:text-purple-400 transition-colors duration-200"
@@ -26,7 +18,7 @@ export default function Footer() {
                   hello@riddlecity.co.uk
                 </a>
               </p>
-              <p className="text-neutral-400 text-sm">
+              <p className="text-neutral-400 text-xs">
                 🕵️‍♀️ Based in Barnsley, South Yorkshire
               </p>
             </div>
@@ -34,23 +26,23 @@ export default function Footer() {
           
           {/* Legal Section */}
           <div>
-            <h4 className="font-semibold mb-3 text-white">Legal</h4>
-            <div className="space-y-2">
+            <h4 className="font-semibold mb-2 text-white text-sm">Legal</h4>
+            <div className="flex flex-wrap gap-3">
               <Link 
                 href="/privacy" 
-                className="block text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-sm"
+                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-xs"
               >
                 Privacy Policy
               </Link>
               <Link 
                 href="/terms" 
-                className="block text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-sm"
+                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-xs"
               >
                 Terms of Service
               </Link>
               <Link 
                 href="/contact" 
-                className="block text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-sm"
+                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-xs"
               >
                 Contact Us
               </Link>
@@ -59,8 +51,8 @@ export default function Footer() {
         </div>
         
         {/* Copyright Section */}
-        <div className="border-t border-neutral-800 mt-8 pt-6 text-center">
-          <p className="text-neutral-500 text-sm">
+        <div className="border-t border-neutral-800 mt-4 pt-3 text-center">
+          <p className="text-neutral-500 text-xs">
             &copy; 2025 RiddleCity. All rights reserved. | Made with 🧩 in Barnsley
           </p>
         </div>
