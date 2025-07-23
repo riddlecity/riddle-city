@@ -24,6 +24,39 @@ export default function PreferencesPage() {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
+  // Content filtering for team names
+  const offensiveWords = [
+    // Swear words
+    'fuck', 'shit', 'damn', 'hell', 'ass', 'bitch', 'bastard', 'crap', 'piss', 'cock', 'dick', 'pussy', 'tits', 'boobs',
+    // Offensive/hateful terms  
+    'hitler', 'nazi', 'fascist', 'racist', 'nigger', 'faggot', 'retard', 'spastic', 'gay', 'homo', 'lesbian',
+    // Other inappropriate
+    'sex', 'porn', 'nude', 'naked', 'kill', 'murder', 'death', 'suicide', 'drug', 'cocaine', 'weed', 'marijuana',
+    // Variations and common substitutions
+    'f*ck', 'sh*t', 'b*tch', 'h*tler', 'f**k', 's**t', 'fck', 'sht', 'btch'
+  ];
+
+  const containsOffensiveContent = (text: string) => {
+    const lowerText = text.toLowerCase().replace(/[^a-z0-9]/g, ''); // Remove special chars and spaces
+    return offensiveWords.some(word => lowerText.includes(word.replace(/[^a-z0-9]/g, '')));
+  };
+
+  const handleTeamNameChange = (value: string) => {
+    setTeamName(value);
+    
+    // Check for offensive content
+    if (value.trim() && containsOffensiveContent(value)) {
+      setDuplicateWarning("Please choose a family-friendly team name");
+      // Clear the offensive name after a short delay
+      setTimeout(() => {
+        setTeamName('');
+        setDuplicateWarning(null);
+      }, 2500);
+    } else {
+      setDuplicateWarning(null);
+    }
+  };
+
   // Expanded team name suggestions
   const teamSuggestions = [
     'Mystery Masters', 'The Puzzle Squad', 'Riddle Runners', 'Code Crackers',
@@ -287,8 +320,17 @@ export default function PreferencesPage() {
       </div>
       
       <div className="w-full max-w-lg space-y-6">
-        {/* Number of players */}
-        <div className="text-center">
+        {/* Number of players with friendly messaging */}
+        <div className="text-center bg-white/5 border border-white/10 rounded-xl p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-white mb-2">
+              👥 This adventure is better with friends!
+            </h3>
+            <p className="text-sm text-white/70 leading-relaxed">
+              Choose how many people will be playing together. Everyone needs to be paid for to join the adventure - this keeps teams fair and supports the experience for everyone.
+            </p>
+          </div>
+          
           <label className="block text-lg font-medium mb-4">
             Number of players:
           </label>
@@ -299,10 +341,20 @@ export default function PreferencesPage() {
           >
             {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
               <option key={n} value={n} className="bg-neutral-800">
-                {n}
+                {n} {n === 2 ? 'players (minimum)' : 'players'}
               </option>
             ))}
           </select>
+          
+          {/* Dynamic pricing display */}
+          <div className="mt-3 text-center">
+            <p className="text-white/60 text-sm">
+              Total cost: <span className="text-white font-semibold">£{players * 15}</span>
+              {players > 2 && (
+                <span className="text-white/50"> ({players} players × £15 each)</span>
+              )}
+            </p>
+          </div>
         </div>
 
         {/* Team Name - Required with purple styling */}
@@ -319,7 +371,7 @@ export default function PreferencesPage() {
               <input
                 type="text"
                 value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
+                onChange={(e) => handleTeamNameChange(e.target.value)}
                 placeholder="Enter your team name to proceed..."
                 maxLength={30}
                 className="w-full bg-transparent px-4 py-3 text-white placeholder:text-white/50 focus:outline-none"
@@ -403,9 +455,9 @@ export default function PreferencesPage() {
         {/* Submit button */}
         <button
           onClick={handleStart}
-          disabled={loading || !teamName.trim() || hasDuplicateEmails()}
+          disabled={loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() && containsOffensiveContent(teamName))}
           className={`w-full font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg ${
-            loading || !teamName.trim() || hasDuplicateEmails()
+            loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() && containsOffensiveContent(teamName))
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
               : isAdminMode
               ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 hover:shadow-xl'
@@ -424,10 +476,16 @@ export default function PreferencesPage() {
           )}
         </button>
         
-        {/* Show warning if there are duplicates */}
+        {/* Show warnings */}
         {hasDuplicateEmails() && (
           <div className="text-center text-red-400 text-sm">
             ⚠️ Please remove duplicate emails before continuing
+          </div>
+        )}
+        
+        {teamName.trim() && containsOffensiveContent(teamName) && (
+          <div className="text-center text-red-400 text-sm">
+            ⚠️ Please choose a more appropriate team name
           </div>
         )}
       </div>
