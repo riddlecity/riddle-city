@@ -25,21 +25,31 @@ export default function PreferencesPage() {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  // Content filtering for team names
+  // Content filtering for team names - only the most egregious terms
   const offensiveWords = [
-    // Swear words
-    'fuck', 'shit', 'damn', 'hell', 'ass', 'bitch', 'bastard', 'crap', 'piss', 'cock', 'dick', 'pussy', 'tits', 'boobs',
-    // Offensive/hateful terms  
-    'hitler', 'nazi', 'fascist', 'racist', 'nigger', 'faggot', 'retard', 'spastic', 'gay', 'homo', 'lesbian',
-    // Other inappropriate
-    'sex', 'porn', 'nude', 'naked', 'kill', 'murder', 'death', 'suicide', 'drug', 'cocaine', 'weed', 'marijuana',
-    // Variations and common substitutions
-    'f*ck', 'sh*t', 'b*tch', 'h*tler', 'f**k', 's**t', 'fck', 'sht', 'btch'
+    // Major swear words (full words only to avoid false positives)
+    'fuck', 'fucking', 'fucked', 'fucker', 'shit', 'shitting', 'bitch', 'bitches', 
+    'bastard', 'bastards', 'cocksucker', 'motherfucker',
+    // Hateful terms
+    'hitler', 'nazi', 'nazis', 'fascist', 'racist', 'nigger', 'nigga', 'faggot', 'faggots',
+    // Explicit sexual terms
+    'pussy', 'cock', 'dick', 'penis', 'vagina', 'porn', 'pornhub', 'sex', 'sexual',
+    // Violence/harmful
+    'kill', 'killing', 'murder', 'suicide', 'death', 'die', 'dying',
+    // Drugs
+    'cocaine', 'heroin', 'meth', 'drugs',
+    // Common substitutions
+    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht'
   ];
 
   const containsOffensiveContent = (text: string): boolean => {
-    const lowerText = text.toLowerCase().replace(/[^a-z0-9]/g, ''); // Remove special chars and spaces
-    return offensiveWords.some(word => lowerText.includes(word.replace(/[^a-z0-9]/g, '')));
+    const lowerText = text.toLowerCase().replace(/[^a-z0-9\s]/g, ''); // Keep spaces for word boundary checking
+    
+    return offensiveWords.some(word => {
+      // Use word boundaries to match whole words only
+      const wordRegex = new RegExp(`\\b${word.replace(/[^a-z0-9]/g, '')}\\b`, 'i');
+      return wordRegex.test(lowerText);
+    });
   };
 
   const handleTeamNameChange = (value: string, isRandomSuggestion = false) => {
