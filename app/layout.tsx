@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Riddle City - Your Mystery Awaits",
   description: "Puzzle-based adventures through your town or city. Scan QR codes, solve riddles, and explore with friends.",
+  icons: {
+    icon: "/favicon.ico", // ✅ Updated to use .ico file
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-black`}
       >
         <GameLayoutWrapper>
           <div className="flex-1">
