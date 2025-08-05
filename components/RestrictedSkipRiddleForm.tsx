@@ -1,7 +1,6 @@
 // components/RestrictedSkipRiddleForm.tsx
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 interface Props {
@@ -11,7 +10,6 @@ interface Props {
 
 export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
   const [isSkipping, setIsSkipping] = useState(false);
-  const router = useRouter();
 
   if (!isLeader) {
     return null; // Only show to leaders
@@ -21,6 +19,8 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
     if (isSkipping) return;
     
     setIsSkipping(true);
+    console.log('🔄 Leader initiating skip...');
+
     try {
       const response = await fetch('/api/skip-riddle', {
         method: 'POST',
@@ -28,11 +28,27 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
         body: JSON.stringify({ groupId }),
       });
 
-      if (response.ok) {
-        // Don't redirect here - let real-time sync handle it
-        console.log('Skip successful, waiting for real-time update...');
+      const data = await response.json();
+      console.log('📡 Skip API response:', data);
+
+      if (response.ok && data.success) {
+        // 🚀 IMMEDIATE REDIRECT FOR LEADER - DON'T WAIT FOR REAL-TIME
+        if (data.completed) {
+          // Adventure completed
+          console.log('🎉 Adventure completed, redirecting leader immediately');
+          window.location.href = `/adventure-complete/${groupId}`;
+        } else if (data.nextRiddleId) {
+          // Next riddle
+          console.log('⏭️ Redirecting leader to next riddle immediately:', data.nextRiddleId);
+          window.location.href = `/riddle/${data.nextRiddleId}`;
+        } else {
+          // Fallback - should not happen with your API
+          console.warn('⚠️ Skip successful but no redirect info, waiting for real-time...');
+          // Keep your original behavior as fallback
+          console.log('Skip successful, waiting for real-time update...');
+        }
       } else {
-        console.error('Skip failed');
+        console.error('Skip failed:', data.error || 'Unknown error');
         setIsSkipping(false);
       }
     } catch (error) {

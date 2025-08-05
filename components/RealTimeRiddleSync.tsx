@@ -1,7 +1,6 @@
-// components/RealTimeRiddleSync.tsx
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 interface RealTimeRiddleSyncProps {
@@ -9,10 +8,16 @@ interface RealTimeRiddleSyncProps {
 }
 
 export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps) {
+  const [isConnected, setIsConnected] = useState(true);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const subscriptionRef = useRef<any>(null);
+  const maxReconnectAttempts = 5;
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSyncCheck = useRef<Date>(new Date());
   const backupIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 🚨 NEW: Backup sync mechanism - checks every 30 seconds
+  // 🚨 KEEP YOUR WORKING BACKUP SYNC MECHANISM
   const performBackupSync = async () => {
     try {
       console.log('🔄 BACKUP SYNC: Checking group status...');
@@ -59,69 +64,150 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
     }
   };
 
-  useEffect(() => {
-    console.log("=== REALTIME SYNC SETUP ===");
-    console.log("Group ID:", groupId);
-    
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`riddle-updates-${groupId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'groups',
-          filter: `id=eq.${groupId}`,
-        },
-        (payload) => {
-          console.log("=== REALTIME UPDATE RECEIVED ===");
-          console.log("Full payload:", payload);
-          
-          const newRiddleId = payload.new?.current_riddle_id;
-          const oldRiddleId = payload.old?.current_riddle_id;
-          const isFinished = payload.new?.finished;
-          const currentUrlId = window.location.pathname.split("/").pop();
-          
-          console.log("Riddle change details:", {
-            newRiddleId,
-            oldRiddleId,
-            currentUrlId,
-            isFinished,
-            hasNewRiddle: !!newRiddleId,
-            isDifferentFromCurrent: newRiddleId !== currentUrlId,
-            shouldRedirect: newRiddleId && newRiddleId !== currentUrlId
-          });
+  // Enhanced real-time subscription with mobile-friendly reconnection
+  const setupRealtimeSubscription = async () => {
+    try {
+      const supabase = createClient();
+      
+      // Clean up existing subscription
+      if (subscriptionRef.current) {
+        await supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
 
-          // 🚨 ENHANCED: Update last sync check time when real-time works
-          lastSyncCheck.current = new Date();
-          
-          if (newRiddleId && newRiddleId !== currentUrlId) {
-            if (isFinished) {
-              console.log(`🔄 REDIRECTING TO COMPLETION: ${currentUrlId} → adventure-complete/${groupId}`);
-              window.location.href = `/adventure-complete/${groupId}`;
-            } else {
-              console.log(`🔄 REDIRECTING: ${currentUrlId} → ${newRiddleId}`);
-              window.location.href = `/riddle/${newRiddleId}`;
-            }
-          } else {
-            console.log("❌ NO REDIRECT:", {
-              reason: !newRiddleId ? "No new riddle ID" : "Same as current URL"
+      console.log("=== REALTIME SYNC SETUP ===");
+      console.log("Group ID:", groupId);
+
+      const channel = supabase
+        .channel(`riddle-updates-${groupId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'groups',
+            filter: `id=eq.${groupId}`,
+          },
+          (payload) => {
+            console.log("=== REALTIME UPDATE RECEIVED ===");
+            console.log("Full payload:", payload);
+            
+            const newRiddleId = payload.new?.current_riddle_id;
+            const oldRiddleId = payload.old?.current_riddle_id;
+            const isFinished = payload.new?.finished;
+            const currentUrlId = window.location.pathname.split("/").pop();
+            
+            console.log("Riddle change details:", {
+              newRiddleId,
+              oldRiddleId,
+              currentUrlId,
+              isFinished,
+              hasNewRiddle: !!newRiddleId,
+              isDifferentFromCurrent: newRiddleId !== currentUrlId,
+              shouldRedirect: newRiddleId && newRiddleId !== currentUrlId
             });
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log("=== REALTIME SUBSCRIPTION STATUS ===");
-        console.log("Status:", status);
-        if (status === 'SUBSCRIBED') {
-          console.log("✅ Successfully subscribed to riddle updates");
-        } else if (status === 'CHANNEL_ERROR') {
-          console.log("❌ Realtime subscription error");
-        }
-      });
 
-    // 🚨 NEW: Set up backup sync interval (every 30 seconds)
+            // Reset connection status and update sync time
+            setIsConnected(true);
+            setReconnectAttempts(0);
+            lastSyncCheck.current = new Date();
+            
+            if (newRiddleId && newRiddleId !== currentUrlId) {
+              if (isFinished) {
+                console.log(`🔄 REDIRECTING TO COMPLETION: ${currentUrlId} → adventure-complete/${groupId}`);
+                window.location.href = `/adventure-complete/${groupId}`;
+              } else {
+                console.log(`🔄 REDIRECTING: ${currentUrlId} → ${newRiddleId}`);
+                window.location.href = `/riddle/${newRiddleId}`;
+              }
+            } else {
+              console.log("❌ NO REDIRECT:", {
+                reason: !newRiddleId ? "No new riddle ID" : "Same as current URL"
+              });
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log("=== REALTIME SUBSCRIPTION STATUS ===");
+          console.log("Status:", status);
+          
+          if (status === 'SUBSCRIBED') {
+            setIsConnected(true);
+            setReconnectAttempts(0);
+            console.log("✅ Successfully subscribed to riddle updates");
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            setIsConnected(false);
+            console.warn("❌ Realtime subscription error, will attempt to reconnect");
+            scheduleReconnect();
+          }
+        });
+
+      subscriptionRef.current = channel;
+      
+    } catch (error) {
+      console.error('❌ Failed to setup real-time subscription:', error);
+      setIsConnected(false);
+      scheduleReconnect();
+    }
+  };
+
+  // Improved reconnection with exponential backoff
+  const scheduleReconnect = () => {
+    if (reconnectAttempts >= maxReconnectAttempts) {
+      console.warn('🚫 Max reconnection attempts reached');
+      return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000); // Max 30 seconds
+    console.log(`🔄 Scheduling reconnect in ${delay}ms (attempt ${reconnectAttempts + 1})`);
+
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      setReconnectAttempts(prev => prev + 1);
+      setupRealtimeSubscription();
+    }, delay);
+  };
+
+  // Keep the app active with invisible activity
+  const setupKeepAlive = () => {
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+    }
+
+    // Send a heartbeat every 30 seconds to keep connection alive
+    heartbeatIntervalRef.current = setInterval(() => {
+      if (subscriptionRef.current) {
+        // Ping the channel to keep it alive
+        subscriptionRef.current.send({
+          type: 'heartbeat',
+          payload: { timestamp: Date.now() }
+        });
+      }
+    }, 30000);
+  };
+
+  // Handle visibility changes (mobile background/foreground)
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      console.log('📱 App went to background');
+    } else {
+      console.log('📱 App came to foreground, checking connection');
+      // Force reconnection when app comes back to foreground
+      setTimeout(() => {
+        setupRealtimeSubscription();
+      }, 1000);
+    }
+  };
+
+  // Setup everything on mount
+  useEffect(() => {
+    setupRealtimeSubscription();
+    setupKeepAlive();
+
+    // 🚨 KEEP YOUR WORKING BACKUP SYNC INTERVAL
     console.log("🔄 Setting up backup sync interval...");
     backupIntervalRef.current = setInterval(() => {
       const timeSinceLastCheck = Date.now() - lastSyncCheck.current.getTime();
@@ -141,16 +227,54 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
       performBackupSync();
     }, 5000);
 
+    // Listen for visibility changes (mobile background/foreground)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+    window.addEventListener('blur', handleVisibilityChange);
+
     return () => {
       console.log("=== REALTIME CLEANUP ===");
+      
+      // Clean up subscriptions
+      if (subscriptionRef.current) {
+        createClient().then(supabase => {
+          supabase.removeChannel(subscriptionRef.current);
+        });
+      }
+      
+      // Clean up timers
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
       if (backupIntervalRef.current) {
         clearInterval(backupIntervalRef.current);
-        backupIntervalRef.current = null;
         console.log("🔄 Backup sync interval cleared");
       }
-      supabase.removeChannel(channel);
+
+      // Clean up event listeners
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+      window.removeEventListener('blur', handleVisibilityChange);
     };
   }, [groupId]);
+
+  // Show connection status for debugging (remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+          isConnected 
+            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+        }`}>
+          {isConnected ? '🟢 Connected' : `🔴 Reconnecting... (${reconnectAttempts}/${maxReconnectAttempts})`}
+        </div>
+      </div>
+    );
+  }
 
   return null;
 }
