@@ -235,11 +235,10 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
     return () => {
       console.log("=== REALTIME CLEANUP ===");
       
-      // Clean up subscriptions
+      // Clean up subscriptions - FIXED: createClient() is synchronous
       if (subscriptionRef.current) {
-        createClient().then(supabase => {
-          supabase.removeChannel(subscriptionRef.current);
-        });
+        const supabase = createClient();
+        supabase.removeChannel(subscriptionRef.current);
       }
       
       // Clean up timers
