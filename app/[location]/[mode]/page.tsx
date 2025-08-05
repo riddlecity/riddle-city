@@ -18,7 +18,7 @@ export default function PreferencesPage() {
   const [showEmails, setShowEmails] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
-const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to capitalize first letter
   const capitalize = (str: string) => {
@@ -43,30 +43,34 @@ const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   };
 
   const handleTeamNameChange = (value: string, isRandomSuggestion = false) => {
-  setTeamName(value);
-  
-  // Clear any existing timeout when setting a new name
-  if (clearTimeoutRef.current) {
-    clearTimeout(clearTimeoutRef.current);
-    clearTimeoutRef.current = null;
-  }
-  
-  // Check for offensive content
-  if (value.trim() && containsOffensiveContent(value)) {
-    setDuplicateWarning("Please choose a family-friendly team name");
+    setTeamName(value);
     
-    // Only set timeout to clear if this is NOT a random suggestion
-    if (!isRandomSuggestion) {
+    // Clear any existing timeout when setting a new name
+    if (clearTimeoutRef.current) {
+      clearTimeout(clearTimeoutRef.current);
+      clearTimeoutRef.current = null;
+    }
+    
+    // If this is a random suggestion, we know it's clean - skip all checks
+    if (isRandomSuggestion) {
+      setDuplicateWarning(null);
+      return;
+    }
+    
+    // Only check for offensive content if it's NOT a random suggestion
+    if (value.trim() && containsOffensiveContent(value)) {
+      setDuplicateWarning("Please choose a family-friendly team name");
+      
+      // Set timeout to clear the offensive name
       clearTimeoutRef.current = setTimeout(() => {
         setTeamName('');
         setDuplicateWarning(null);
         clearTimeoutRef.current = null;
       }, 2500);
+    } else {
+      setDuplicateWarning(null);
     }
-  } else {
-    setDuplicateWarning(null);
-  }
-};
+  };
 
   // Expanded team name suggestions
   const teamSuggestions = [
@@ -85,13 +89,10 @@ const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   ];
 
   const getRandomSuggestion = () => {
-  const randomSuggestion = teamSuggestions[Math.floor(Math.random() * teamSuggestions.length)];
-  // Pass true to indicate this is a random suggestion - this will NOT trigger the clear timeout
-  handleTeamNameChange(randomSuggestion, true);
-  
-  // Extra safety: clear any warning since we know random suggestions are clean
-  setDuplicateWarning(null);
-};
+    const randomSuggestion = teamSuggestions[Math.floor(Math.random() * teamSuggestions.length)];
+    // Pass true to indicate this is a random suggestion - this will NOT trigger the clear timeout
+    handleTeamNameChange(randomSuggestion, true);
+  };
 
   // 🔧 Check for admin mode on page load
   useEffect(() => {
@@ -111,14 +112,15 @@ const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
       handlePaymentSuccess(sessionId);
     }
   }, [searchParams]);
-// Cleanup timeout on unmount to prevent memory leaks
-useEffect(() => {
-  return () => {
-    if (clearTimeoutRef.current) {
-      clearTimeout(clearTimeoutRef.current);
-    }
-  };
-}, []);
+
+  // Cleanup timeout on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (clearTimeoutRef.current) {
+        clearTimeout(clearTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handlePaymentSuccess = async (sessionId: string) => {
     setIsProcessingPayment(true);
