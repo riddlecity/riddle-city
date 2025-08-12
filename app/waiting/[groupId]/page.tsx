@@ -5,11 +5,11 @@ import Link from "next/link";
 import WaitingClient from "@/components/WaitingClient";
 
 interface Props {
-  params: { groupId: string }; // ✅ Not a Promise
+  params: { groupId: string };
 }
 
 export default async function WaitingPage({ params }: Props) {
-  const { groupId } = params; // ✅ No await needed
+  const { groupId } = params;
 
   // Optional: get initial team name so the page renders something immediately
   const supabase = await createClient();
