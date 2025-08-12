@@ -104,16 +104,14 @@ export default function LocationPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Starting location */}
+            {/* Start Point */}
             {dateStartLabel && (
               <div className="mt-3 pt-3 border-t border-white/20">
                 <span className="text-xs uppercase tracking-wide text-white/70">
-                  Starting location:
+                  Start Point:
                 </span>{" "}
                 <span className="text-sm font-semibold">{dateStartLabel}</span>
                 <div className="text-xs text-white/60 mt-1">
-                  Head to <strong>{dateStartLabel}</strong> to be ready for your
-                  adventure
                 </div>
               </div>
             )}
