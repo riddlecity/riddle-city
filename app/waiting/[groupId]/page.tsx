@@ -1,90 +1,56 @@
 // app/waiting/[groupId]/page.tsx
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
+import Link from "next/link";
+import WaitingClient from "@/components/WaitingClient";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-// If your client helper differs, adjust this import:
-import { createClient } from "@/lib/supabase/client";
-
-interface PageProps {
-  params: { groupId: string };
+interface Props {
+  params: Promise<{ groupId: string }>;
 }
 
-export default function WaitingPage({ params }: PageProps) {
-  const { groupId } = params;
-  const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-  const [teamName, setTeamName] = useState<string>("Your Team");
-  const [membersCount, setMembersCount] = useState<number | null>(null);
-  const [isStarted, setIsStarted] = useState<boolean>(false);
-  const [currentRiddleId, setCurrentRiddleId] = useState<string | null>(null);
+export default async function WaitingPage({ params }: Props) {
+  const { groupId } = await params;
 
-  // Helper: go when ready
-  useEffect(() => {
-    if (isStarted && currentRiddleId) {
-      router.replace(`/riddle/${currentRiddleId}`);
-    }
-  }, [isStarted, currentRiddleId, router]);
+  // Optional: get initial team name so the page renders something immediately
+  const supabase = await createClient();
+  const { data: group } = await supabase
+    .from("groups")
+    .select("team_name")
+    .eq("id", groupId)
+    .single();
 
-  // Poll + (optional) realtime
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchGroup = async () => {
-      const { data: group } = await supabase
-        .from("groups")
-        .select("team_name, current_riddle_id, started, group_members ( user_id )")
-        .eq("id", groupId)
-        .single();
-
-      if (!group || cancelled) return;
-
-      setTeamName(group.team_name || "Your Team");
-      setCurrentRiddleId(group.current_riddle_id ?? null);
-
-      // If you don't have a 'started' column yet, treat "has riddle id" as started
-      const startedFlag =
-        typeof group.started === "boolean"
-          ? group.started
-          : Boolean(group.current_riddle_id);
-      setIsStarted(startedFlag);
-
-      setMembersCount(group.group_members?.length ?? null);
-    };
-
-    // initial + poll
-    fetchGroup();
-    const interval = setInterval(fetchGroup, 3000);
-
-    // optional realtime — comment out if you don’t have Realtime enabled
-    const channel = supabase
-      .channel(`waiting-${groupId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
-        () => fetchGroup()
-      )
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
-  }, [groupId, supabase]);
+  const initialTeamName = group?.team_name || "Your Team";
 
   return (
-    <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex items-center justify-center px-6">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="text-6xl">⏳</div>
-        <h1 className="text-2xl font-bold">{teamName}</h1>
-        <p className="text-white/70">
-          {isStarted ? "Loading your first riddle..." : "Waiting for the leader to start the game"}
-        </p>
-        {typeof membersCount === "number" && (
-          <p className="text-white/50 text-sm">Players joined: {membersCount}</p>
-        )}
+    <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex items-center justify-center px-6 relative overflow-hidden">
+      {/* Background logo */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+        <Image
+          src="/riddle-city-logo2.png"
+          alt=""
+          width={600}
+          height={600}
+          className="w-[420px] h-[420px] md:w-[700px] md:h-[700px] object-contain"
+          priority={false}
+        />
       </div>
+
+      {/* Top-left logo link */}
+      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+        <Link href="/">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={60}
+            height={60}
+            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            priority
+          />
+        </Link>
+      </div>
+
+      {/* Client-side poller */}
+      <WaitingClient groupId={groupId} initialTeamName={initialTeamName} />
     </main>
   );
 }
