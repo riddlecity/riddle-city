@@ -1,7 +1,7 @@
 // components/RestrictedSkipRiddleForm.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 interface Props {
   groupId: string;
@@ -11,62 +11,58 @@ interface Props {
 export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
   const [isSkipping, setIsSkipping] = useState(false);
 
-  if (!isLeader) {
-    return null; // Only show to leaders
-  }
+  if (!isLeader) return null; // Only show to leaders
 
   const handleSkip = async () => {
     if (isSkipping) return;
-    
-    setIsSkipping(true);
-    console.log('🔄 Leader initiating skip...');
 
+    setIsSkipping(true);
     try {
-      const response = await fetch('/api/skip-riddle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/skip-riddle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ groupId }),
       });
 
       const data = await response.json();
-      console.log('📡 Skip API response:', data);
 
       if (response.ok && data.success) {
-        // 🚀 IMMEDIATE REDIRECT FOR LEADER - DON'T WAIT FOR REAL-TIME
+        // Immediate redirect for leader
         if (data.completed) {
-          // Adventure completed
-          console.log('🎉 Adventure completed, redirecting leader immediately');
           window.location.href = `/adventure-complete/${groupId}`;
         } else if (data.nextRiddleId) {
-          // Next riddle
-          console.log('⏭️ Redirecting leader to next riddle immediately:', data.nextRiddleId);
           window.location.href = `/riddle/${data.nextRiddleId}`;
         } else {
-          // Fallback - should not happen with your API
-          console.warn('⚠️ Skip successful but no redirect info, waiting for real-time...');
-          // Keep your original behavior as fallback
-          console.log('Skip successful, waiting for real-time update...');
+          // Fallback: let realtime take over
+          setIsSkipping(false);
         }
       } else {
-        console.error('Skip failed:', data.error || 'Unknown error');
+        console.error("Skip failed:", data.error || "Unknown error");
         setIsSkipping(false);
       }
-    } catch (error) {
-      console.error('Skip error:', error);
+    } catch (err) {
+      console.error("Skip error:", err);
       setIsSkipping(false);
     }
   };
 
   return (
-    <button
-      onClick={handleSkip}
-      disabled={isSkipping}
-      className="text-white text-right hover:text-white/80 transition-colors duration-200"
-    >
-      <div className="text-xs text-white/60 mb-1">QR missing? Not working?</div>
-      <div className="text-sm font-medium">
-        {isSkipping ? 'Skipping...' : 'Skip to next riddle'}
-      </div>
-    </button>
+    <div className="text-right">
+      {/* Optional helper line (kept subtle) */}
+      <div className="text-xs text-white/60 mb-2">QR missing? Not working?</div>
+
+      <button
+        onClick={handleSkip}
+        disabled={isSkipping}
+        aria-label="Skip to next riddle"
+        className={`
+          text-sm font-medium rounded-lg px-4 py-2 transition-all duration-200 border
+          bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/40
+          ${isSkipping ? "text-white/60 cursor-not-allowed" : "text-red-500 hover:text-red-400"}
+        `}
+      >
+        {isSkipping ? "Skipping..." : "Skip to next riddle"}
+      </button>
+    </div>
   );
 }

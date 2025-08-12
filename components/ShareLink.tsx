@@ -1,4 +1,3 @@
-// components/ShareLink.tsx
 "use client";
 import { useState, useEffect } from "react";
 
@@ -29,16 +28,21 @@ export default function ShareLink({ groupId }: { groupId: string }) {
 
   return (
     <div className="text-left">
-      {/* Match Skip’s small helper line */}
-      <div className="text-xs text-white/60 mb-1">Invite your team</div>
+      <div className="text-xs text-white/60 mb-2">Invite your team</div>
 
-      {/* Match Skip’s link-like button style */}
       <button
         onClick={handleCopy}
-        className="text-sm font-medium text-white hover:text-white/80 transition-colors duration-200"
-        aria-label="Copy invite link"
+        className={`
+          text-sm font-medium border rounded-lg px-4 py-2 transition-all duration-200
+          bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/40
+          ${copied 
+            ? "text-green-400" 
+            : copyError 
+              ? "text-red-400" 
+              : "text-red-500 hover:text-red-400"}
+        `}
       >
-        {copied ? "Copied!" : copyError ? "Copy failed" : "Copy invite link"}
+        {copied ? "✅ Copied!" : copyError ? "❌ Failed" : "Copy Invite Link"}
       </button>
     </div>
   );
