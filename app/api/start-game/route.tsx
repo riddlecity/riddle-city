@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+export const runtime = "nodejs"; // Stripe needs Node runtime
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export async function GET(req: Request) {
@@ -14,7 +16,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
     }
 
-    // Pull the Stripe session (we only need metadata + email)
+    // Pull session to get the metadata we stored in checkout
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     const md = session.metadata || {};
@@ -28,7 +30,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
     }
 
-    // ✅ Set cookies here (Route Handler is allowed to mutate cookies)
+    // ✅ Set cookies in a Route Handler (allowed)
+    const c = await cookies(); // <-- await is required in Next 15
     const opts = {
       path: "/",
       httpOnly: true as const,
@@ -36,12 +39,11 @@ export async function GET(req: Request) {
       secure: true as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days
     };
-    const c = cookies();
     c.set("group_id", groupId, opts);
     c.set("user_id", userId, opts);
     c.set("team_name", teamName, opts);
 
-    // Redirect to your existing Start page (which still expects session_id & success)
+    // Bounce to your Start page with the same params your page expects
     const redirectUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`;
     return NextResponse.redirect(new URL(redirectUrl, req.url));
   } catch (err) {
