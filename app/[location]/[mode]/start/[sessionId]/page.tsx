@@ -1,6 +1,7 @@
 // app/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { cookies as nextCookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import ShareLink from "@/components/ShareLink";
@@ -18,7 +19,7 @@ function buildLinks(opts: {
 }) {
   const { lat, lng, postcode, w3w } = opts;
 
-  // Prefer accurate coords if available; otherwise use postcode
+  // Prefer precise coords; fall back to postcode
   const query =
     typeof lat === "number" && typeof lng === "number"
       ? `${lat},${lng}`
@@ -127,7 +128,7 @@ export default async function StartPage({ params, searchParams }: Props) {
     }
   }
 
-  // ---------- 7) Reset group to a fresh start ----------
+  // ---------- 7) Reset group to a fresh start (same as before) ----------
   {
     const { data: trackStart } = await supabase
       .from("tracks")
@@ -154,7 +155,7 @@ export default async function StartPage({ params, searchParams }: Props) {
     }
   }
 
-  // ---------- 8) Fire emails (non‑blocking for gameplay) ----------
+  // ---------- 8) Send emails (non‑blocking) ----------
   if (teamLeaderEmail || memberEmails.length > 0) {
     try {
       const effectiveLeaderEmail =
@@ -178,16 +179,27 @@ export default async function StartPage({ params, searchParams }: Props) {
         cache: "no-store",
       });
     } catch {
-      // ignore email errors; do not block game start
+      // ignore email errors
     }
   }
 
-  // ---------- 9) Prepare cookie payload for Start button ----------
-  const cookieData = { groupId, userId, teamName: teamName || "" };
-  const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
-  const riddleHref = `/riddle/${group.current_riddle_id}?game_data=${encodedData}`;
+  // ---------- 9) NEW: set cookies NOW so the leader can resume later ----------
+  {
+    const c = await nextCookies();
+    // httpOnly cookies so your API routes can trust them server-side
+    const opts = {
+      path: "/",
+      httpOnly: true as const,
+      sameSite: "lax" as const,
+      secure: true as const,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    };
+    c.set("group_id", groupId!, opts);
+    c.set("user_id", userId!, opts);
+    c.set("team_name", teamName || "", opts);
+  }
 
-  // ---------- 10) Load minimal start meta from tracks ----------
+  // ---------- 10) Load start meta from tracks ----------
   const { data: trackMeta } = await supabase
     .from("tracks")
     .select("id, name, start_label, start_postcode, start_w3w, start_lat, start_lng")
@@ -207,7 +219,12 @@ export default async function StartPage({ params, searchParams }: Props) {
     w3w: start_w3w || undefined,
   });
 
-  // ---------- 11) Render Start page (no auto‑redirect) ----------
+  // ---------- 11) Prepare Start button (kept your game_data flow for teammates’ devices) ----------
+  const cookieData = { groupId, userId, teamName: teamName || "" };
+  const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
+  const riddleHref = `/riddle/${group.current_riddle_id}?game_data=${encodedData}`;
+
+  // ---------- 12) Render Start page (NO auto‑redirect) ----------
   return (
     <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white relative overflow-hidden flex flex-col">
       {/* Background maze logo */}
@@ -243,10 +260,10 @@ export default async function StartPage({ params, searchParams }: Props) {
       {/* Content */}
       <div className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-4 pb-24 md:pb-28 flex items-center">
         <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6">
-          {/* LEFT: (removed image) now a simple info card */}
+          {/* LEFT: Info card (renamed, tip removed) */}
           <div className="md:col-span-2">
             <div className="bg-white/5 border border-white/15 rounded-2xl p-5">
-              <h2 className="text-xl font-semibold mb-3">Getting there</h2>
+              <h2 className="text-xl font-semibold mb-3">Starting Location</h2>
 
               <div className="flex flex-col gap-3">
                 {googleMapsUrl && (
@@ -266,9 +283,6 @@ export default async function StartPage({ params, searchParams }: Props) {
                   <div className="text-sm">
                     <div className="text-white/50">Postcode</div>
                     <div className="font-medium">{start_postcode}</div>
-                    <div className="text-white/40 text-xs mt-1">
-                      Tip: long‑press to copy
-                    </div>
                   </div>
                 )}
 
