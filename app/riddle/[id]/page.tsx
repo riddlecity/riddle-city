@@ -26,27 +26,23 @@ async function getCookiesWithRetry(maxRetries = 3) {
     const groupId = cookieStore.get("group_id")?.value;
     const userId = cookieStore.get("user_id")?.value;
     const teamName = cookieStore.get("team_name")?.value;
-    
-    // If we have the essential cookies, return them
+
     if (groupId && userId) {
       return { groupId, userId, teamName };
     }
-    
-    // If this isn't the last attempt, wait a bit
     if (attempt < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
-  
   return { groupId: undefined, userId: undefined, teamName: undefined };
 }
 
 // Unauthorized access page component
 function UnauthorizedPage() {
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
-      {/* Background maze logo - more visible red tint */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-15 z-0">
+    <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
+      {/* Background maze logo */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-15 z-0 pointer-events-none">
         <Image
           src="/riddle-city-logo2.png"
           alt=""
@@ -59,15 +55,15 @@ function UnauthorizedPage() {
 
       <div className="text-center relative z-10 max-w-md">
         <div className="text-6xl mb-6">🔒</div>
-        
+
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          You Haven't Unlocked This Yet
+          You Haven&apos;t Unlocked This Yet
         </h1>
-        
+
         <p className="text-lg text-white/70 mb-8">
           This riddle is part of an active adventure. Start your journey to unlock the mysteries!
         </p>
-        
+
         <div className="space-y-4">
           <Link
             href="/"
@@ -75,7 +71,7 @@ function UnauthorizedPage() {
           >
             What is Riddle City? Find Out
           </Link>
-          
+
           <Link
             href="/locations"
             className="block w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-white/20 hover:border-white/40"
@@ -90,13 +86,15 @@ function UnauthorizedPage() {
 
 export default async function RiddlePage({ params }: Props) {
   const { id } = await params;
-  
+
   const supabase = await createClient();
 
-  // UPDATED: Add manual answer fields to the query
+  // Add manual answer fields to the query
   const { data, error } = await supabase
     .from("riddles")
-    .select("riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id")
+    .select(
+      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id"
+    )
     .eq("id", id)
     .single();
 
@@ -104,22 +102,27 @@ export default async function RiddlePage({ params }: Props) {
     notFound();
   }
 
-  // UPDATED: Destructure the new fields
-  const { riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id } = data;
+  const {
+    riddle_text,
+    qr_hint,
+    order_index,
+    track_id,
+    has_manual_answer,
+    answer,
+    next_riddle_id,
+  } = data;
 
   // Get user info from cookies with retry logic
   const { groupId, userId, teamName } = await getCookiesWithRetry();
 
-  // Check if user has valid access - but be more lenient for payment flow
+  // If cookies missing, show loading screen so CookieHandler can set them
   if (!groupId || !userId) {
-    // If no cookies but there might be game_data in URL, show the page and let CookieHandler fix it
-    // Only show unauthorized if this is clearly not a payment redirect
     return (
-      <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
+      <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
         <CookieHandler />
-        
-        {/* Background maze logo - original colors, more visible */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0">
+
+        {/* Background maze logo */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0 pointer-events-none">
           <Image
             src="/riddle-city-logo2.png"
             alt=""
@@ -160,7 +163,6 @@ export default async function RiddlePage({ params }: Props) {
     .single();
 
   if (group && group.current_riddle_id !== id) {
-    // Redirect to the correct riddle
     redirect(`/riddle/${group.current_riddle_id}`);
   }
 
@@ -168,17 +170,17 @@ export default async function RiddlePage({ params }: Props) {
   let currentRiddleOrder = order_index;
   let totalRiddles = 0;
   let isLastRiddle = false;
-  
+
   if (groupId && userId) {
     // Get total riddles for this track
     const { data: riddleCount } = await supabase
       .from("riddles")
-      .select("id", { count: 'exact' })
+      .select("id", { count: "exact" })
       .eq("track_id", track_id);
-    
+
     totalRiddles = riddleCount?.length || 0;
 
-    // UPDATED: Use next_riddle_id from query instead of separate check
+    // Use next_riddle_id to determine last step
     isLastRiddle = !next_riddle_id;
   }
 
@@ -191,30 +193,30 @@ export default async function RiddlePage({ params }: Props) {
       .eq("group_id", groupId)
       .eq("user_id", userId)
       .single();
-    
+
     isLeader = memberData?.is_leader || false;
   }
 
-  // If this is the last riddle, check if group is already finished and redirect to completion
+  // If this is the last riddle and group finished, go to completion
   if (isLastRiddle && groupId) {
     const { data: groupStatus } = await supabase
       .from("groups")
       .select("finished")
       .eq("id", groupId)
       .single();
-    
+
     if (groupStatus?.finished) {
       redirect(`/adventure-complete/${groupId}`);
     }
   }
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white relative overflow-hidden flex flex-col">
+    <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white relative overflow-hidden flex flex-col">
       {/* Handle cookie setting from URL parameters */}
       <CookieHandler />
-      
-      {/* Background maze logo - original colors, more visible */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0">
+
+      {/* Background maze logo */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0 pointer-events-none">
         <Image
           src="/riddle-city-logo2.png"
           alt=""
@@ -228,7 +230,7 @@ export default async function RiddlePage({ params }: Props) {
       {/* Game Progress - At the very top (NO TIMER) */}
       {groupId && (
         <div className="w-full px-4 pt-4 z-10">
-          <GameProgress 
+          <GameProgress
             currentRiddleOrder={currentRiddleOrder}
             totalRiddles={totalRiddles}
           />
@@ -238,14 +240,18 @@ export default async function RiddlePage({ params }: Props) {
       {/* Main content area - riddle centered in logo */}
       <div className="flex-1 flex items-center justify-center px-4 z-10">
         <div className="w-full max-w-4xl text-center">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight drop-shadow-lg mb-8">
+          <h1
+            className="font-bold text-white leading-tight drop-shadow-lg mb-8
+                       text-[clamp(1.5rem,6vw,2.5rem)]
+                       md:text-[clamp(2rem,4vw,3rem)]"
+          >
             {riddle_text}
           </h1>
-          
-          {/* NEW: Manual Answer Form - Shows when has_manual_answer is true */}
+
+          {/* Manual Answer Form */}
           {has_manual_answer && groupId && (
             <div className="mt-8 mb-8">
-              <ManualAnswerForm 
+              <ManualAnswerForm
                 riddleId={id}
                 groupId={groupId}
                 correctAnswer={answer}
@@ -254,8 +260,8 @@ export default async function RiddlePage({ params }: Props) {
               />
             </div>
           )}
-          
-          {/* Hint section - right below riddle */}
+
+          {/* Hint section */}
           {qr_hint && (
             <div className="mt-8">
               <details className="group">
@@ -272,14 +278,17 @@ export default async function RiddlePage({ params }: Props) {
       </div>
 
       {/* Bottom section - copy link and skip */}
-      <div className="relative z-10 p-4 flex justify-between items-end">
+      <div
+        className="relative z-10 p-4 flex justify-between items-end"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+      >
         {/* Copy Link - Bottom Left */}
         {groupId && isLeader && !isLastRiddle && (
           <div className="flex-1">
             <ShareLink groupId={groupId} />
           </div>
         )}
-        
+
         {/* Skip button - Bottom Right */}
         {groupId && userId && isLeader && (
           <div className="flex-1 flex justify-end">

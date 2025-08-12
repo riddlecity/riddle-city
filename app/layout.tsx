@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+// app/layout.tsx
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import GameLayoutWrapper from "@/components/GameLayoutWrapper";
@@ -16,10 +17,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Riddle City - Your Mystery Awaits",
-  description: "Puzzle-based adventures through your town or city. Scan QR codes, solve riddles, and explore with friends.",
+  description:
+    "Puzzle-based adventures through your town or city. Scan QR codes, solve riddles, and explore with friends.",
   icons: {
     icon: "/favicon-custom.ico",
   },
+};
+
+// ✅ Make the viewport fill behind notches and handle mobile URL bars correctly
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -29,17 +38,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="shortcut icon" href="/favicon-custom.ico" />
-        <link rel="icon" href="/favicon-custom.ico" />
-      </head>
+      {/* Tip: You don't need a manual <head> for the favicon — the metadata.icons above handles it */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-black`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black flex flex-col
+                    min-h-[100svh] md:min-h-dvh`}
       >
         <GameLayoutWrapper>
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
           <Footer />
         </GameLayoutWrapper>
       </body>
