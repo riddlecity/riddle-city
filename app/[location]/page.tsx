@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
 
 interface Props {
   params: Promise<{ location: string }>;
@@ -12,15 +13,44 @@ interface Props {
 export default function LocationPage({ params }: Props) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const location = resolvedParams.location.charAt(0).toUpperCase() + resolvedParams.location.slice(1);
-  
+  const locationSlug = resolvedParams.location; // e.g. "barnsley"
+  const location =
+    locationSlug.charAt(0).toUpperCase() + locationSlug.slice(1);
+
+  const [dateStartLabel, setDateStartLabel] = useState<string | null>(null);
+  const [pubStartLabel, setPubStartLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const fetchLabels = async () => {
+      // For Date Day Adventure
+      const { data: dateData } = await supabase
+        .from("tracks")
+        .select("start_label")
+        .eq("id", `date_${locationSlug}`)
+        .maybeSingle();
+      setDateStartLabel(dateData?.start_label ?? null);
+
+      // For Pub Crawl
+      const { data: pubData } = await supabase
+        .from("tracks")
+        .select("start_label")
+        .eq("id", `pub_${locationSlug}`)
+        .maybeSingle();
+      setPubStartLabel(pubData?.start_label ?? null);
+    };
+
+    fetchLabels();
+  }, [locationSlug]);
+
   const handleModeSelect = (mode: string) => {
     router.push(`/${resolvedParams.location}/${mode}`);
   };
-  
+
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
-      {/* Logo in consistent top-left position */}
+      {/* Logo */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
         <Link href="/">
           <Image
@@ -34,7 +64,7 @@ export default function LocationPage({ params }: Props) {
         </Link>
       </div>
 
-      {/* Back link in top-right */}
+      {/* Back link */}
       <div className="absolute top-6 right-6">
         <Link
           href="/locations"
@@ -46,21 +76,21 @@ export default function LocationPage({ params }: Props) {
         </Link>
       </div>
 
-      {/* Main content centered */}
+      {/* Main content */}
       <div className="w-full text-center">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 text-center tracking-tight leading-tight">
           Riddle City {location}
         </h1>
         <p className="text-lg text-white/80 mb-12">Choose Your Adventure</p>
-        
+
         <div className="w-full max-w-md mx-auto space-y-6">
           {/* Date Day Adventure */}
           <button
             onClick={() => handleModeSelect("date")}
-            className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group"
+            className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left"
           >
             <div className="flex items-center justify-between">
-              <div className="text-left">
+              <div>
                 <div className="text-lg font-bold">💘 Date Day Adventure</div>
                 <div className="text-sm font-normal text-pink-100 mt-1">
                   Perfect for couples exploring together
@@ -68,30 +98,83 @@ export default function LocationPage({ params }: Props) {
               </div>
               <div className="text-right">
                 <div className="text-xl font-bold">£15</div>
-                <div className="text-xs font-normal text-pink-100">per person</div>
+                <div className="text-xs font-normal text-pink-100">
+                  per person
+                </div>
               </div>
             </div>
+
+            {/* Starting location */}
+            {dateStartLabel && (
+              <div className="mt-3 pt-3 border-t border-white/20">
+                <span className="text-xs uppercase tracking-wide text-white/70">
+                  Starting location:
+                </span>{" "}
+                <span className="text-sm font-semibold">{dateStartLabel}</span>
+                <div className="text-xs text-white/60 mt-1">
+                  Head to <strong>{dateStartLabel}</strong> to be ready for your
+                  adventure
+                </div>
+              </div>
+            )}
           </button>
-          
-          {/* Pub Crawl - Coming Soon */}
-          <div className="w-full bg-gray-600/30 text-gray-400 font-medium py-6 px-8 rounded-xl border border-gray-500/30 cursor-not-allowed">
+
+          {/* Pub Crawl Adventure */}
+          <div
+            className={`w-full ${
+              pubStartLabel
+                ? "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 cursor-pointer"
+                : "bg-gray-600/30 cursor-not-allowed"
+            } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-left`}
+            onClick={() =>
+              pubStartLabel ? handleModeSelect("standard") : null
+            }
+          >
             <div className="flex items-center justify-between">
-              <div className="text-left">
+              <div>
                 <div className="text-lg font-bold">🍻 Pub Crawl Adventure</div>
-                <div className="text-sm font-normal text-gray-500 mt-1">
+                <div className="text-sm font-normal text-yellow-100 mt-1">
                   Explore local pubs and bars
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-gray-500">Coming Soon</div>
+                {pubStartLabel ? (
+                  <>
+                    <div className="text-xl font-bold">£20</div>
+                    <div className="text-xs font-normal text-yellow-100">
+                      per person
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-lg font-bold text-gray-500">
+                    Coming Soon
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Starting location */}
+            {pubStartLabel && (
+              <div className="mt-3 pt-3 border-t border-white/20">
+                <span className="text-xs uppercase tracking-wide text-white/70">
+                  Starting location:
+                </span>{" "}
+                <span className="text-sm font-semibold">{pubStartLabel}</span>
+                <div className="text-xs text-white/60 mt-1">
+                  Head to <strong>{pubStartLabel}</strong> to be ready for your
+                  adventure
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Additional info */}
+        {/* Extra info */}
         <div className="mt-8 text-center text-white/60 text-sm max-w-lg mx-auto">
-          <p>🎯 Solve riddles, scan QR codes, and explore {location} in a whole new way!</p>
+          <p>
+            🎯 Solve riddles, scan QR codes, and explore {location} in a whole
+            new way!
+          </p>
         </div>
       </div>
     </main>
