@@ -1,8 +1,11 @@
 // components/ResumeGameBanner.tsx
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+
+interface ResumeGameBannerProps {
+  onVisibilityChange?: (visible: boolean) => void;
+}
 
 interface ActiveGameResponse {
   isActive: boolean;
@@ -12,7 +15,7 @@ interface ActiveGameResponse {
   gameStarted?: string;
 }
 
-export default function ResumeGameBanner() {
+export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBannerProps) {
   const [visible, setVisible] = useState(false);
   const [teamName, setTeamName] = useState<string>('Your Team');
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -28,6 +31,11 @@ export default function ResumeGameBanner() {
     return null;
   };
 
+  const updateVisibility = (newVisible: boolean) => {
+    setVisible(newVisible);
+    onVisibilityChange?.(newVisible);
+  };
+
   const check = async () => {
     try {
       const cGroup = getCookie('group_id');
@@ -35,31 +43,33 @@ export default function ResumeGameBanner() {
       const cTeam = getCookie('team_name') || 'Your Team';
 
       if (!cGroup || !cUser) {
-        setVisible(false);
+        updateVisibility(false);
         setLoading(false);
         return;
       }
 
       const res = await fetch(`/api/check-active-game?groupId=${encodeURIComponent(cGroup)}&userId=${encodeURIComponent(cUser)}`, { cache: 'no-store' });
+      
       if (!res.ok) {
-        setVisible(false);
+        updateVisibility(false);
         setLoading(false);
         return;
       }
-      const data: ActiveGameResponse = await res.json();
 
+      const data: ActiveGameResponse = await res.json();
+      
       if (data.isActive && !data.isFinished) {
         setTeamName(cTeam);
         setGroupId(data.groupId ?? cGroup);
         setCurrentRiddleId(data.currentRiddleId ?? null);
-        // respect “hide for this tab” if user dismissed earlier
+        // respect "hide for this tab" if user dismissed earlier
         const hidden = sessionStorage.getItem('resume_banner_hidden') === '1';
-        setVisible(!hidden);
+        updateVisibility(!hidden);
       } else {
-        setVisible(false);
+        updateVisibility(false);
       }
     } catch {
-      setVisible(false);
+      updateVisibility(false);
     } finally {
       setLoading(false);
     }
@@ -73,13 +83,22 @@ export default function ResumeGameBanner() {
     };
   }, []);
 
-  if (loading || !visible || !groupId) return null;
+  if (loading || !visible || !groupId) {
+    // Notify parent that banner is not visible
+    useEffect(() => {
+      if (!loading) {
+        onVisibilityChange?.(false);
+      }
+    }, [loading, onVisibilityChange]);
+    
+    return null;
+  }
 
   const href = currentRiddleId ? `/riddle/${currentRiddleId}` : `/waiting/${groupId}`;
 
   const dismiss = () => {
     sessionStorage.setItem('resume_banner_hidden', '1');
-    setVisible(false);
+    updateVisibility(false);
   };
 
   return (
@@ -97,7 +116,6 @@ export default function ResumeGameBanner() {
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <Link
               href={href}
@@ -106,7 +124,6 @@ export default function ResumeGameBanner() {
               <span>🚀</span>
               Resume Game
             </Link>
-
             <button
               onClick={dismiss}
               className="text-white/90 hover:text-white transition-colors duration-200 p-2"
