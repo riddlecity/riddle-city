@@ -5,26 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import ShareLink from "@/components/ShareLink";
 
-// Tiny client button for copying the postcode
-function CopyPostcodeButton({ postcode }: { postcode: string }) {
-  "use client";
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(postcode);
-    } catch {}
-  };
-  return (
-    <button
-      onClick={handleCopy}
-      className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20
-                 border border-white/20 hover:border-white/40
-                 text-white/90 transition-colors text-sm"
-    >
-      Copy Postcode
-    </button>
-  );
-}
-
 interface Props {
   params: Promise<{ location: string; mode: string; sessionId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -38,6 +18,7 @@ function buildLinks(opts: {
 }) {
   const { lat, lng, postcode, w3w } = opts;
 
+  // Prefer accurate coords if available; otherwise use postcode
   const query =
     typeof lat === "number" && typeof lng === "number"
       ? `${lat},${lng}`
@@ -58,59 +39,46 @@ function buildLinks(opts: {
 }
 
 export default async function StartPage({ params, searchParams }: Props) {
-  console.log("🚀 START PAGE: Beginning payment verification process...");
-
+  // ---------- 0) Setup ----------
   const awaitedParams = await params;
   const awaitedSearchParams = await searchParams;
-
   const supabase = await createClient();
-  const stripeSessionId = awaitedSearchParams.session_id as string;
-  const successFlag = awaitedSearchParams.success;
 
+  const stripeSessionId = awaitedSearchParams.session_id as string;
+  const successFlag = awaitedSearchParams.success as string | undefined;
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || "https://riddle-city.vercel.app";
 
-  // 1) Validate success flags
+  // ---------- 1) Validate success flags ----------
   if (!stripeSessionId || successFlag !== "true") {
-    console.error("❌ START PAGE: Invalid payment confirmation", {
-      stripeSessionId,
-      successFlag,
-    });
     redirect("/locations");
   }
 
-  // 2) Fetch Stripe session via your API
+  // ---------- 2) Fetch Stripe session ----------
   let stripeSession: any;
   try {
     const stripeUrl = `${baseUrl}/api/stripe-session?session_id=${stripeSessionId}`;
     const stripeResponse = await fetch(stripeUrl, { cache: "no-store" });
     if (!stripeResponse.ok) {
-      const errorText = await stripeResponse.text();
-      console.error("❌ START PAGE: Stripe error:", errorText);
       redirect("/locations");
     }
     stripeSession = await stripeResponse.json();
-  } catch (error) {
-    console.error("💥 START PAGE: Error fetching Stripe session:", error);
+  } catch {
     redirect("/locations");
   }
 
-  // 3) Check paid
+  // ---------- 3) Check payment ----------
   if (stripeSession.payment_status !== "paid") {
-    console.error(
-      "❌ START PAGE: Payment not completed:",
-      stripeSession.payment_status
-    );
     redirect("/locations");
   }
 
-  // 4) Extract metadata
+  // ---------- 4) Extract metadata ----------
   const groupId = stripeSession.metadata?.group_id as string | undefined;
   const userId = stripeSession.metadata?.user_id as string | undefined;
   const teamName = (stripeSession.metadata?.team_name as string) || "";
   const playerCount = stripeSession.metadata?.player_count as string | undefined;
-  const mLocation = stripeSession.metadata?.location;
-  const mMode = stripeSession.metadata?.mode;
+  const mLocation = stripeSession.metadata?.location as string | undefined;
+  const mMode = stripeSession.metadata?.mode as string | undefined;
 
   // Emails
   const teamLeaderEmail = stripeSession.customer_details?.email || "";
@@ -121,14 +89,10 @@ export default async function StartPage({ params, searchParams }: Props) {
     : [];
 
   if (!groupId || !userId) {
-    console.error("❌ START PAGE: Missing essential metadata", {
-      groupId,
-      userId,
-    });
     redirect("/locations");
   }
 
-  // 5) Verify group belongs to this user
+  // ---------- 5) Verify group ----------
   let group: {
     id: string;
     current_riddle_id: string | null;
@@ -143,18 +107,13 @@ export default async function StartPage({ params, searchParams }: Props) {
       .eq("id", groupId)
       .single();
 
-    if (error || !data) {
-      console.error("❌ START PAGE: Group not found / DB error", error);
-      redirect("/locations");
-    }
-    if (data.created_by !== userId) {
-      console.error("❌ START PAGE: User is not the creator of this group");
+    if (error || !data || data.created_by !== userId) {
       redirect("/locations");
     }
     group = data;
   }
 
-  // 6) Verify leader
+  // ---------- 6) Verify leader ----------
   {
     const { data, error } = await supabase
       .from("group_members")
@@ -164,12 +123,11 @@ export default async function StartPage({ params, searchParams }: Props) {
       .single();
 
     if (error || !data?.is_leader) {
-      console.error("❌ START PAGE: User is not marked as leader", error, data);
       redirect("/locations");
     }
   }
 
-  // 7) Reset group to a fresh start (start riddle, clear finished)
+  // ---------- 7) Reset group to a fresh start ----------
   {
     const { data: trackStart } = await supabase
       .from("tracks")
@@ -190,14 +148,13 @@ export default async function StartPage({ params, searchParams }: Props) {
       .eq("id", groupId);
 
     if (updateError) {
-      console.error("❌ START PAGE: Failed to reset group", updateError);
       redirect("/locations");
     } else {
       group.current_riddle_id = startRiddleId;
     }
   }
 
-  // 8) Fire emails (non‑blocking for gameplay)
+  // ---------- 8) Fire emails (non‑blocking for gameplay) ----------
   if (teamLeaderEmail || memberEmails.length > 0) {
     try {
       const effectiveLeaderEmail =
@@ -220,22 +177,20 @@ export default async function StartPage({ params, searchParams }: Props) {
         }),
         cache: "no-store",
       });
-    } catch (emailError) {
-      console.warn("⚠️ START PAGE: Email error (continuing)", emailError);
+    } catch {
+      // ignore email errors; do not block game start
     }
   }
 
-  // 9) Prepare cookie payload for Start button
+  // ---------- 9) Prepare cookie payload for Start button ----------
   const cookieData = { groupId, userId, teamName: teamName || "" };
   const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
   const riddleHref = `/riddle/${group.current_riddle_id}?game_data=${encodedData}`;
 
-  // 10) Load minimal start meta from tracks (incl. your hosted image)
+  // ---------- 10) Load minimal start meta from tracks ----------
   const { data: trackMeta } = await supabase
     .from("tracks")
-    .select(
-      "id, name, start_label, start_postcode, start_w3w, start_lat, start_lng, start_image_url"
-    )
+    .select("id, name, start_label, start_postcode, start_w3w, start_lat, start_lng")
     .eq("id", group.track_id)
     .single();
 
@@ -244,7 +199,6 @@ export default async function StartPage({ params, searchParams }: Props) {
   const start_w3w = (trackMeta?.start_w3w as string | null) ?? null;
   const start_lat = (trackMeta?.start_lat as number | null) ?? null;
   const start_lng = (trackMeta?.start_lng as number | null) ?? null;
-  const start_image_url = (trackMeta?.start_image_url as string | null) ?? null;
 
   const { googleMapsUrl, w3wUrl } = buildLinks({
     lat: start_lat,
@@ -253,7 +207,7 @@ export default async function StartPage({ params, searchParams }: Props) {
     w3w: start_w3w || undefined,
   });
 
-  // 11) Render Start page (no auto-redirect)
+  // ---------- 11) Render Start page (no auto‑redirect) ----------
   return (
     <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white relative overflow-hidden flex flex-col">
       {/* Background maze logo */}
@@ -264,6 +218,7 @@ export default async function StartPage({ params, searchParams }: Props) {
           width={600}
           height={600}
           className="w-[480px] h-[480px] md:w-[720px] md:h-[720px] object-contain"
+          priority={false}
         />
       </div>
 
@@ -281,78 +236,69 @@ export default async function StartPage({ params, searchParams }: Props) {
           <span className="hidden sm:inline text-white/80">Riddle City</span>
         </Link>
         <div className="hidden sm:block">
-          <ShareLink groupId={groupId} />
+          <ShareLink groupId={groupId!} />
         </div>
       </div>
 
       {/* Content */}
       <div className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-4 pb-24 md:pb-28 flex items-center">
         <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-6">
-          {/* Image card (your own hosted image) */}
+          {/* LEFT: (removed image) now a simple info card */}
           <div className="md:col-span-2">
-            <div className="bg-white/5 border border-white/15 rounded-2xl overflow-hidden">
-              {start_image_url ? (
-                <Image
-                  src={start_image_url}
-                  alt={start_label}
-                  width={1200}
-                  height={800}
-                  className="w-full h-64 md:h-80 object-cover"
-                />
-              ) : (
-                <div className="w-full h-64 md:h-80 flex items-center justify-center text-white/40">
-                  No start image provided
-                </div>
-              )}
+            <div className="bg-white/5 border border-white/15 rounded-2xl p-5">
+              <h2 className="text-xl font-semibold mb-3">Getting there</h2>
 
-              <div className="p-4 border-t border-white/10 flex items-center gap-3">
+              <div className="flex flex-col gap-3">
                 {googleMapsUrl && (
                   <a
                     href={googleMapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20
-                               border border-white/20 hover:border-white/40 text-white/90 text-sm transition"
+                    className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20
+                               border border-white/20 hover:border-white/40
+                               text-white/90 transition-colors text-sm w-max"
                   >
                     Open in Google Maps
                   </a>
                 )}
-                {start_postcode && <CopyPostcodeButton postcode={start_postcode} />}
-              </div>
-            </div>
-          </div>
 
-          {/* Details + Start */}
-          <div className="md:col-span-3 flex flex-col gap-4">
-            <div className="bg-white/5 border border-white/15 rounded-2xl p-5">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                {start_label}
-              </h1>
-              <p className="text-white/70 mb-4">
-                Head to the starting location below. When your team is together, tap Start.
-              </p>
-
-              <div className="space-y-3 text-sm">
                 {start_postcode && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-white/50 w-24">Postcode</span>
-                    <span className="text-white/90">{start_postcode}</span>
+                  <div className="text-sm">
+                    <div className="text-white/50">Postcode</div>
+                    <div className="font-medium">{start_postcode}</div>
+                    <div className="text-white/40 text-xs mt-1">
+                      Tip: long‑press to copy
+                    </div>
                   </div>
                 )}
-                {start_w3w && (
-                  <div className="flex items-start gap-2">
-                    <span className="text-white/50 w-24">what3words</span>
+
+                {w3wUrl && start_w3w && (
+                  <div className="text-sm">
+                    <div className="text-white/50">what3words</div>
                     <a
-                      href={w3wUrl ?? "#"}
+                      href={w3wUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sky-300 hover:text-sky-200 underline"
+                      className="text-sky-300 hover:text-sky-200 underline font-medium"
                     >
                       ///{start_w3w}
                     </a>
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Details + Start */}
+          <div className="md:col-span-3 flex flex-col gap-4">
+            <div className="bg-white/5 border border-white/15 rounded-2xl p-5">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                {start_label}
+              </h1>
+              <p className="text-white/70">
+                Head to the starting location. When your team is together, tap
+                Start to begin.
+              </p>
             </div>
 
             {/* Start button card */}
@@ -377,7 +323,7 @@ export default async function StartPage({ params, searchParams }: Props) {
 
             {/* Mobile: Share link below */}
             <div className="sm:hidden">
-              <ShareLink groupId={groupId} />
+              <ShareLink groupId={groupId!} />
             </div>
           </div>
         </div>
