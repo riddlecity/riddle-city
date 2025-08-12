@@ -5,12 +5,12 @@ import Link from "next/link";
 import WaitingClient from "@/components/WaitingClient";
 
 interface Props {
-  params: { groupId: string };
+  params: Promise<{ groupId: string }>; // Changed: params is now a Promise in Next.js 15
 }
 
 export default async function WaitingPage({ params }: Props) {
-  const { groupId } = params;
-
+  const { groupId } = await params; // Changed: await the params Promise
+  
   // Optional: get initial team name so the page renders something immediately
   const supabase = await createClient();
   const { data: group } = await supabase
