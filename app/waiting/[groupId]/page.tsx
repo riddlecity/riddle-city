@@ -1,56 +1,68 @@
-// app/waiting/[groupId]/page.tsx
-import { createClient } from "@/lib/supabase/server";
-import Image from "next/image";
-import Link from "next/link";
-import WaitingClient from "@/components/WaitingClient";
+// components/WaitingClient.tsx
+"use client";
 
-interface Props {
-  params: Promise<{ groupId: string }>;
-}
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default async function WaitingPage({ params }: Props) {
-  const { groupId } = await params;
+type Props = {
+  groupId: string;
+  initialTeamName?: string;
+};
 
-  // Optional: get initial team name so the page renders something immediately
-  const supabase = await createClient();
-  const { data: group } = await supabase
-    .from("groups")
-    .select("team_name")
-    .eq("id", groupId)
-    .single();
+export default function WaitingClient({ groupId, initialTeamName = "Your Team" }: Props) {
+  const router = useRouter();
+  const [teamName, setTeamName] = useState(initialTeamName);
+  const [membersCount, setMembersCount] = useState<number | null>(null);
+  const [started, setStarted] = useState<boolean>(false);
+  const [currentRiddleId, setCurrentRiddleId] = useState<string | null>(null);
+  const ticking = useRef<NodeJS.Timeout | null>(null);
 
-  const initialTeamName = group?.team_name || "Your Team";
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch(`/api/group-status?groupId=${encodeURIComponent(groupId)}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (cancelled) return;
+
+        setTeamName(data.teamName ?? "Your Team");
+        setMembersCount(typeof data.membersCount === "number" ? data.membersCount : null);
+        setStarted(Boolean(data.started));
+        setCurrentRiddleId(data.currentRiddleId ?? null);
+
+        if (data.started && data.currentRiddleId) {
+          router.replace(`/riddle/${data.currentRiddleId}`);
+        }
+      } catch {
+        // ignore transient errors
+      }
+    };
+
+    // initial + poll every 2s
+    fetchStatus();
+    ticking.current = setInterval(fetchStatus, 2000);
+
+    return () => {
+      cancelled = true;
+      if (ticking.current) clearInterval(ticking.current);
+    };
+  }, [groupId, router]);
 
   return (
-    <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex items-center justify-center px-6 relative overflow-hidden">
-      {/* Background logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
-        <Image
-          src="/riddle-city-logo2.png"
-          alt=""
-          width={600}
-          height={600}
-          className="w-[420px] h-[420px] md:w-[700px] md:h-[700px] object-contain"
-          priority={false}
-        />
-      </div>
-
-      {/* Top-left logo link */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
-        <Link href="/">
-          <Image
-            src="/riddle-city-logo.png"
-            alt="Riddle City Logo"
-            width={60}
-            height={60}
-            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
-            priority
-          />
-        </Link>
-      </div>
-
-      {/* Client-side poller */}
-      <WaitingClient groupId={groupId} initialTeamName={initialTeamName} />
-    </main>
+    <div className="z-10 max-w-md w-full text-center space-y-6">
+      <div className="text-6xl">⏳</div>
+      <h1 className="text-2xl font-bold">{teamName}</h1>
+      <p className="text-white/70">
+        {started ? "Loading your first riddle..." : "Waiting for the leader to start the game"}
+      </p>
+      {typeof membersCount === "number" && (
+        <p className="text-white/50 text-sm">Players joined: {membersCount}</p>
+      )}
+    </div>
   );
 }
