@@ -155,19 +155,7 @@ export default async function StartPage({ params, searchParams }: Props) {
     }
   }
 
-  // ---------- 7.5) SET COOKIES IMMEDIATELY AFTER PAYMENT VALIDATION ----------
-  const cookieData = { groupId, userId, teamName: teamName || "" };
-  const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
   
-  // Set the session cookie so leader can navigate away and come back
-  cookieStore.set("riddlecity-session", encodedData, {
-    httpOnly: false, // Allow client-side access for homepage detection
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 48 * 60 * 60, // 48 hours (matches your game expiry)
-    path: "/"
-  });
-
   // ---------- 8) Send emails (non‑blocking) ----------
   if (teamLeaderEmail || memberEmails.length > 0) {
     try {

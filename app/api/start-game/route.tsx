@@ -18,8 +18,8 @@ export async function GET(req: Request) {
 
     // Pull session to get the metadata we stored in checkout
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-
     const md = session.metadata || {};
+    
     const groupId = md.group_id;
     const userId = md.user_id;
     const teamName = md.team_name || "";
@@ -39,13 +39,28 @@ export async function GET(req: Request) {
       secure: true as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days
     };
+
+    // Set your original cookies
     c.set("group_id", groupId, opts);
     c.set("user_id", userId, opts);
     c.set("team_name", teamName, opts);
 
-    // Bounce to your Start page with the same params your page expects
+    // ✨ NEW: Set the session cookie for rejoin functionality
+    const cookieData = { groupId, userId, teamName };
+    const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
+    
+    c.set("riddlecity-session", encodedData, {
+      httpOnly: false, // Allow client-side access for homepage detection
+      secure: true,
+      sameSite: "lax" as const,
+      maxAge: 48 * 60 * 60, // 48 hours (matches game expiry)
+      path: "/"
+    });
+
+    // Redirect to start page
     const redirectUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`;
     return NextResponse.redirect(new URL(redirectUrl, req.url));
+
   } catch (err) {
     console.error("start-game route error:", err);
     return NextResponse.json({ error: "Failed to start game" }, { status: 500 });
