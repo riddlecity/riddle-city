@@ -1,6 +1,7 @@
 // app/[location]/[mode]/start/[sessionId]/page.tsx
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import ShareLink from "@/components/ShareLink";
@@ -42,6 +43,7 @@ export default async function StartPage({ params, searchParams }: Props) {
   const awaitedParams = await params;
   const awaitedSearchParams = await searchParams;
   const supabase = await createClient();
+  const cookieStore = await cookies();
 
   const stripeSessionId = awaitedSearchParams.session_id as string;
   const successFlag = awaitedSearchParams.success as string | undefined;
@@ -153,6 +155,19 @@ export default async function StartPage({ params, searchParams }: Props) {
     }
   }
 
+  // ---------- 7.5) SET COOKIES IMMEDIATELY AFTER PAYMENT VALIDATION ----------
+  const cookieData = { groupId, userId, teamName: teamName || "" };
+  const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
+  
+  // Set the session cookie so leader can navigate away and come back
+  cookieStore.set("riddlecity-session", encodedData, {
+    httpOnly: false, // Allow client-side access for homepage detection
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 48 * 60 * 60, // 48 hours (matches your game expiry)
+    path: "/"
+  });
+
   // ---------- 8) Send emails (non‑blocking) ----------
   if (teamLeaderEmail || memberEmails.length > 0) {
     try {
@@ -205,10 +220,8 @@ export default async function StartPage({ params, searchParams }: Props) {
     w3w: start_w3w || undefined,
   });
 
-  // ---------- 10) Prepare Start button (kept your game_data flow) ----------
-  const cookieData = { groupId, userId, teamName: teamName || "" };
-  const encodedData = Buffer.from(JSON.stringify(cookieData)).toString("base64");
-  const riddleHref = `/riddle/${group.current_riddle_id}?game_data=${encodedData}`;
+  // ---------- 10) Prepare Start button (simplified - no need for game_data now) ----------
+  const riddleHref = `/riddle/${group.current_riddle_id}`;
 
   // ---------- 11) Render ----------
   return (

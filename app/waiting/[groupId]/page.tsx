@@ -1,26 +1,98 @@
 // app/waiting/[groupId]/page.tsx
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import WaitingClient from "@/components/WaitingClient";
 
 interface Props {
-  params: Promise<{ groupId: string }>; // Changed: params is now a Promise in Next.js 15
+  params: Promise<{ groupId: string }>;
+}
+
+interface SessionData {
+  groupId: string;
+  userId: string;
+  teamName: string;
 }
 
 export default async function WaitingPage({ params }: Props) {
-  const { groupId } = await params; // Changed: await the params Promise
-  
-  // Optional: get initial team name so the page renders something immediately
+  const { groupId } = await params;
+  const cookieStore = await cookies();
   const supabase = await createClient();
-  const { data: group } = await supabase
+  
+  // Parse session cookie
+  let sessionData: SessionData | null = null;
+  try {
+    const sessionCookie = cookieStore.get("riddlecity-session")?.value;
+    if (sessionCookie) {
+      const decoded = Buffer.from(sessionCookie, 'base64').toString('utf8');
+      sessionData = JSON.parse(decoded);
+    }
+  } catch (e) {
+    console.warn("Invalid session cookie in waiting page");
+  }
+  
+  // If no valid session or wrong group, redirect
+  if (!sessionData || sessionData.groupId !== groupId) {
+    console.warn("No valid session for waiting page, redirecting to join");
+    redirect(`/join/${groupId}`);
+  }
+  
+  // Fetch current group state
+  const { data: group, error: groupError } = await supabase
     .from("groups")
-    .select("team_name")
+    .select(`
+      id,
+      team_name,
+      current_riddle_id,
+      game_started,
+      finished,
+      active,
+      paid,
+      player_limit,
+      group_members(user_id, is_leader)
+    `)
     .eq("id", groupId)
     .single();
-
-  const initialTeamName = group?.team_name || "Your Team";
-
+  
+  if (groupError || !group) {
+    console.error("Group not found in waiting page:", groupError);
+    redirect("/locations");
+  }
+  
+  // Check if group is still valid
+  if (!group.active || !group.paid) {
+    redirect("/locations");
+  }
+  
+  // If game has finished, redirect to completion
+  if (group.finished) {
+    redirect(`/adventure-complete/${groupId}`);
+  }
+  
+  // If game has started, redirect to current riddle
+  if (group.game_started && group.current_riddle_id) {
+    redirect(`/riddle/${group.current_riddle_id}`);
+  }
+  
+  // Verify user is actually a member
+  const isMember = group.group_members?.some(
+    (member: any) => member.user_id === sessionData!.userId
+  );
+  
+  if (!isMember) {
+    console.warn("User not a member, redirecting to join");
+    redirect(`/join/${groupId}`);
+  }
+  
+  const isLeader = group.group_members?.some(
+    (member: any) => member.user_id === sessionData!.userId && member.is_leader
+  );
+  
+  const memberCount = group.group_members?.length || 0;
+  const teamName = group.team_name || sessionData.teamName || "Your Team";
+  
   return (
     <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex items-center justify-center px-6 relative overflow-hidden">
       {/* Background logo */}
@@ -33,7 +105,7 @@ export default async function WaitingPage({ params }: Props) {
           className="w-[420px] h-[420px] md:w-[700px] md:h-[700px] object-contain"
         />
       </div>
-
+      
       {/* Top-left logo link */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
         <Link href="/">
@@ -46,9 +118,16 @@ export default async function WaitingPage({ params }: Props) {
           />
         </Link>
       </div>
-
-      {/* Client-side poller */}
-      <WaitingClient groupId={groupId} initialTeamName={initialTeamName} />
+      
+      {/* Client-side poller with all necessary props */}
+      <WaitingClient 
+        groupId={groupId}
+        initialTeamName={teamName}
+        isLeader={isLeader}
+        memberCount={memberCount}
+        playerLimit={group.player_limit}
+        userId={sessionData.userId}
+      />
     </main>
   );
 }

@@ -28,15 +28,24 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     const supabase = await createClient();
     
-    // Get or create user
-    let userId = cookieStore.get("user_id")?.value;
+    // Check if user already has a session cookie
+    const existingSession = cookieStore.get("riddlecity-session")?.value;
+    let userId: string;
+    let existingSessionData: any = null;
     
-    if (!userId) {
-      // Create anonymous user if none exists
+    if (existingSession) {
+      try {
+        existingSessionData = JSON.parse(Buffer.from(existingSession, 'base64').toString('utf8'));
+        userId = existingSessionData.userId;
+        console.log("👤 JOIN GROUP: Using existing session user:", userId);
+      } catch (e) {
+        console.warn("⚠️ JOIN GROUP: Invalid session cookie, creating new user");
+        userId = uuidv4();
+      }
+    } else {
+      // Create new anonymous user
       userId = uuidv4();
       console.log("👤 JOIN GROUP: Created new anonymous user:", userId);
-    } else {
-      console.log("👤 JOIN GROUP: Using existing user:", userId);
     }
     
     // 🔧 FIX: Ensure profile exists for this user
@@ -52,20 +61,37 @@ export async function POST(req: Request) {
     
     console.log("✅ JOIN GROUP: Profile ensured for user:", userId);
     
-    // Check if group exists
+    // Check if group exists and get team name
     console.log("🔍 JOIN GROUP: Checking if group exists:", groupId);
     const { data: group, error: groupError } = await supabase
       .from("groups")
-      .select("player_limit, current_riddle_id, track_id, group_members(*)")
+      .select("player_limit, current_riddle_id, track_id, team_name, finished, active, paid, game_started, group_members(*)")
       .eq("id", groupId)
       .single();
       
     if (groupError || !group) {
       console.error("❌ JOIN GROUP: Group fetch error:", groupError);
-      return NextResponse.json({ error: "Group not found" }, { status: 404 });
+      return NextResponse.json({ error: "Group not found or no longer available" }, { status: 404 });
+    }
+    
+    // Check if group is still valid
+    if (group.finished) {
+      console.log("❌ JOIN GROUP: Group has finished");
+      return NextResponse.json({ error: "This adventure has already finished" }, { status: 403 });
+    }
+    
+    if (!group.active) {
+      console.log("❌ JOIN GROUP: Group is not active");
+      return NextResponse.json({ error: "This group is no longer active" }, { status: 403 });
+    }
+    
+    if (!group.paid) {
+      console.log("❌ JOIN GROUP: Group hasn't been paid for yet");
+      return NextResponse.json({ error: "This group hasn't completed payment yet" }, { status: 403 });
     }
     
     console.log("✅ JOIN GROUP: Group found, current members:", group.group_members?.length || 0);
+    console.log("📋 JOIN GROUP: Group details - Team:", group.team_name, "Started:", group.game_started);
     
     // Check if user is already a member
     const existingMember = group.group_members?.find(
@@ -76,25 +102,29 @@ export async function POST(req: Request) {
       // User is already a member, let them rejoin
       console.log("🔄 JOIN GROUP: User rejoining group");
       
-      // Set cookies and return success
+      // Create consistent session data
+      const sessionData = {
+        groupId,
+        userId,
+        teamName: group.team_name || "Your Team"
+      };
+      const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
+      
       const response = NextResponse.json({
         message: "Welcome back!",
+        userId,
+        teamName: group.team_name || "Your Team",
         nextRiddle: group.current_riddle_id,
+        gameStarted: group.game_started,
         isRejoining: true
       });
       
-      response.cookies.set("user_id", userId, {
-        httpOnly: false, // Allow client-side access
+      // Set the consistent session cookie
+      response.cookies.set("riddlecity-session", encodedData, {
+        httpOnly: false,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 1 week
-        path: "/"
-      });
-      response.cookies.set("group_id", groupId, {
-        httpOnly: false, // Allow client-side access
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24, // 1 day
+        maxAge: 48 * 60 * 60, // 48 hours to match game expiry
         path: "/"
       });
       
@@ -126,25 +156,29 @@ export async function POST(req: Request) {
     
     console.log("✅ JOIN GROUP: Successfully added user to group");
     
-    // Set cookies and return success
+    // Create session data
+    const sessionData = {
+      groupId,
+      userId,
+      teamName: group.team_name || "Your Team"
+    };
+    const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
+    
     const response = NextResponse.json({
       message: "Successfully joined group!",
+      userId,
+      teamName: group.team_name || "Your Team", 
       nextRiddle: group.current_riddle_id,
+      gameStarted: group.game_started,
       isRejoining: false
     });
     
-    response.cookies.set("user_id", userId, {
-      httpOnly: false, // Allow client-side access for game logic
-      secure: process.env.NODE_ENV === "production",
+    // Set the consistent session cookie (matches your start page format)
+    response.cookies.set("riddlecity-session", encodedData, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production", 
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: "/"
-    });
-    response.cookies.set("group_id", groupId, {
-      httpOnly: false, // Allow client-side access for game logic
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 1 day
+      maxAge: 48 * 60 * 60, // 48 hours to match game expiry
       path: "/"
     });
     
