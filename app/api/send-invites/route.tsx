@@ -7,6 +7,15 @@ function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, l
   const adventureType = mode === 'date' ? 'Date Day Adventure' : 'Adventure';
   const joinLink = `${process.env.NEXT_PUBLIC_BASE_URL}/join/${groupId}`;
   
+  // WhatsApp share message
+  const whatsappMessage = encodeURIComponent(
+    `🎮 Join our Riddle City adventure in ${location.charAt(0).toUpperCase() + location.slice(1)}!\n\n` +
+    `Team: ${teamName}\n` +
+    `Adventure: ${adventureType}\n\n` +
+    `Click here to join: ${joinLink}`
+  );
+  const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+  
   return {
     subject: `Payment confirmed - Your Riddle City adventure awaits!`,
     html: `
@@ -27,19 +36,26 @@ function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, l
         </div>
         
         <div style="text-align: center; margin-bottom: 25px;">
-          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/riddle/${firstRiddleId}" 
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/${groupId}?session_id=email&success=true" 
              style="display: inline-block; background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 15px;">
             🎮 Start Your Adventure
           </a>
           <br>
-          <a href="${joinLink}" 
-             style="display: inline-block; background: #6b7280; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-            👥 Share Team Link
+          <a href="${whatsappUrl}" 
+             style="display: inline-block; background: #25d366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+            📱 Share via WhatsApp
           </a>
         </div>
         
+        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Team Join Link:</strong></p>
+          <p style="margin: 5px 0 0 0; font-family: monospace; background: #fff; padding: 8px; border-radius: 4px; font-size: 12px; word-break: break-all; color: #6b7280;">
+            ${joinLink}
+          </p>
+        </div>
+        
         <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
-          <p style="margin: 0; color: #1e40af;"><strong>💡 Pro Tip:</strong> Share the team link with your friends so they can join your adventure!</p>
+          <p style="margin: 0; color: #1e40af;"><strong>💡 Pro Tip:</strong> Use the WhatsApp button above or copy the join link to invite your team!</p>
         </div>
         
         <p style="color: #666;">Ready to unlock ${location.charAt(0).toUpperCase() + location.slice(1)}'s mysteries?</p>
@@ -65,7 +81,7 @@ Booking Details:
 • Players: ${players} people
 • Booking ID: ${groupId}
 
-Start your adventure: ${process.env.NEXT_PUBLIC_BASE_URL}/riddle/${firstRiddleId}
+Start your adventure: ${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/${groupId}
 Share with your team: ${joinLink}
 
 Ready to unlock ${location.charAt(0).toUpperCase() + location.slice(1)}'s mysteries?
@@ -168,7 +184,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create transporter
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransporter({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '465'),
       secure: true, // true for 465, false for other ports

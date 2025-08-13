@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import WaitingClient from "@/components/WaitingClient";
+import RealTimeGameStart from "@/components/RealTimeGameStart";
 
 interface Props {
   params: Promise<{ groupId: string }>;
@@ -128,6 +129,9 @@ export default async function WaitingPage({ params }: Props) {
         playerLimit={group.player_limit}
         userId={sessionData.userId}
       />
+      
+      {/* ✨ Real-time game start detection - automatically redirects when leader starts game */}
+      <RealTimeGameStart groupId={groupId} />
     </main>
   );
 }
