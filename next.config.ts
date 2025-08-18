@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
-  // Add performance optimizations
-  swcMinify: true,
   // Add security headers
   headers: async () => [
     {
