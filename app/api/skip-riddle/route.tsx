@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
     console.log("=== SKIP RIDDLE API START ===");
     
