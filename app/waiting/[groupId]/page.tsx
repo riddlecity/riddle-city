@@ -6,15 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import WaitingClient from "@/components/WaitingClient";
 import RealTimeGameStart from "@/components/RealTimeGameStart";
+import { SessionData } from "@/types/group";
 
 interface Props {
   params: Promise<{ groupId: string }>;
-}
-
-interface SessionData {
-  groupId: string;
-  userId: string;
-  teamName: string;
 }
 
 export default async function WaitingPage({ params }: Props) {
@@ -79,7 +74,7 @@ export default async function WaitingPage({ params }: Props) {
   
   // Verify user is actually a member
   const isMember = group.group_members?.some(
-    (member: any) => member.user_id === sessionData!.userId
+    (member) => member.user_id === sessionData!.userId
   );
   
   if (!isMember) {
@@ -88,7 +83,7 @@ export default async function WaitingPage({ params }: Props) {
   }
   
   const isLeader = group.group_members?.some(
-    (member: any) => member.user_id === sessionData!.userId && member.is_leader
+    (member) => member.user_id === sessionData!.userId && member.is_leader
   );
   
   const memberCount = group.group_members?.length || 0;

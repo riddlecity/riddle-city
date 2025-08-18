@@ -113,7 +113,7 @@ export default async function RiddlePage({ params }: Props) {
   } = data;
 
   // Get user info from cookies with retry logic
-  const { groupId, userId, teamName } = await getCookiesWithRetry();
+  const { groupId, userId } = await getCookiesWithRetry();
 
   // If cookies missing, show loading screen so CookieHandler can set them
   if (!groupId || !userId) {

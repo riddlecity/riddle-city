@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
+import { GroupMember, SessionData } from "@/types/group";
 
 export async function POST(req: Request) {
   try {
@@ -31,12 +32,12 @@ export async function POST(req: Request) {
     // Check if user already has a session cookie
     const existingSession = cookieStore.get("riddlecity-session")?.value;
     let userId: string;
-    let existingSessionData: any = null;
+    let existingSessionData: SessionData | null = null;
     
     if (existingSession) {
       try {
         existingSessionData = JSON.parse(Buffer.from(existingSession, 'base64').toString('utf8'));
-        userId = existingSessionData.userId;
+        userId = existingSessionData?.userId ?? uuidv4();
         console.log("👤 JOIN GROUP: Using existing session user:", userId);
       } catch (e) {
         console.warn("⚠️ JOIN GROUP: Invalid session cookie, creating new user");
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
     
     // Check if user is already a member
     const existingMember = group.group_members?.find(
-      (member: any) => member.user_id === userId
+      (member: GroupMember) => member.user_id === userId
     );
     
     if (existingMember) {
