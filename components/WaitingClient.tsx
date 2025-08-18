@@ -40,9 +40,10 @@ export default function WaitingClient({
     if (isStarted && currentRiddleId) {
       console.log('🔄 WAITING: Game started, redirecting to current riddle:', currentRiddleId);
       setIsRedirecting(true);
-      router.replace(`/riddle/${currentRiddleId}`);
+      // Use window.location.href for more reliable redirect
+      window.location.href = `/riddle/${currentRiddleId}`;
     }
-  }, [isStarted, currentRiddleId, router, isRedirecting]);
+  }, [isStarted, currentRiddleId, isRedirecting]);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,8 +111,11 @@ export default function WaitingClient({
         // ENHANCED: If game started and we have a current riddle, redirect immediately
         // This handles cases where someone joins via link after game has progressed
         if (gameStarted && group.current_riddle_id && !isRedirecting) {
-          console.log('🔄 WAITING: Game already in progress, should redirect to:', group.current_riddle_id);
-          // The useEffect above will handle the redirect
+          console.log('🔄 WAITING: Game already in progress, redirecting immediately to:', group.current_riddle_id);
+          setIsRedirecting(true);
+          // Use window.location.href for immediate redirect
+          window.location.href = `/riddle/${group.current_riddle_id}`;
+          return;
         }
 
       } catch (err) {
@@ -119,22 +123,43 @@ export default function WaitingClient({
       }
     };
 
-    // Initial fetch + polling
+    // Initial fetch + polling (more frequent polling)
     fetchGroup();
-    const interval = setInterval(fetchGroup, 3000);
+    const interval = setInterval(fetchGroup, 2000); // Poll every 2 seconds instead of 3
 
-    // Optional realtime subscription
+    // Enhanced realtime subscription with better debugging
     const channel = supabase
       .channel(`waiting-${groupId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
         (payload) => {
-          console.log('🔄 WAITING: Real-time update received:', payload);
+          console.log('🔄 WAITING: Real-time update received:', {
+            event: payload.eventType,
+            oldGameStarted: payload.old?.game_started,
+            newGameStarted: payload.new?.game_started,
+            oldRiddleId: payload.old?.current_riddle_id,
+            newRiddleId: payload.new?.current_riddle_id
+          });
+          
+          // Immediate check if game just started
+          if (payload.eventType === 'UPDATE' && 
+              payload.new?.game_started && 
+              !payload.old?.game_started && 
+              payload.new?.current_riddle_id) {
+            console.log('🚀 WAITING: Game just started via real-time, redirecting immediately!');
+            setIsRedirecting(true);
+            window.location.href = `/riddle/${payload.new.current_riddle_id}`;
+            return;
+          }
+          
+          // Always refetch to ensure we have latest state
           fetchGroup();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔄 WAITING: Real-time subscription status:', status);
+      });
 
     return () => {
       cancelled = true;
@@ -175,7 +200,8 @@ export default function WaitingClient({
       if (data.currentRiddleId) {
         console.log('🔄 WAITING: Leader started game, redirecting to:', data.currentRiddleId);
         setIsRedirecting(true);
-        router.replace(`/riddle/${data.currentRiddleId}`);
+        // Use window.location.href for immediate redirect
+        window.location.href = `/riddle/${data.currentRiddleId}`;
       } else {
         throw new Error('No starting riddle found');
       }

@@ -65,6 +65,7 @@ export async function POST(req: Request) {
     
     if (group.game_started) {
       // Already started, return current riddle
+      console.log("⚠️ START ADVENTURE: Game already started, returning current riddle:", group.current_riddle_id);
       return NextResponse.json({ 
         message: "Game already started",
         currentRiddleId: group.current_riddle_id,
@@ -84,13 +85,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No starting riddle found for this adventure" }, { status: 500 });
     }
     
-    // Start the game
+    console.log("🎯 START ADVENTURE: Starting game with riddle:", track.start_riddle_id);
+    
+    // Start the game - Clean update without modifying created_at
     const { error: updateError } = await supabase
       .from("groups")
       .update({
         game_started: true,
-        current_riddle_id: track.start_riddle_id,
-        created_at: new Date().toISOString() // Reset start time for timer
+        current_riddle_id: track.start_riddle_id
       })
       .eq("id", groupId);
     
@@ -99,7 +101,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to start game" }, { status: 500 });
     }
     
-    console.log("✅ START ADVENTURE: Successfully started game for group:", groupId);
+    console.log("✅ START ADVENTURE: Successfully started game!", {
+      groupId,
+      currentRiddleId: track.start_riddle_id
+    });
+    
+    // Verify the update worked by fetching the group again
+    const { data: updatedGroup } = await supabase
+      .from("groups")
+      .select("game_started, current_riddle_id")
+      .eq("id", groupId)
+      .single();
+    
+    console.log("🔍 START ADVENTURE: Post-update verification:", updatedGroup);
     
     return NextResponse.json({
       message: "Game started successfully!",
