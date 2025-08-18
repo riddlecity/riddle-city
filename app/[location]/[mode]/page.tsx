@@ -113,6 +113,8 @@ export default function PreferencesPage() {
     }
   }, [searchParams]);
 
+  const handlePaymentSuccess = async (_sessionId: string) => {
+
   // Check if we're returning from successful payment
   useEffect(() => {
     const sessionId = searchParams?.get('session_id');
@@ -131,8 +133,6 @@ export default function PreferencesPage() {
       }
     };
   }, []);
-
-  const handlePaymentSuccess = async (sessionId: string) => {
     setIsProcessingPayment(true);
     try {
       // Create the group after successful payment
