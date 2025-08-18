@@ -24,7 +24,58 @@ export function useGroupSession() {
       try {
         console.log('🔍 USE GROUP SESSION: Checking for active session')
         
-        const response = await fetch('/api/check-active-game', {
+        // Get session data from cookies (matches your start-game API format)
+        let groupId: string | null = null
+        let userId: string | null = null
+        let teamName: string | null = null
+        
+        // Try to get from riddlecity-session cookie first (your preferred format)
+        const sessionCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('riddlecity-session='))
+          ?.split('=')[1]
+        
+        if (sessionCookie) {
+          try {
+            const sessionData = JSON.parse(Buffer.from(sessionCookie, 'base64').toString('utf8'))
+            groupId = sessionData.groupId
+            userId = sessionData.userId  
+            teamName = sessionData.teamName
+            console.log('🔍 USE GROUP SESSION: Found session cookie data:', { groupId, userId, teamName })
+          } catch (e) {
+            console.warn('🔍 USE GROUP SESSION: Could not parse session cookie')
+          }
+        }
+        
+        // Fallback to individual cookies (your join-group API format)
+        if (!groupId || !userId) {
+          groupId = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('group_id='))
+            ?.split('=')[1] || null
+            
+          userId = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('user_id='))
+            ?.split('=')[1] || null
+            
+          teamName = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('team_name='))
+            ?.split('=')[1] || null
+            
+          console.log('🔍 USE GROUP SESSION: Found individual cookies:', { groupId, userId, teamName })
+        }
+        
+        if (!groupId || !userId) {
+          console.log('🔍 USE GROUP SESSION: No session cookies found')
+          setActiveSession(null)
+          setLoading(false)
+          return
+        }
+        
+        // Call your actual check-active-game API with query parameters
+        const response = await fetch(`/api/check-active-game?groupId=${groupId}&userId=${userId}`, {
           credentials: 'include'
         })
         
@@ -39,7 +90,7 @@ export function useGroupSession() {
         console.log('🔍 USE GROUP SESSION: Active game data:', data)
         
         if (data.isActive && data.groupId) {
-          // Get additional group details
+          // Get additional group details from Supabase
           const supabase = createClient()
           const { data: groupData, error: groupError } = await supabase
             .from('groups')
@@ -58,17 +109,43 @@ export function useGroupSession() {
 
           const session: GroupSession = {
             groupId: data.groupId,
-            userId: data.userId,
+            userId: userId,
             trackId: groupData.track_id,
-            currentRiddleId: groupData.current_riddle_id,
-            gameStarted: groupData.game_started,
-            finished: groupData.finished,
+            currentRiddleId: groupData.current_riddle_id || data.currentRiddleId,
+            gameStarted: data.gameStarted || groupData.game_started,
+            finished: data.isFinished || groupData.finished,
             active: groupData.active,
             paid: groupData.paid,
-            teamName: groupData.team_name
+            teamName: teamName || groupData.team_name || 'Your Team'
           }
           
           setActiveSession(session)
+        } else if (data.isFinished) {
+          // Handle finished games
+          const supabase = createClient()
+          const { data: groupData, error: groupError } = await supabase
+            .from('groups')
+            .select('team_name, track_id, current_riddle_id, game_started, finished, active, paid')
+            .eq('id', data.groupId)
+            .single()
+
+          if (!groupError && groupData) {
+            const session: GroupSession = {
+              groupId: data.groupId,
+              userId: userId,
+              trackId: groupData.track_id,
+              currentRiddleId: groupData.current_riddle_id || data.currentRiddleId,
+              gameStarted: data.gameStarted || groupData.game_started,
+              finished: true,
+              active: false,
+              paid: groupData.paid,
+              teamName: teamName || groupData.team_name || 'Your Team'
+            }
+            
+            setActiveSession(session)
+          } else {
+            setActiveSession(null)
+          }
         } else {
           setActiveSession(null)
         }
@@ -115,9 +192,17 @@ export function useGroupSession() {
 
   const clearSession = async () => {
     try {
-      // Clear cookies
-      document.cookie = 'riddlecity-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-      document.cookie = 'riddlecity-user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      // Clear all possible cookie variations
+      const cookiesToClear = [
+        'riddlecity-session',
+        'group_id', 
+        'user_id',
+        'team_name'
+      ]
+      
+      cookiesToClear.forEach(cookieName => {
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+      })
       
       setActiveSession(null)
       console.log('🔍 USE GROUP SESSION: Session cleared')
@@ -132,9 +217,9 @@ export function useGroupSession() {
     error,
     getResumeUrl,
     clearSession,
-    hasActiveGame: !!activeSession && activeSession.active && activeSession.paid,
-    hasActiveGroup: !!activeSession && activeSession.active && activeSession.paid,
-    // Add these direct accessors for backwards compatibility
+    hasActiveGame: !!activeSession && activeSession.active && activeSession.paid && !activeSession.finished,
+    hasActiveGroup: !!activeSession && activeSession.active && activeSession.paid, // Includes finished games
+    // Direct accessors for backwards compatibility
     currentRiddleId: activeSession?.currentRiddleId || null,
     groupId: activeSession?.groupId || null,
     teamName: activeSession?.teamName || null,
