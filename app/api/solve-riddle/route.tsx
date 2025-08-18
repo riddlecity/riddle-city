@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
@@ -9,7 +8,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
   }
 
-  const cookieStore = await cookies(); // ✅ await is needed
   const supabase = await createClient(); // ✅ FIXED: must await createClient()
 
   // Get the next riddle ID from the current one
