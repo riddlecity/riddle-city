@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useGroupSession } from "@/hooks/useGroupSession";
 
 export default function Home() {
-  const { loading, hasActiveGroup, currentRiddleId, groupId } = useGroupSession();
+  const { loading, hasActiveGroup, currentRiddleId, groupId, clearSession } = useGroupSession();
   const [showInfo, setShowInfo] = useState(false);
 
   // WhatsApp share function
@@ -20,6 +20,12 @@ export default function Home() {
     const randomMessage = messages[Math.floor(Math.random() * messages.length)];
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(randomMessage)}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  // Handle starting fresh - use the clearSession method from the hook
+  const handleStartFresh = async () => {
+    await clearSession();
+    window.location.reload();
   };
 
   // Show loading state while checking session
@@ -72,11 +78,7 @@ export default function Home() {
               🔍 Resume Adventure
             </Link>
             <button
-              onClick={() => {
-                document.cookie = 'user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                document.cookie = 'group_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                window.location.reload();
-              }}
+              onClick={handleStartFresh}
               className="block w-full bg-gray-600/50 hover:bg-gray-600/70 text-white/90 font-medium py-2 px-6 rounded-lg transition-all duration-200 text-sm border border-gray-500/30"
             >
               🆕 Start Fresh Instead
