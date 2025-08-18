@@ -30,12 +30,6 @@ interface Props {
   isLeader?: boolean;
   memberCount?: number;
   playerLimit?: number;
-  userId?: string;
-}
-
-interface StartGameResponse {
-  currentRiddleId: string;
-  error?: string;
 }
 
 export default function WaitingClient({ 
@@ -43,8 +37,7 @@ export default function WaitingClient({
   initialTeamName = "Your Team",
   isLeader = false,
   memberCount: initialMemberCount = 0,
-  playerLimit = 2,
-  userId
+  playerLimit = 2
 }: Props) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
