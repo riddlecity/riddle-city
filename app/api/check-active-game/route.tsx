@@ -19,10 +19,22 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Check if group exists and get current state
+    // Check if group exists and get current state (enhanced with additional fields)
     const { data: group, error: groupError } = await supabase
       .from('groups')
-      .select('id, current_riddle_id, finished, paid, active, completed_at, created_at')
+      .select(`
+        id, 
+        current_riddle_id, 
+        finished, 
+        paid, 
+        active, 
+        completed_at, 
+        created_at,
+        game_started,
+        expires_at,
+        track_id,
+        team_name
+      `)
       .eq('id', groupId)
       .single();
 
@@ -34,10 +46,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check if user is a member of this group
+    // Check if user is a member of this group (enhanced with is_leader)
     const { data: membership, error: memberError } = await supabase
       .from('group_members')
-      .select('user_id')
+      .select('user_id, is_leader')
       .eq('group_id', groupId)
       .eq('user_id', userId)
       .single();
@@ -50,6 +62,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Check if group has expired (48-hour expiry)
+    const now = new Date();
+    const expiresAt = group.expires_at ? new Date(group.expires_at) : null;
+    const hasExpired = expiresAt && now > expiresAt;
+
     // Check if group is finished
     if (group.finished) {
       console.log('🏁 CHECK ACTIVE GAME: Group is finished');
@@ -58,7 +75,11 @@ export async function GET(request: NextRequest) {
         isFinished: true,
         currentRiddleId: group.current_riddle_id,
         groupId: group.id,
-        gameStarted: group.created_at,
+        gameStarted: Boolean(group.game_started),
+        trackId: group.track_id,
+        isPaid: Boolean(group.paid),
+        isLeader: Boolean(membership.is_leader),
+        teamName: group.team_name,
         reason: 'Group has finished the adventure'
       });
     }
@@ -71,15 +92,35 @@ export async function GET(request: NextRequest) {
         isFinished: group.finished,
         currentRiddleId: group.current_riddle_id,
         groupId: group.id,
-        gameStarted: group.created_at,
+        gameStarted: Boolean(group.game_started),
+        trackId: group.track_id,
+        isPaid: Boolean(group.paid),
+        isLeader: Boolean(membership.is_leader),
+        teamName: group.team_name,
         reason: 'Group session has expired'
+      });
+    }
+
+    // Check if group has expired
+    if (hasExpired) {
+      console.log('⏰ CHECK ACTIVE GAME: Group has expired (48-hour limit)');
+      return NextResponse.json({
+        isActive: false,
+        isFinished: group.finished,
+        currentRiddleId: group.current_riddle_id,
+        groupId: group.id,
+        gameStarted: Boolean(group.game_started),
+        trackId: group.track_id,
+        isPaid: Boolean(group.paid),
+        isLeader: Boolean(membership.is_leader),
+        teamName: group.team_name,
+        reason: 'Group session expired (48-hour limit)'
       });
     }
 
     // Auto-close group if completed > 15 minutes ago
     if (group.completed_at) {
       const completionTime = new Date(group.completed_at);
-      const now = new Date();
       const timeSinceCompletion = now.getTime() - completionTime.getTime();
       const FIFTEEN_MINUTES = 15 * 60 * 1000;
       
@@ -99,21 +140,28 @@ export async function GET(request: NextRequest) {
           isFinished: group.finished,
           currentRiddleId: group.current_riddle_id,
           groupId: group.id,
-          gameStarted: group.created_at,
+          gameStarted: Boolean(group.game_started),
+          trackId: group.track_id,
+          isPaid: Boolean(group.paid),
+          isLeader: Boolean(membership.is_leader),
+          teamName: group.team_name,
           reason: 'Group session expired (15 minutes after completion)'
         });
       }
     }
 
     // Check if game is active (paid and not finished)
-    const isActive = group.paid && !group.finished && group.active !== false;
+    const isActive = group.paid && !group.finished && group.active !== false && !hasExpired;
     
     console.log('🔍 CHECK ACTIVE GAME: Game status', {
       paid: group.paid,
       finished: group.finished,
       active: group.active,
+      hasExpired,
       isActive,
-      currentRiddleId: group.current_riddle_id
+      currentRiddleId: group.current_riddle_id,
+      gameStarted: group.game_started,
+      trackId: group.track_id
     });
 
     return NextResponse.json({
@@ -121,7 +169,11 @@ export async function GET(request: NextRequest) {
       isFinished: group.finished,
       currentRiddleId: group.current_riddle_id,
       groupId: group.id,
-      gameStarted: group.created_at
+      gameStarted: Boolean(group.game_started), // Ensure boolean
+      trackId: group.track_id,
+      isPaid: Boolean(group.paid), // Ensure boolean
+      isLeader: Boolean(membership.is_leader), // Ensure boolean
+      teamName: group.team_name
     });
 
   } catch (error) {

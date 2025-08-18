@@ -31,13 +31,18 @@ export default function WaitingClient({
   const [isStarting, setIsStarting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
 
-  // If started, go!
+  // Enhanced redirect logic - handle both game start and mid-game joins
   useEffect(() => {
+    if (isRedirecting) return; // Prevent multiple redirects
+
     if (isStarted && currentRiddleId) {
+      console.log('🔄 WAITING: Game started, redirecting to current riddle:', currentRiddleId);
+      setIsRedirecting(true);
       router.replace(`/riddle/${currentRiddleId}`);
     }
-  }, [isStarted, currentRiddleId, router]);
+  }, [isStarted, currentRiddleId, router, isRedirecting]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +58,7 @@ export default function WaitingClient({
             finished,
             active,
             player_limit,
+            paid,
             group_members ( user_id )
           `)
           .eq("id", groupId)
@@ -65,19 +71,47 @@ export default function WaitingClient({
 
         if (!group || cancelled) return;
 
+        console.log('🔍 WAITING: Fetched group data:', {
+          gameStarted: group.game_started,
+          currentRiddleId: group.current_riddle_id,
+          finished: group.finished,
+          active: group.active,
+          paid: group.paid
+        });
+
         // Update state
         setTeamName(group.team_name || "Your Team");
         setCurrentRiddleId(group.current_riddle_id ?? null);
         setMembersCount(group.group_members?.length ?? 0);
 
+        // Check if group is no longer active, finished, or not paid
+        if (group.finished) {
+          console.log('🔄 WAITING: Game finished, redirecting to completion');
+          router.replace(`/adventure-complete/${groupId}`);
+          return;
+        }
+
+        if (!group.active) {
+          console.log('🔄 WAITING: Group not active, redirecting to locations');
+          router.replace("/locations");
+          return;
+        }
+
+        if (!group.paid) {
+          console.log('🔄 WAITING: Group not paid, redirecting to locations');
+          router.replace("/locations");
+          return;
+        }
+
         // Check if game started (using correct column name)
         const gameStarted = Boolean(group.game_started);
         setIsStarted(gameStarted);
 
-        // Check if group is no longer active or finished
-        if (group.finished || !group.active) {
-          router.replace("/locations");
-          return;
+        // ENHANCED: If game started and we have a current riddle, redirect immediately
+        // This handles cases where someone joins via link after game has progressed
+        if (gameStarted && group.current_riddle_id && !isRedirecting) {
+          console.log('🔄 WAITING: Game already in progress, should redirect to:', group.current_riddle_id);
+          // The useEffect above will handle the redirect
         }
 
       } catch (err) {
@@ -95,7 +129,10 @@ export default function WaitingClient({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
-        () => fetchGroup()
+        (payload) => {
+          console.log('🔄 WAITING: Real-time update received:', payload);
+          fetchGroup();
+        }
       )
       .subscribe();
 
@@ -104,7 +141,7 @@ export default function WaitingClient({
       clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, [groupId, supabase, router]);
+  }, [groupId, supabase, router, isRedirecting]);
 
   const handleStartGame = async () => {
     if (!isLeader || isStarting) return;
@@ -136,6 +173,8 @@ export default function WaitingClient({
       const data = await response.json();
       
       if (data.currentRiddleId) {
+        console.log('🔄 WAITING: Leader started game, redirecting to:', data.currentRiddleId);
+        setIsRedirecting(true);
         router.replace(`/riddle/${data.currentRiddleId}`);
       } else {
         throw new Error('No starting riddle found');
@@ -156,6 +195,17 @@ export default function WaitingClient({
         <div className="text-8xl animate-pulse">{countdown}</div>
         <h1 className="text-2xl font-bold">{teamName}</h1>
         <p className="text-white/70">Starting your adventure...</p>
+      </div>
+    );
+  }
+
+  // Show loading state during redirect
+  if (isRedirecting) {
+    return (
+      <div className="z-10 max-w-md w-full text-center space-y-6">
+        <div className="text-6xl animate-spin">🎮</div>
+        <h1 className="text-2xl font-bold">{teamName}</h1>
+        <p className="text-white/70">Loading your adventure...</p>
       </div>
     );
   }

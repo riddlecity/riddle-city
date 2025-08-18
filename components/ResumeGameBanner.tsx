@@ -13,7 +13,9 @@ interface ActiveGameResponse {
   isFinished?: boolean;
   currentRiddleId?: string | null;
   groupId?: string;
-  gameStarted?: boolean; // Changed from string to boolean for consistency
+  gameStarted?: boolean;
+  trackId?: string;
+  isPaid?: boolean;
 }
 
 export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBannerProps) {
@@ -21,7 +23,9 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const [teamName, setTeamName] = useState<string>('Your Team');
   const [groupId, setGroupId] = useState<string | null>(null);
   const [currentRiddleId, setCurrentRiddleId] = useState<string | null>(null);
-  const [gameStarted, setGameStarted] = useState<boolean>(false); // Track game start status
+  const [gameStarted, setGameStarted] = useState<boolean>(false);
+  const [trackId, setTrackId] = useState<string | null>(null);
+  const [isPaid, setIsPaid] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const tick = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
@@ -43,25 +47,52 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const getResumeUrl = (): string => {
     if (!groupId) return '/locations';
     
-    // If game hasn't started yet, go to waiting page
+    console.log('🔍 RESUME BANNER: Determining URL...', {
+      groupId,
+      gameStarted,
+      currentRiddleId,
+      trackId,
+      isPaid
+    });
+    
+    // If not paid yet, something is wrong - go to locations
+    if (!isPaid) {
+      console.log('🔍 RESUME BANNER: Not paid, going to locations');
+      return '/locations';
+    }
+    
+    // If game hasn't started yet (still on start page), go to start page
     if (!gameStarted) {
+      console.log('🔍 RESUME BANNER: Game not started, going to start page');
+      // Extract location and mode from trackId (e.g., "date_barnsley" -> "barnsley/date")
+      if (trackId) {
+        const parts = trackId.split('_');
+        if (parts.length >= 2) {
+          const mode = parts[0]; // "date" or "pub"
+          const location = parts.slice(1).join('_'); // "barnsley" (or multi-part locations)
+          return `/${location}/${mode}/start/${groupId}`;
+        }
+      }
+      // Fallback if we can't parse trackId
       return `/waiting/${groupId}`;
     }
     
     // If game started and has current riddle, go to that riddle
     if (currentRiddleId) {
+      console.log('🔍 RESUME BANNER: Game started with riddle, going to riddle');
       return `/riddle/${currentRiddleId}`;
     }
     
     // Fallback to waiting page
+    console.log('🔍 RESUME BANNER: Fallback to waiting page');
     return `/waiting/${groupId}`;
   };
 
   const check = async () => {
     try {
       // Don't show banner on game pages to avoid distraction
-      const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/game-confirmation/'];
-      const isOnGamePage = gamePages.some(page => pathname.startsWith(page));
+      const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/game-confirmation/', '/start/'];
+      const isOnGamePage = gamePages.some(page => pathname.includes(page));
       
       if (isOnGamePage) {
         updateVisibility(false);
@@ -116,7 +147,9 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
         setTeamName(cTeam);
         setGroupId(data.groupId ?? cGroup);
         setCurrentRiddleId(data.currentRiddleId ?? null);
-        setGameStarted(Boolean(data.gameStarted)); // Ensure boolean
+        setGameStarted(Boolean(data.gameStarted));
+        setTrackId(data.trackId ?? null);
+        setIsPaid(Boolean(data.isPaid));
         
         // Respect "hide for this tab" if user dismissed earlier
         const hidden = sessionStorage.getItem('resume_banner_hidden') === '1';
@@ -124,7 +157,9 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
         
         console.log('✅ RESUME BANNER: Showing banner for active game', {
           gameStarted: data.gameStarted,
-          currentRiddleId: data.currentRiddleId
+          currentRiddleId: data.currentRiddleId,
+          trackId: data.trackId,
+          isPaid: data.isPaid
         });
       } else {
         console.log('❌ RESUME BANNER: No active game found or game finished');
@@ -166,6 +201,19 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
     updateVisibility(false);
   };
 
+  // Determine button text and description based on game state
+  const getButtonText = () => {
+    if (!isPaid) return 'Complete Payment';
+    if (!gameStarted) return 'Go to Start Page';
+    return 'Resume Game';
+  };
+
+  const getDescription = () => {
+    if (!isPaid) return 'Complete your payment to start the adventure';
+    if (!gameStarted) return 'Ready to begin your adventure';
+    return 'Continue your adventure where you left off';
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 py-3">
@@ -177,7 +225,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
                 You have an active game as "{teamName}"
               </div>
               <div className="text-sm text-white/80">
-                {gameStarted ? 'Continue your adventure where you left off' : 'Waiting for game to start'}
+                {getDescription()}
               </div>
             </div>
           </div>
@@ -187,7 +235,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
               className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
             >
               <span>🚀</span>
-              {gameStarted ? 'Resume Game' : 'Join Team'}
+              {getButtonText()}
             </Link>
             <button
               onClick={dismiss}
