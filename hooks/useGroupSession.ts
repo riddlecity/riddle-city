@@ -133,6 +133,11 @@ export function useGroupSession() {
     getResumeUrl,
     clearSession,
     hasActiveGame: !!activeSession && activeSession.active && activeSession.paid,
-    hasActiveGroup: !!activeSession && activeSession.active && activeSession.paid // Alias for backwards compatibility
+    hasActiveGroup: !!activeSession && activeSession.active && activeSession.paid,
+    // Add these direct accessors for backwards compatibility
+    currentRiddleId: activeSession?.currentRiddleId || null,
+    groupId: activeSession?.groupId || null,
+    teamName: activeSession?.teamName || null,
+    trackId: activeSession?.trackId || null
   }
 }
