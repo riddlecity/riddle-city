@@ -147,8 +147,7 @@ export default function JoinGroupPage() {
           body: JSON.stringify({ groupId }),
         });
 
-        // Better error handling for non-JSON responses
-        const contentType = res.headers.get("content-type");
+        // Parse the JSON response
         let data;
         
         try {
