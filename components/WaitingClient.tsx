@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 // Type definitions
-type DatabaseGroup = {
+interface DatabaseGroup {
   id: string;
   team_name: string;
   game_started: boolean;
@@ -13,23 +13,30 @@ type DatabaseGroup = {
   finished: boolean;
   active: boolean;
   paid: boolean;
-  group_members?: { user_id: string }[];
-};
+  group_members?: Array<{ user_id: string }>;
+  player_limit: number;
+}
 
-type RealtimePayload = {
+interface RealtimePayload {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE';
   new: DatabaseGroup | null;
   old: DatabaseGroup | null;
-};
+  errors: null | Array<{ message: string }>;
+}
 
-type Props = {
+interface Props {
   groupId: string;
   initialTeamName?: string;
   isLeader?: boolean;
   memberCount?: number;
   playerLimit?: number;
   userId?: string;
-};
+}
+
+interface StartGameResponse {
+  currentRiddleId: string;
+  error?: string;
+}
 
 export default function WaitingClient({ 
   groupId, 
@@ -143,13 +150,23 @@ export default function WaitingClient({
     fetchGroup();
     const interval = setInterval(fetchGroup, 2000); // Poll every 2 seconds instead of 3
 
-    // Enhanced realtime subscription with better debugging
+    // Enhanced realtime subscription with better debugging and error handling
     const channel = supabase
       .channel(`waiting-${groupId}`)
       .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
+        'postgres_changes' as any, // Type assertion for Supabase client
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'groups', 
+          filter: `id=eq.${groupId}` 
+        },
         (payload: RealtimePayload) => {
+          if (payload.errors?.length) {
+            console.error('🔴 WAITING: Real-time error:', payload.errors);
+            return;
+          }
+
           console.log('🔄 WAITING: Real-time update received:', {
             event: payload.eventType,
             oldGameStarted: payload.old?.game_started,
@@ -159,10 +176,12 @@ export default function WaitingClient({
           });
           
           // Immediate check if game just started
-          if (payload.eventType === 'UPDATE' && 
-              payload.new?.game_started && 
-              !payload.old?.game_started && 
-              payload.new?.current_riddle_id) {
+          if (
+            payload.eventType === 'UPDATE' && 
+            payload.new?.game_started && 
+            !payload.old?.game_started && 
+            payload.new?.current_riddle_id
+          ) {
             console.log('🚀 WAITING: Game just started via real-time, redirecting immediately!');
             setIsRedirecting(true);
             window.location.href = `/riddle/${payload.new.current_riddle_id}`;
@@ -173,8 +192,12 @@ export default function WaitingClient({
           fetchGroup();
         }
       )
-      .subscribe((status) => {
-        console.log('🔄 WAITING: Real-time subscription status:', status);
+      .subscribe((status: 'SUBSCRIBED' | 'CLOSED' | 'TIMED_OUT' | 'CHANNEL_ERROR', err?: Error) => {
+        if (err) {
+          console.error('� WAITING: Subscription error:', err);
+          return;
+        }
+        console.log('� WAITING: Real-time subscription status:', status);
       });
 
     return () => {
@@ -184,20 +207,20 @@ export default function WaitingClient({
     };
   }, [groupId, supabase, router, isRedirecting]);
 
-  const handleStartGame = async () => {
+  const handleStartGame = async (): Promise<void> => {
     if (!isLeader || isStarting) return;
     
     setIsStarting(true);
     setError(null);
     
-    // Countdown before starting
-    for (let i = 3; i > 0; i--) {
-      setCountdown(i);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    setCountdown(null);
-    
     try {
+      // Countdown before starting
+      for (let i = 3; i > 0; i--) {
+        setCountdown(i);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      setCountdown(null);
+      
       const response = await fetch('/api/start-adventure', {
         method: 'POST',
         headers: {
@@ -206,24 +229,23 @@ export default function WaitingClient({
         body: JSON.stringify({ groupId })
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to start game');
-      }
-      
       const data = await response.json();
       
-      if (data.currentRiddleId) {
-        console.log('🔄 WAITING: Leader started game, redirecting to:', data.currentRiddleId);
-        setIsRedirecting(true);
-        window.location.href = `/riddle/${data.currentRiddleId}`;
-      } else {
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to start game');
+      }
+      
+      if (!data.currentRiddleId) {
         throw new Error('No starting riddle found');
       }
       
+      console.log('🔄 WAITING: Leader started game, redirecting to:', data.currentRiddleId);
+      setIsRedirecting(true);
+      window.location.href = `/riddle/${data.currentRiddleId}`;
+      
     } catch (e) {
       console.error("Failed to start game:", e);
-      setError(e instanceof Error ? e.message : "Failed to start game");
+      setError(e instanceof Error ? e.message : "An unexpected error occurred");
       setIsStarting(false);
       setCountdown(null);
     }
