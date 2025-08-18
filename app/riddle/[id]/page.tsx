@@ -255,7 +255,6 @@ export default async function RiddlePage({ params }: Props) {
                 riddleId={id}
                 groupId={groupId}
                 correctAnswer={answer}
-                nextRiddleId={next_riddle_id}
                 isLastRiddle={isLastRiddle}
               />
             </div>

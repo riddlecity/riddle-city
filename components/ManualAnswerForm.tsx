@@ -8,7 +8,6 @@ interface ManualAnswerFormProps {
   riddleId: string
   groupId: string
   correctAnswer: string
-  nextRiddleId: string | null
   isLastRiddle: boolean
 }
 
@@ -16,7 +15,6 @@ export default function ManualAnswerForm({
   riddleId, 
   groupId, 
   correctAnswer, 
-  nextRiddleId, 
   isLastRiddle 
 }: ManualAnswerFormProps) {
   const [answer, setAnswer] = useState('')
@@ -37,6 +35,18 @@ export default function ManualAnswerForm({
     setError('')
 
     try {
+      // For manual answer riddles, check the answer locally first
+      const userAnswerNormalized = answer.trim().toLowerCase();
+      const correctAnswerNormalized = correctAnswer.trim().toLowerCase();
+      const isAnswerCorrect = userAnswerNormalized === correctAnswerNormalized;
+
+      // Only make API call if answer is correct to update game state
+      if (!isAnswerCorrect) {
+        setError('Incorrect answer. Try again!');
+        setAnswer('');
+        return;
+      }
+
       const response = await fetch('/api/submit-answer', {
         method: 'POST',
         headers: {
@@ -44,7 +54,8 @@ export default function ManualAnswerForm({
         },
         body: JSON.stringify({
           userAnswer: answer.trim(),
-          currentRiddleId: riddleId // 🚨 NEW: Send current riddle ID for sync check
+          currentRiddleId: riddleId,
+          isManualAnswer: true
         }),
       })
 
