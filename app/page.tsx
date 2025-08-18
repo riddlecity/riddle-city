@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useGroupSession } from "@/hooks/useGroupSession";
 
 export default function Home() {
-  const { loading, hasActiveGroup, currentRiddleId, groupId, clearSession } = useGroupSession();
+  const { loading, hasActiveGroup, currentRiddleId, clearSession } = useGroupSession();
   const [showInfo, setShowInfo] = useState(false);
 
   // WhatsApp share function
