@@ -111,12 +111,8 @@ export default function PreferencesPage() {
       setIsAdminMode(true);
       console.log('🔧 Admin mode detected');
     }
-  }, [searchParams]);
 
-  const handlePaymentSuccess = async (_sessionId: string) => {
-
-  // Check if we're returning from successful payment
-  useEffect(() => {
+    // Check if we're returning from successful payment
     const sessionId = searchParams?.get('session_id');
     const success = searchParams?.get('success');
 
@@ -133,6 +129,8 @@ export default function PreferencesPage() {
       }
     };
   }, []);
+
+  const handlePaymentSuccess = async (_sessionId: string) => {
     setIsProcessingPayment(true);
     try {
       // Create the group after successful payment
