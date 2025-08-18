@@ -5,9 +5,20 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export async function POST() {
+  console.log("=== SKIP RIDDLE API START ===");
+  
+  const cookieStore = await cookies();
+  const groupId = cookieStore.get("group_id")?.value;
+  const userId = cookieStore.get("user_id")?.value;
+
+  console.log("Cookies:", { groupId, userId });
+
+  if (!groupId || !userId) {
+    console.error("Missing required cookies");
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   try {
-    console.log("=== SKIP RIDDLE API START ===");
-    
     const cookieStore = await cookies();
     const groupId = cookieStore.get("group_id")?.value;
     const userId = cookieStore.get("user_id")?.value;
@@ -83,7 +94,15 @@ export async function POST() {
 
     // Use service role to update the group (bypasses RLS)
     console.log("Updating group with service role...");
-    const updateData: any = {
+    
+    interface GroupUpdate {
+      current_riddle_id: string;
+      riddles_skipped: number;
+      finished?: boolean;
+      completed_at?: string;
+    }
+
+    const updates: GroupUpdate = {
       current_riddle_id: nextRiddleId,
       riddles_skipped: (group.riddles_skipped || 0) + 1
     };
@@ -91,23 +110,20 @@ export async function POST() {
     // 🔧 FIX: If this is the last riddle, mark as completed with timestamp
     if (isLastRiddle) {
       const completionTime = new Date().toISOString();
-      updateData.finished = true;
-      updateData.completed_at = completionTime;
+      updates.finished = true;
+      updates.completed_at = completionTime;
       console.log("Marking group as completed at:", completionTime);
     }
 
-    const { data: updateResult, error: updateError } = await serviceSupabase
-      .from("groups")
-      .update(updateData)
-      .eq("id", groupId)
-      .select("current_riddle_id, riddles_skipped, finished, completed_at");
+    const { error: updateError } = await serviceSupabase
+      .from('groups')
+      .update(updates)
+      .eq('id', groupId);
 
     if (updateError) {
       console.error("Failed to update group:", updateError);
       return NextResponse.json({ error: "Failed to update group" }, { status: 500 });
     }
-
-    console.log("Group updated successfully:", updateResult);
 
     // Broadcast real-time update to other group members
     try {
@@ -119,9 +135,39 @@ export async function POST() {
           payload: {
             groupId,
             newRiddleId: nextRiddleId,
-            skippedCount: updateData.riddles_skipped,
+            skippedCount: updates.riddles_skipped,
             isCompleted: isLastRiddle,
-            completedAt: isLastRiddle ? updateData.completed_at : null
+            completedAt: isLastRiddle ? updates.completed_at : null
+          }
+        });
+      console.log("Broadcast sent successfully");
+    } catch (broadcastError) {
+      console.error("Broadcast error:", broadcastError);
+      // Continue with response even if broadcast fails
+    }
+
+    console.log("=== SKIP RIDDLE SUCCESS ===");
+
+    // Return data in the same format as other riddle completion endpoints
+    return NextResponse.json({
+      success: true,
+      nextRiddleId: isLastRiddle ? null : nextRiddleId,
+      completed: isLastRiddle,
+      message: isLastRiddle ? "Adventure completed!" : "Skipped to next riddle",
+      riddles_skipped: updates.riddles_skipped
+    });
+    try {
+      await serviceSupabase
+        .channel(`riddle-updates-${groupId}`)
+        .send({
+          type: 'broadcast',
+          event: 'riddle_update',
+          payload: {
+            groupId,
+            newRiddleId: nextRiddleId,
+            skippedCount: updates.riddles_skipped,
+            isCompleted: isLastRiddle,
+            completedAt: isLastRiddle ? updates.completed_at : null
           }
         });
       console.log("Broadcast sent successfully");
@@ -130,22 +176,6 @@ export async function POST() {
     }
 
     console.log("=== SKIP RIDDLE SUCCESS ===");
-
-    // Return appropriate response
-    if (isLastRiddle) {
-      console.log("Adventure completed! Returning completion response.");
-      return NextResponse.json({
-        success: true,
-        completed: true,
-        message: "Adventure completed!",
-        groupId: groupId,
-        completedAt: updateData.completed_at
-      });
-    } else {
-      return NextResponse.json({
-        success: true,
-        nextRiddleId: nextRiddleId,
-        skipsUsed: updateData.riddles_skipped
       });
     }
 
