@@ -132,6 +132,7 @@ export function useGroupSession() {
     error,
     getResumeUrl,
     clearSession,
-    hasActiveGame: !!activeSession && activeSession.active && activeSession.paid
+    hasActiveGame: !!activeSession && activeSession.active && activeSession.paid,
+    hasActiveGroup: !!activeSession && activeSession.active && activeSession.paid // Alias for backwards compatibility
   }
 }
