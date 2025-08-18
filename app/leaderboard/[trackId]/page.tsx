@@ -9,10 +9,7 @@ interface Props {
   params: Promise<{ trackId: string }>;
 }
 
-export default async function LeaderboardPage({ params, searchParams }: { 
-  params: Promise<{ trackId: string }>;
-  searchParams?: Promise<{ from_group?: string }>;
-}) {
+export default async function LeaderboardPage({ params }: Props) {
   const { trackId } = await params;
   const supabase = await createClient();
 
