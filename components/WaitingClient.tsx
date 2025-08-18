@@ -4,6 +4,24 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Type definitions
+type DatabaseGroup = {
+  id: string;
+  team_name: string;
+  game_started: boolean;
+  current_riddle_id: string | null;
+  finished: boolean;
+  active: boolean;
+  paid: boolean;
+  group_members?: { user_id: string }[];
+};
+
+type RealtimePayload = {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new: DatabaseGroup | null;
+  old: DatabaseGroup | null;
+};
+
 type Props = {
   groupId: string;
   initialTeamName?: string;
@@ -109,11 +127,9 @@ export default function WaitingClient({
         setIsStarted(gameStarted);
 
         // ENHANCED: If game started and we have a current riddle, redirect immediately
-        // This handles cases where someone joins via link after game has progressed
         if (gameStarted && group.current_riddle_id && !isRedirecting) {
           console.log('🔄 WAITING: Game already in progress, redirecting immediately to:', group.current_riddle_id);
           setIsRedirecting(true);
-          // Use window.location.href for immediate redirect
           window.location.href = `/riddle/${group.current_riddle_id}`;
           return;
         }
@@ -133,7 +149,7 @@ export default function WaitingClient({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
-        (payload) => {
+        (payload: RealtimePayload) => {
           console.log('🔄 WAITING: Real-time update received:', {
             event: payload.eventType,
             oldGameStarted: payload.old?.game_started,
@@ -200,7 +216,6 @@ export default function WaitingClient({
       if (data.currentRiddleId) {
         console.log('🔄 WAITING: Leader started game, redirecting to:', data.currentRiddleId);
         setIsRedirecting(true);
-        // Use window.location.href for immediate redirect
         window.location.href = `/riddle/${data.currentRiddleId}`;
       } else {
         throw new Error('No starting riddle found');
