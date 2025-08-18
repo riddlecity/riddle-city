@@ -1,6 +1,5 @@
 // app/adventure-complete/[groupId]/page.tsx
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,7 +25,6 @@ function CookieCleaner() {
 
 export default async function AdventureCompletePage({ params }: Props) {
   const { groupId } = await params;
-  const cookieStore = await cookies();
   const supabase = await createClient();
 
   // Get group details with completion info
@@ -73,17 +71,14 @@ export default async function AdventureCompletePage({ params }: Props) {
   // Calculate completion time (NO penalty added)
   const startTime = new Date(group.created_at);
   let endTime: Date;
-  let timeCalculationNote = "";
 
   if (group.completed_at) {
     // Use stored completion time
     endTime = new Date(group.completed_at);
-    timeCalculationNote = "Final completion time";
   } else {
     // Group finished but no completion time stored - mark it now and use current time
     const now2 = new Date();
     endTime = now2;
-    timeCalculationNote = "Completion time (calculated now)";
 
     // Update the group with completion timestamp
     try {
