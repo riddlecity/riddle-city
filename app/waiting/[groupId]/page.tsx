@@ -122,7 +122,6 @@ export default async function WaitingPage({ params }: Props) {
         isLeader={isLeader}
         memberCount={memberCount}
         playerLimit={group.player_limit}
-        userId={sessionData.userId}
       />
       
       {/* ✨ Real-time game start detection - automatically redirects when leader starts game */}
