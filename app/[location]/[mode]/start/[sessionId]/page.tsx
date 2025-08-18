@@ -1,4 +1,4 @@
-// app/[location]/[mode]/start/[sessionId]/page.tsx
+// app/[location]/[mode]/start/[sessionId]/page.tsx (enhanced with session validation)
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -93,6 +93,26 @@ export default async function StartPage({ params, searchParams }: Props) {
     redirect("/locations");
   }
 
+  // ---------- 4.5) Validate session cookies are set ----------
+  console.log('🍪 START PAGE: Checking if session cookies are present...');
+  
+  const sessionUserId = cookieStore.get('user_id')?.value;
+  const sessionGroupId = cookieStore.get('group_id')?.value;
+  const riddleCitySession = cookieStore.get('riddlecity-session')?.value;
+  
+  console.log('🍪 START PAGE: Session cookies -', {
+    sessionUserId: !!sessionUserId,
+    sessionGroupId: !!sessionGroupId,
+    riddleCitySession: !!riddleCitySession
+  });
+  
+  // If cookies are missing, this suggests the /api/start-game route didn't work properly
+  if (!sessionUserId && !sessionGroupId && !riddleCitySession) {
+    console.log('⚠️ START PAGE: No session cookies found! Redirecting to re-authenticate...');
+    // Redirect back through the start-game API to ensure cookies are set
+    redirect(`/api/start-game?session_id=${stripeSessionId}`);
+  }
+
   // ---------- 5) Verify group ----------
   let group: {
     id: string;
@@ -137,6 +157,11 @@ export default async function StartPage({ params, searchParams }: Props) {
       .single();
 
     const startRiddleId = trackStart?.start_riddle_id || "barnsley_r1";
+    
+    // Also set expires_at to 48 hours from now if not already set
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 48);
+    
     const { error: updateError } = await supabase
       .from("groups")
       .update({
@@ -145,17 +170,19 @@ export default async function StartPage({ params, searchParams }: Props) {
         riddles_skipped: 0,
         finished: false,
         completed_at: null,
+        expires_at: expiresAt.toISOString(), // Ensure 48-hour expiry is set
       })
       .eq("id", groupId);
 
     if (updateError) {
+      console.error('❌ START PAGE: Failed to update group:', updateError);
       redirect("/locations");
     } else {
       group.current_riddle_id = startRiddleId;
+      console.log('✅ START PAGE: Group updated successfully, expires at:', expiresAt.toISOString());
     }
   }
 
-  
   // ---------- 8) Send emails (non‑blocking) ----------
   if (teamLeaderEmail || memberEmails.length > 0) {
     try {
@@ -181,8 +208,8 @@ export default async function StartPage({ params, searchParams }: Props) {
         }),
         cache: "no-store",
       });
-    } catch {
-      // ignore email errors
+    } catch (error) {
+      console.log('⚠️ START PAGE: Email sending failed:', error);
     }
   }
 
@@ -208,8 +235,10 @@ export default async function StartPage({ params, searchParams }: Props) {
     w3w: start_w3w || undefined,
   });
 
-  // ---------- 10) Prepare Start button (simplified - no need for game_data now) ----------
+  // ---------- 10) Prepare Start button ----------
   const riddleHref = `/riddle/${group.current_riddle_id}`;
+
+  console.log('✅ START PAGE: Rendering page for group:', groupId, 'riddle:', group.current_riddle_id);
 
   // ---------- 11) Render ----------
   return (
