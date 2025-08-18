@@ -17,13 +17,14 @@ const eslintConfig = [
   {
     rules: {
       "no-unused-vars": "off", // Using TypeScript's rule instead
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": "off", // Temporarily disabled for development
       "@typescript-eslint/explicit-function-return-type": "off", // Temporarily disabled
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-      "react/no-unescaped-entities": "off" // Temporarily disabled
+      "react/no-unescaped-entities": "off", // Temporarily disabled
+      "react/jsx-no-comment-textnodes": "error"
     }
   }
 ];

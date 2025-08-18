@@ -311,7 +311,7 @@ export default async function StartPage({ params, searchParams }: Props) {
                       rel="noopener noreferrer"
                       className="text-sky-300 hover:text-sky-200 underline font-medium"
                     >
-                      ///{start_w3w}
+                      {`///${start_w3w}`}
                     </a>
                   </div>
                 )}

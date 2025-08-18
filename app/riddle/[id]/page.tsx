@@ -167,7 +167,7 @@ export default async function RiddlePage({ params }: Props) {
   }
 
   // Get progress data if user is in a group
-  let currentRiddleOrder = order_index;
+  const currentRiddleOrder = order_index;
   let totalRiddles = 0;
   let isLastRiddle = false;
 

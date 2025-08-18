@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     const supabase = await createClient(); // <- Add await here
     
-    let userId = cookieStore.get("user_id")?.value || uuidv4();
+    const userId = cookieStore.get("user_id")?.value || uuidv4();
     
     // Ensure user exists
     await supabase.from("profiles").upsert({ id: userId });
