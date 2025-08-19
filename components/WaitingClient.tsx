@@ -122,8 +122,8 @@ export default function WaitingClient({
           return;
         }
 
-        // Check if game started (using correct column name)
-        const gameStarted = Boolean(group.game_started);
+        // Check if game started (either game_started is true OR there's a current_riddle_id)
+        const gameStarted = Boolean(group.game_started || group.current_riddle_id);
         setIsStarted(gameStarted);
 
         // ENHANCED: If game started and we have a current riddle, redirect immediately
@@ -171,14 +171,17 @@ export default function WaitingClient({
           // Immediate check if game just started
           if (
             payload.eventType === 'UPDATE' && 
-            payload.new?.game_started && 
-            !payload.old?.game_started && 
-            payload.new?.current_riddle_id
+            payload.new
           ) {
-            console.log('🚀 WAITING: Game just started via real-time, redirecting immediately!');
-            setIsRedirecting(true);
-            window.location.href = `/riddle/${payload.new.current_riddle_id}`;
-            return;
+            const newGameStarted = Boolean(payload.new.game_started || payload.new.current_riddle_id);
+            const oldGameStarted = Boolean(payload.old?.game_started || payload.old?.current_riddle_id);
+            
+            if (newGameStarted && !oldGameStarted && payload.new.current_riddle_id) {
+              console.log('🚀 WAITING: Game just started via real-time, redirecting immediately!');
+              setIsRedirecting(true);
+              window.location.href = `/riddle/${payload.new.current_riddle_id}`;
+              return;
+            }
           }
           
           // Always refetch to ensure we have latest state

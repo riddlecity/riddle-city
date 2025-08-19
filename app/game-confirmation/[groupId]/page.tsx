@@ -39,8 +39,8 @@ export default async function GameConfirmationPage({ params }: Props) {
     redirect(`/${group.tracks?.location || 'barnsley'}/${group.tracks?.mode || 'date'}`);
   }
 
-  // Check if game has already started
-  if (group.game_started) {
+  // Check if game has already started (either game_started is true OR there's a current_riddle_id)
+  if (group.game_started || group.current_riddle_id) {
     redirect(`/riddle/${group.current_riddle_id}`);
   }
 

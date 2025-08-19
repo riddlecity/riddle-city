@@ -137,8 +137,7 @@ export default function RealTimeGameStart({ groupId }: RealTimeGameStartProps) {
             }
             else {
               console.log("⏳ Game not started yet, staying on waiting page");
-              // Force refresh the page to ensure we have latest state
-              window.location.reload();
+              // Don't reload - let the normal polling handle updates
             }
           }
         )
