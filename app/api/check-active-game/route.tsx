@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
       trackId: group.track_id,
       isPaid: Boolean(group.paid), // Ensure boolean
       isLeader: Boolean(membership.is_leader), // Ensure boolean
-      teamName: group.team_name
+      teamName: group.team_name || 'Your Team' // Ensure we always have a team name
     });
 
   } catch (error) {

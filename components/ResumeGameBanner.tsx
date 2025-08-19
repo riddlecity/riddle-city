@@ -16,6 +16,7 @@ interface ActiveGameResponse {
   gameStarted?: boolean;
   trackId?: string;
   isPaid?: boolean;
+  teamName?: string;
 }
 
 export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBannerProps) {
@@ -28,7 +29,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const tick = useRef<NodeJS.Timeout | null>(null);
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const getCookie = (name: string): string | null => {
     if (typeof document === 'undefined') return null;
@@ -144,7 +145,8 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
       console.log('🔍 RESUME BANNER: API response:', data);
       
       if (data.isActive && !data.isFinished) {
-        setTeamName(cTeam);
+        // Prefer API response team name over cookie
+        setTeamName(data.teamName || cTeam || 'Your Team');
         setGroupId(data.groupId ?? cGroup);
         setCurrentRiddleId(data.currentRiddleId ?? null);
         setGameStarted(Boolean(data.gameStarted));

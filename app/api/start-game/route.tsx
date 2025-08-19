@@ -37,16 +37,16 @@ export async function GET(req: Request) {
     
     const cookieOpts = {
       path: "/",
-      httpOnly: true as const,
+      httpOnly: false, // Allow client-side access
       sameSite: "lax" as const,
       secure: isProduction, // Only secure in production
       maxAge: 60 * 60 * 48, // 48 hours to match game expiry
     };
 
-    // Set individual cookies for backward compatibility
+    // Set individual cookies for backward compatibility with non-httpOnly for client access
     c.set("group_id", groupId, cookieOpts);
     c.set("user_id", userId, cookieOpts);
-    c.set("team_name", teamName, cookieOpts);
+    c.set("team_name", teamName || "Your Team", cookieOpts); // Ensure team name is never empty
 
     // ✨ Set the main session cookie for rejoin functionality
     const cookieData = { 
