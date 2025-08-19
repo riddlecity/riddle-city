@@ -62,9 +62,35 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
       return '/locations';
     }
     
-    // If game hasn't started yet, go to game confirmation page
+    // If game hasn't started yet, go to actual start page (not game confirmation)
     if (!gameStarted) {
-      console.log('🔍 RESUME BANNER: Game not started, going to game confirmation page');
+      console.log('🔍 RESUME BANNER: Game not started, going to start page');
+      
+      // Try to get sessionId from session cookie
+      const sessionCookie = getCookie('riddlecity-session');
+      let sessionId = null;
+      
+      if (sessionCookie) {
+        try {
+          const decoded = JSON.parse(atob(sessionCookie));
+          sessionId = decoded.sessionId;
+        } catch (e) {
+          console.warn('🔍 RESUME BANNER: Could not decode session cookie');
+        }
+      }
+      
+      // Extract location and mode from trackId (e.g., "date_barnsley" -> "barnsley/date")
+      if (trackId && sessionId) {
+        const parts = trackId.split('_');
+        if (parts.length >= 2) {
+          const mode = parts[0]; // "date" or "pub"
+          const location = parts.slice(1).join('_'); // "barnsley" (or multi-part locations)
+          return `/${location}/${mode}/start/${sessionId}`;
+        }
+      }
+      
+      // Fallback to game confirmation if we can't construct the start page URL
+      console.log('🔍 RESUME BANNER: Could not construct start page URL, falling back to game confirmation');
       return `/game-confirmation/${groupId}`;
     }
 
