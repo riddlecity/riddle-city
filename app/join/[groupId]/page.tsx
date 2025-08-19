@@ -117,14 +117,22 @@ export default function JoinGroupPage() {
             if (statusResponse.ok) {
               const statusData = await statusResponse.json();
 
-              if (statusData.isActive && statusData.currentRiddleId) {
+              if (statusData.isActive) {
                 setStatusMessage("Rejoining your adventure...");
                 setSuccessMessage("Welcome back to your group!");
                 setIsJoining(false);
 
-                setTimeout(() => {
-                  router.replace(`/riddle/${statusData.currentRiddleId}`);
-                }, 1200);
+                // If game is started and has a current riddle, go there
+                if (statusData.gameStarted && statusData.currentRiddleId) {
+                  setTimeout(() => {
+                    window.location.replace(`/riddle/${statusData.currentRiddleId}`);
+                  }, 1200);
+                } else {
+                  // Otherwise go to waiting room
+                  setTimeout(() => {
+                    window.location.replace(`/waiting/${groupId}`);
+                  }, 1200);
+                }
                 return;
               }
             } else {

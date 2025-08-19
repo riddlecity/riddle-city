@@ -69,6 +69,13 @@ export default async function WaitingPage({ params }: Props) {
   
   // If game has started, redirect to current riddle
   if (group.game_started && group.current_riddle_id) {
+    // Set a cookie to indicate we're redirecting to avoid loops
+    const c = await cookies();
+    c.set('game_redirect', 'true', {
+      maxAge: 60, // 1 minute expiry
+      path: '/',
+      httpOnly: false
+    });
     redirect(`/riddle/${group.current_riddle_id}`);
   }
   

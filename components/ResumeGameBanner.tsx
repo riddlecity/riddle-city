@@ -62,20 +62,10 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
       return '/locations';
     }
     
-    // If game hasn't started yet (still on start page), go to start page
+    // If game hasn't started yet, go to game confirmation page
     if (!gameStarted) {
-      console.log('🔍 RESUME BANNER: Game not started, going to start page');
-      // Extract location and mode from trackId (e.g., "date_barnsley" -> "barnsley/date")
-      if (trackId) {
-        const parts = trackId.split('_');
-        if (parts.length >= 2) {
-          const mode = parts[0]; // "date" or "pub"
-          const location = parts.slice(1).join('_'); // "barnsley" (or multi-part locations)
-          return `/${location}/${mode}/start/${groupId}`;
-        }
-      }
-      // Fallback if we can't parse trackId
-      return `/waiting/${groupId}`;
+      console.log('🔍 RESUME BANNER: Game not started, going to game confirmation page');
+      return `/game-confirmation/${groupId}`;
     }
     
     // If game started and has current riddle, go to that riddle
@@ -207,13 +197,13 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   // Determine button text and description based on game state
   const getButtonText = () => {
     if (!isPaid) return 'Complete Payment';
-    if (!gameStarted) return 'Go to Start Page';
+    if (!gameStarted) return 'Start Adventure';
     return 'Resume Game';
   };
 
   const getDescription = () => {
     if (!isPaid) return 'Complete your payment to start the adventure';
-    if (!gameStarted) return 'Ready to begin your adventure';
+    if (!gameStarted) return 'Return to start your adventure';
     return 'Continue your adventure where you left off';
   };
 

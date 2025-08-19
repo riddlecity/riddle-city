@@ -120,15 +120,25 @@ export default function RealTimeGameStart({ groupId }: RealTimeGameStartProps) {
             // Check if game finished
             if (isFinished) {
               console.log(`🎉 GAME COMPLETED! Redirecting to completion page`);
-              window.location.href = `/adventure-complete/${groupId}`;
+              try {
+                window.location.replace(`/adventure-complete/${groupId}`);
+              } catch (e) {
+                window.location.href = `/adventure-complete/${groupId}`;
+              }
             }
             // Check if game started
             else if (gameStarted && currentRiddleId) {
               console.log(`🚀 GAME STARTED! Redirecting to first riddle: ${currentRiddleId}`);
-              window.location.href = `/riddle/${currentRiddleId}`;
+              try {
+                window.location.replace(`/riddle/${currentRiddleId}`);
+              } catch (e) {
+                window.location.href = `/riddle/${currentRiddleId}`;
+              }
             }
             else {
               console.log("⏳ Game not started yet, staying on waiting page");
+              // Force refresh the page to ensure we have latest state
+              window.location.reload();
             }
           }
         )
