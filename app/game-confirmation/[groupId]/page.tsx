@@ -39,8 +39,8 @@ export default async function GameConfirmationPage({ params }: Props) {
     redirect(`/${group.tracks?.location || 'barnsley'}/${group.tracks?.mode || 'date'}`);
   }
 
-  // Check if game has already started (either game_started is true OR there's a current_riddle_id)
-  if (group.game_started || group.current_riddle_id) {
+  // Check if game has already started
+  if (group.game_started) {
     redirect(`/riddle/${group.current_riddle_id}`);
   }
 
@@ -163,7 +163,7 @@ export default async function GameConfirmationPage({ params }: Props) {
 
         {/* Action buttons */}
         <div className="space-y-4 w-full max-w-md">
-          <form action="/api/start-game" method="POST" className="w-full">
+          <form action="/api/start-adventure" method="POST" className="w-full">
             <input type="hidden" name="groupId" value={groupId} />
             <button
               type="submit"

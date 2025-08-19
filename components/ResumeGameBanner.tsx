@@ -67,14 +67,12 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
       console.log('🔍 RESUME BANNER: Game not started, going to game confirmation page');
       return `/game-confirmation/${groupId}`;
     }
-    
+
     // If game started and has current riddle, go to that riddle
-    if (currentRiddleId) {
+    if (gameStarted && currentRiddleId) {
       console.log('🔍 RESUME BANNER: Game started with riddle, going to riddle');
       return `/riddle/${currentRiddleId}`;
-    }
-    
-    // Fallback to waiting page
+    }    // Fallback to waiting page
     console.log('🔍 RESUME BANNER: Fallback to waiting page');
     return `/waiting/${groupId}`;
   };
@@ -82,7 +80,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const check = async () => {
     try {
       // Don't show banner on game pages to avoid distraction
-      const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/game-confirmation/', '/start/'];
+      const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/game-confirmation/', '/start/', '/join/'];
       const isOnGamePage = gamePages.some(page => pathname.includes(page));
       
       if (isOnGamePage) {

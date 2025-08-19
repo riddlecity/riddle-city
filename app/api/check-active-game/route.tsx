@@ -168,26 +168,15 @@ export async function GET(request: NextRequest) {
       isActive,
       currentRiddleId: group.current_riddle_id,
       gameStarted: group.game_started,
-      trackId: group.track_id,
-      // If there's a current riddle, the game should be considered started
-      actuallyStarted: Boolean(group.game_started || group.current_riddle_id)
+      trackId: group.track_id
     });
-
-    // If there's a current riddle but game_started is false, fix the database
-    if (group.current_riddle_id && !group.game_started) {
-      console.log('🔧 CHECK ACTIVE GAME: Fixing inconsistent game state - has riddle but not marked as started');
-      await supabase
-        .from('groups')
-        .update({ game_started: true })
-        .eq('id', groupId);
-    }
 
     return NextResponse.json({
       isActive,
       isFinished: group.finished,
       currentRiddleId: group.current_riddle_id,
       groupId: group.id,
-      gameStarted: Boolean(group.game_started || group.current_riddle_id), // Consider started if has riddle
+      gameStarted: Boolean(group.game_started), // Use actual database value
       trackId: group.track_id,
       isPaid: Boolean(group.paid), // Ensure boolean
       isLeader: Boolean(membership.is_leader), // Ensure boolean

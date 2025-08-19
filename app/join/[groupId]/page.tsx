@@ -203,7 +203,7 @@ export default function JoinGroupPage() {
           setIsJoining(false);
 
           setTimeout(() => {
-            router.replace(`/riddle/${data.nextRiddle}`);
+            window.location.replace(`/riddle/${data.nextRiddle}`);
           }, 1500);
         } else {
           setSuccessMessage(`Successfully joined ${data.teamName}! Waiting for the leader to start…`);

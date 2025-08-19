@@ -116,7 +116,7 @@ export async function POST(req: Request) {
         userId,
         teamName: group.team_name || "Your Team",
         nextRiddle: group.current_riddle_id,
-        gameStarted: group.game_started,
+        gameStarted: Boolean(group.game_started), // Use actual database value
         isRejoining: true
       });
       
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
       userId,
       teamName: group.team_name || "Your Team", 
       nextRiddle: group.current_riddle_id,
-      gameStarted: group.game_started,
+      gameStarted: Boolean(group.game_started), // Use actual database value
       isRejoining: false
     });
     
