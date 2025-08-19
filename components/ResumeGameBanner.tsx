@@ -149,6 +149,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
         setCurrentRiddleId(data.currentRiddleId ?? null);
         setGameStarted(Boolean(data.gameStarted));
         setTrackId(data.trackId ?? null);
+        setTrackId(data.trackId ?? null);
         setIsPaid(Boolean(data.isPaid));
         
         // Respect "hide for this tab" if user dismissed earlier

@@ -22,6 +22,9 @@ export default function RealTimeGameStart({ groupId }: RealTimeGameStartProps) {
     try {
       console.log('🔄 GAME START SYNC: Checking if game started...');
       
+      // Add random delay to prevent all clients checking at exact same time
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 1000));
+      
       const supabase = createClient();
       const { data: group, error } = await supabase
         .from('groups')
@@ -45,10 +48,18 @@ export default function RealTimeGameStart({ groupId }: RealTimeGameStartProps) {
       // Check if we need to redirect
       if (group.finished) {
         console.log(`🔄 GAME START SYNC: Adventure finished, redirecting to completion`);
-        window.location.href = `/adventure-complete/${groupId}`;
+        try {
+          window.location.replace(`/adventure-complete/${groupId}`);
+        } catch (e) {
+          window.location.href = `/adventure-complete/${groupId}`;
+        }
       } else if (group.game_started && group.current_riddle_id) {
         console.log(`🔄 GAME START SYNC: Game started! Redirecting to: ${group.current_riddle_id}`);
-        window.location.href = `/riddle/${group.current_riddle_id}`;
+        try {
+          window.location.replace(`/riddle/${group.current_riddle_id}`);
+        } catch (e) {
+          window.location.href = `/riddle/${group.current_riddle_id}`;
+        }
       } else {
         console.log('🔄 GAME START SYNC: Still waiting for game to start ⏳');
       }
