@@ -22,6 +22,7 @@ export default async function WaitingPage({ params }: Props) {
   try {
     const sessionCookie = cookieStore.get("riddlecity-session")?.value;
     if (sessionCookie) {
+      // Use Buffer.from for server-side (Node.js environment)
       const decoded = Buffer.from(sessionCookie, 'base64').toString('utf8');
       sessionData = JSON.parse(decoded);
     }

@@ -8,7 +8,7 @@ export default function CookieHandler() {
   const searchParams = useSearchParams();
   
   useEffect(() => {
-    const gameData = searchParams.get('game_data');
+    const gameData = searchParams?.get('game_data');
     
     if (gameData) {
       try {

@@ -19,7 +19,7 @@ export default function GameLayoutWrapper({ children }: GameLayoutWrapperProps) 
     '/barnsley/date/start/',
   ];
   
-  const shouldShowBanner = !excludedPaths.some(path => pathname.startsWith(path));
+  const shouldShowBanner = !excludedPaths.some(path => pathname?.startsWith(path));
 
   return (
     <>

@@ -37,7 +37,8 @@ export function useGroupSession() {
         
         if (sessionCookie) {
           try {
-            const sessionData = JSON.parse(Buffer.from(sessionCookie, 'base64').toString('utf8'))
+            // Use atob instead of Buffer for browser compatibility
+            const sessionData = JSON.parse(atob(sessionCookie))
             groupId = sessionData.groupId
             userId = sessionData.userId  
             teamName = sessionData.teamName
@@ -176,9 +177,40 @@ export function useGroupSession() {
       return `/adventure-complete/${activeSession.groupId}`
     }
     
-    // If game hasn't started yet, go to waiting page
+    // If game hasn't started yet, go to actual start page (not waiting room)
     if (!activeSession.gameStarted) {
-      return `/waiting/${activeSession.groupId}`
+      console.log('🔍 USE GROUP SESSION: Game not started, constructing start page URL')
+      
+      // Try to get sessionId from session cookie
+      const sessionCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('riddlecity-session='))
+        ?.split('=')[1]
+      
+      let sessionId = null
+      if (sessionCookie) {
+        try {
+          // Use atob instead of Buffer for browser compatibility
+          const decoded = JSON.parse(atob(sessionCookie))
+          sessionId = decoded.sessionId
+        } catch (e) {
+          console.warn('🔍 USE GROUP SESSION: Could not decode session cookie')
+        }
+      }
+      
+      // Extract location and mode from trackId (e.g., "date_barnsley" -> "barnsley/date")
+      if (activeSession.trackId && sessionId) {
+        const parts = activeSession.trackId.split('_')
+        if (parts.length >= 2) {
+          const mode = parts[0] // "date" or "pub"
+          const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
+          return `/${location}/${mode}/start/${sessionId}`
+        }
+      }
+      
+      // Fallback to game confirmation if we can't construct the start page URL
+      console.log('🔍 USE GROUP SESSION: Could not construct start page URL, falling back to game confirmation')
+      return `/game-confirmation/${activeSession.groupId}`
     }
     
     // If game is active and has a current riddle, go to that riddle
@@ -186,8 +218,8 @@ export function useGroupSession() {
       return `/riddle/${activeSession.currentRiddleId}`
     }
     
-    // Fallback to waiting page
-    return `/waiting/${activeSession.groupId}`
+    // Fallback to game confirmation
+    return `/game-confirmation/${activeSession.groupId}`
   }
 
   const clearSession = async () => {

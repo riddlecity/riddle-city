@@ -60,7 +60,8 @@ export default function JoinGroupPage() {
       const sessionCookie = getCookie("riddlecity-session");
       if (!sessionCookie) return null;
       
-      const decoded = Buffer.from(sessionCookie, 'base64').toString('utf8');
+      // Use atob instead of Buffer for browser compatibility
+      const decoded = atob(sessionCookie);
       const parsed = JSON.parse(decoded);
       
       if (parsed.groupId && parsed.userId) {
@@ -75,7 +76,8 @@ export default function JoinGroupPage() {
 
   const setSessionCookie = (sessionData: SessionData) => {
     try {
-      const encoded = Buffer.from(JSON.stringify(sessionData)).toString('base64');
+      // Use btoa instead of Buffer for browser compatibility
+      const encoded = btoa(JSON.stringify(sessionData));
       const maxAge = 48 * 60 * 60; // 48 hours
       const isProduction = window.location.hostname !== 'localhost';
       
