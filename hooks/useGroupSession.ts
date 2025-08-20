@@ -172,6 +172,12 @@ export function useGroupSession() {
     
     console.log('🔍 USE GROUP SESSION: Getting resume URL for session:', activeSession)
     
+    // If not paid, go to locations page  
+    if (!activeSession.paid) {
+      console.log('🔍 USE GROUP SESSION: Not paid, going to locations')
+      return '/locations'
+    }
+    
     // If game is finished, go to completion page
     if (activeSession.finished) {
       return `/adventure-complete/${activeSession.groupId}`
