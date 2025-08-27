@@ -64,11 +64,22 @@ export async function POST(req: Request) {
     
     console.log("✅ JOIN GROUP: Profile ensured for user:", userId);
     
-    // Check if group exists and get team name
+    // Check if group exists and get team name + session info
     console.log("🔍 JOIN GROUP: Checking if group exists:", groupId);
     const { data: group, error: groupError } = await supabase
       .from("groups")
-      .select("player_limit, current_riddle_id, track_id, team_name, finished, active, paid, game_started, group_members(*)")
+      .select(`
+        player_limit, 
+        current_riddle_id, 
+        track_id, 
+        team_name, 
+        finished, 
+        active, 
+        paid, 
+        game_started, 
+        stripe_session_id,
+        group_members(*)
+      `)
       .eq("id", groupId)
       .single();
       
@@ -110,11 +121,12 @@ export async function POST(req: Request) {
       // User is already a member, let them rejoin
       console.log("🔄 JOIN GROUP: User rejoining group");
       
-      // Create consistent session data
+      // Create complete session data including sessionId
       const sessionData = {
         groupId,
         userId,
-        teamName: group.team_name || "Your Team"
+        teamName: group.team_name || "Your Team",
+        sessionId: group.stripe_session_id || groupId // Use Stripe session ID or fallback to group ID
       };
       const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
       
@@ -125,10 +137,11 @@ export async function POST(req: Request) {
         nextRiddle: group.current_riddle_id,
         gameStarted: Boolean(group.game_started), // Use actual database value
         trackId: group.track_id, // Add trackId for start page URL construction
+        sessionId: group.stripe_session_id || groupId, // Include sessionId in response
         isRejoining: true
       });
       
-      // Set the consistent session cookie
+      // Set the complete session cookie
       response.cookies.set("riddlecity-session", encodedData, {
         httpOnly: false,
         secure: process.env.NODE_ENV === "production",
@@ -137,7 +150,7 @@ export async function POST(req: Request) {
         path: "/"
       });
       
-      console.log("✅ JOIN GROUP: User rejoined successfully");
+      console.log("✅ JOIN GROUP: User rejoined successfully with sessionId:", sessionData.sessionId);
       return response;
     }
     
@@ -165,11 +178,12 @@ export async function POST(req: Request) {
     
     console.log("✅ JOIN GROUP: Successfully added user to group");
     
-    // Create session data
+    // Create complete session data including sessionId
     const sessionData = {
       groupId,
       userId,
-      teamName: group.team_name || "Your Team"
+      teamName: group.team_name || "Your Team",
+      sessionId: group.stripe_session_id || groupId // Use Stripe session ID or fallback to group ID
     };
     const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
     
@@ -180,10 +194,11 @@ export async function POST(req: Request) {
       nextRiddle: group.current_riddle_id,
       gameStarted: Boolean(group.game_started), // Use actual database value
       trackId: group.track_id, // Add trackId for start page URL construction
+      sessionId: group.stripe_session_id || groupId, // Include sessionId in response
       isRejoining: false
     });
     
-    // Set the consistent session cookie (matches your start page format)
+    // Set the complete session cookie (matches your start page format)
     response.cookies.set("riddlecity-session", encodedData, {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production", 
@@ -192,7 +207,7 @@ export async function POST(req: Request) {
       path: "/"
     });
     
-    console.log("✅ JOIN GROUP: Join process completed successfully");
+    console.log("✅ JOIN GROUP: Join process completed successfully with sessionId:", sessionData.sessionId);
     return response;
     
   } catch (error) {

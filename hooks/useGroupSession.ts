@@ -1,5 +1,6 @@
 // hooks/useGroupSession.ts
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 interface GroupSession {
@@ -14,10 +15,12 @@ interface GroupSession {
   teamName: string
 }
 
-export function useGroupSession() {
+export function useGroupSession(autoRedirect: boolean = false) {
   const [activeSession, setActiveSession] = useState<GroupSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasRedirected, setHasRedirected] = useState(false)
+  const router = useRouter()
   
   useEffect(() => {
     const checkSession = async () => {
@@ -121,6 +124,18 @@ export function useGroupSession() {
           }
           
           setActiveSession(session)
+
+          // AUTO-REDIRECT LOGIC: If autoRedirect is enabled and we haven't redirected yet
+          if (autoRedirect && !hasRedirected) {
+            const redirectUrl = getResumeUrlFromSession(session)
+            
+            if (redirectUrl) {
+              console.log('🔍 USE GROUP SESSION: Auto-redirecting to:', redirectUrl)
+              setHasRedirected(true)
+              router.push(redirectUrl)
+            }
+          }
+          
         } else if (data.isFinished) {
           // Handle finished games
           const supabase = createClient()
@@ -144,6 +159,13 @@ export function useGroupSession() {
             }
             
             setActiveSession(session)
+
+            // Auto-redirect to completion page if finished
+            if (autoRedirect && !hasRedirected) {
+              console.log('🔍 USE GROUP SESSION: Auto-redirecting to completion page')
+              setHasRedirected(true)
+              router.push(`/adventure-complete/${data.groupId}`)
+            }
           } else {
             setActiveSession(null)
           }
@@ -161,42 +183,48 @@ export function useGroupSession() {
 
     checkSession()
     
-    // Refresh session check every 30 seconds
-    const interval = setInterval(checkSession, 30000)
+    // Only set up interval if we haven't redirected (prevents infinite loops)
+    let interval: NodeJS.Timeout | null = null
+    if (!hasRedirected) {
+      // Refresh session check every 30 seconds
+      interval = setInterval(checkSession, 30000)
+    }
     
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [autoRedirect, hasRedirected, router])
 
-  const getResumeUrl = (): string | null => {
-    if (!activeSession) return null
-    
+  const getResumeUrlFromSession = (session: GroupSession): string | null => {
     console.log('🔍 USE GROUP SESSION: Getting resume URL for session:', {
-      groupId: activeSession.groupId,
-      gameStarted: activeSession.gameStarted,
-      currentRiddleId: activeSession.currentRiddleId,
-      paid: activeSession.paid,
-      trackId: activeSession.trackId
+      groupId: session.groupId,
+      gameStarted: session.gameStarted,
+      currentRiddleId: session.currentRiddleId,
+      paid: session.paid,
+      trackId: session.trackId
     })
     
     // If not paid, go to locations page  
-    if (!activeSession.paid) {
+    if (!session.paid) {
       console.log('🔍 USE GROUP SESSION: Not paid, going to locations')
       return '/locations'
     }
     
     // If game is finished, go to completion page
-    if (activeSession.finished) {
-      return `/adventure-complete/${activeSession.groupId}`
+    if (session.finished) {
+      return `/adventure-complete/${session.groupId}`
     }
     
     // SMART LOGIC: If game started, user has clicked the Start button - go to current riddle
-    if (activeSession.gameStarted && activeSession.currentRiddleId) {
-      console.log('🔍 USE GROUP SESSION: Game started (user clicked Start), going to riddle:', activeSession.currentRiddleId)
-      return `/riddle/${activeSession.currentRiddleId}`
+    if (session.gameStarted && session.currentRiddleId) {
+      console.log('🔍 USE GROUP SESSION: Game started (user clicked Start), going to riddle:', session.currentRiddleId)
+      return `/riddle/${session.currentRiddleId}`
     }
     
     // If game hasn't started, user hasn't clicked Start yet - go to session page
-    if (!activeSession.gameStarted) {
+    if (!session.gameStarted) {
       console.log('🔍 USE GROUP SESSION: Game not started (user hasn\'t clicked Start), constructing start page URL')
       
       // Try to get sessionId from session cookie
@@ -217,8 +245,8 @@ export function useGroupSession() {
       }
       
       // Extract location and mode from trackId (e.g., "date_barnsley" -> "barnsley/date")
-      if (activeSession.trackId && sessionId) {
-        const parts = activeSession.trackId.split('_')
+      if (session.trackId && sessionId) {
+        const parts = session.trackId.split('_')
         if (parts.length >= 2) {
           const mode = parts[0] // "date" or "pub"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
@@ -230,12 +258,17 @@ export function useGroupSession() {
       
       // Fallback to waiting page if we can't construct the start page URL
       console.log('🔍 USE GROUP SESSION: Could not construct start page URL, falling back to waiting page')
-      return `/waiting/${activeSession.groupId}`
+      return `/waiting/${session.groupId}`
     }
     
     // Fallback to waiting page
     console.log('🔍 USE GROUP SESSION: Fallback to waiting page')
-    return `/waiting/${activeSession.groupId}`
+    return `/waiting/${session.groupId}`
+  }
+
+  const getResumeUrl = (): string | null => {
+    if (!activeSession) return null
+    return getResumeUrlFromSession(activeSession)
   }
 
   const clearSession = async () => {
@@ -253,6 +286,7 @@ export function useGroupSession() {
       })
       
       setActiveSession(null)
+      setHasRedirected(false) // Reset redirect flag
       console.log('🔍 USE GROUP SESSION: Session cleared')
     } catch (error) {
       console.error('🔍 USE GROUP SESSION: Error clearing session:', error)

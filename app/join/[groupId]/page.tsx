@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useGroupSession } from "@/hooks/useGroupSession";
 
 interface SessionData {
   groupId: string;
@@ -16,9 +17,12 @@ export default function JoinGroupPage() {
   const router = useRouter();
   const params = useParams();
   const [error, setError] = useState<string | null>(null);
-  const [isJoining, setIsJoining] = useState(true);
+  const [isJoining, setIsJoining] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("Checking your group status...");
+
+  // Use the hook WITH auto-redirect enabled
+  const { loading: sessionLoading, activeSession, error: sessionError } = useGroupSession(true);
 
   const groupId =
     typeof params?.groupId === "string"
@@ -55,25 +59,6 @@ export default function JoinGroupPage() {
     });
   };
 
-  const parseSessionCookie = (): SessionData | null => {
-    try {
-      const sessionCookie = getCookie("riddlecity-session");
-      if (!sessionCookie) return null;
-      
-      // Use atob instead of Buffer for browser compatibility
-      const decoded = atob(sessionCookie);
-      const parsed = JSON.parse(decoded);
-      
-      if (parsed.groupId && parsed.userId) {
-        return parsed;
-      }
-      return null;
-    } catch (e) {
-      console.warn("Failed to parse session cookie:", e);
-      return null;
-    }
-  };
-
   const setSessionCookie = (sessionData: SessionData) => {
     try {
       // Use btoa instead of Buffer for browser compatibility
@@ -90,100 +75,37 @@ export default function JoinGroupPage() {
   useEffect(() => {
     if (!groupId) {
       setError("Invalid group ID. Please check your invite link.");
-      setIsJoining(false);
       return;
     }
 
+    // If useGroupSession found an active session, it will auto-redirect
+    // We just need to show appropriate loading/success messages
+    if (sessionLoading) {
+      setStatusMessage("Checking your group status...");
+      return;
+    }
+
+    if (sessionError) {
+      console.warn("Session error:", sessionError);
+      // Continue with join flow
+    }
+
+    if (activeSession && activeSession.groupId === groupId) {
+      // User already has an active session, useGroupSession will handle redirect
+      setStatusMessage("Welcome back! Taking you to your adventure...");
+      setSuccessMessage("Welcome back to your group!");
+      return;
+    }
+
+    // If we get here, user needs to join the group
     const handleJoin = async () => {
       try {
         setIsJoining(true);
         setError(null);
-
-        // Check for existing session
-        const existingSession = parseSessionCookie();
-
-        if (existingSession && existingSession.groupId === groupId) {
-          setStatusMessage("Welcome back! Verifying your group membership...");
-
-          try {
-            const statusResponse = await fetch(
-              `/api/check-active-game?userId=${existingSession.userId}&groupId=${groupId}`,
-              { 
-                method: "GET",
-                headers: {
-                  'Cache-Control': 'no-cache'
-                }
-              }
-            );
-
-            if (statusResponse.ok) {
-              const statusData = await statusResponse.json();
-
-              if (statusData.isActive) {
-                setStatusMessage("Rejoining your adventure...");
-                setSuccessMessage("Welcome back to your group!");
-                setIsJoining(false);
-
-                // Use the SAME smart logic as resume buttons
-                if (statusData.gameStarted && statusData.currentRiddleId) {
-                  // User has clicked Start - go to current riddle
-                  setTimeout(() => {
-                    window.location.replace(`/riddle/${statusData.currentRiddleId}`);
-                  }, 1200);
-                } else if (!statusData.gameStarted) {
-                  // User hasn't clicked Start yet - construct start page URL
-                  const sessionCookie = getCookie('riddlecity-session');
-                  let sessionId = null;
-                  
-                  if (sessionCookie) {
-                    try {
-                      const decoded = JSON.parse(atob(sessionCookie));
-                      sessionId = decoded.sessionId;
-                    } catch (e) {
-                      console.warn('Could not decode session cookie');
-                    }
-                  }
-                  
-                  // Extract location and mode from trackId
-                  if (statusData.trackId && sessionId) {
-                    const parts = statusData.trackId.split('_');
-                    if (parts.length >= 2) {
-                      const mode = parts[0];
-                      const location = parts.slice(1).join('_');
-                      const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`;
-                      setTimeout(() => {
-                        window.location.replace(startPageUrl);
-                      }, 1200);
-                      return;
-                    }
-                  }
-                  
-                  // Fallback to waiting room if we can't construct start page URL
-                  setTimeout(() => {
-                    window.location.replace(`/waiting/${groupId}`);
-                  }, 1200);
-                } else {
-                  // Fallback to waiting room
-                  setTimeout(() => {
-                    window.location.replace(`/waiting/${groupId}`);
-                  }, 1200);
-                }
-                return;
-              }
-            } else {
-              console.warn("Failed to check active game status:", statusResponse.status);
-            }
-          } catch (e) {
-            console.warn("Error checking active game:", e);
-            // Continue with fresh join flow
-          }
-        }
+        setStatusMessage("Joining your group...");
 
         // Clear any conflicting cookies before joining
         clearAllCookies();
-        
-        // Fresh join flow
-        setStatusMessage("Joining your group...");
 
         const res = await fetch("/api/join-group", {
           method: "POST",
@@ -195,7 +117,6 @@ export default function JoinGroupPage() {
           body: JSON.stringify({ groupId }),
         });
 
-        // Parse the JSON response
         let data;
         
         try {
@@ -232,55 +153,17 @@ export default function JoinGroupPage() {
         
         setSessionCookie(sessionData);
 
-        // Use the SAME smart logic as resume buttons for new members too
+        // Simple redirect logic - let the game flow handle the complexity
         if (data.gameStarted && data.nextRiddle) {
-          // User has clicked Start (game is active) - go to current riddle
+          // Game is active - go directly to current riddle
           setSuccessMessage(`Joining ${data.teamName} adventure in progress...`);
           setIsJoining(false);
 
           setTimeout(() => {
-            window.location.replace(`/riddle/${data.nextRiddle}`);
-          }, 1500);
-        } else if (!data.gameStarted) {
-          // User hasn't clicked Start yet - check if we can construct start page URL
-          const sessionCookie = getCookie('riddlecity-session');
-          let sessionId = null;
-          
-          if (sessionCookie) {
-            try {
-              const decoded = JSON.parse(atob(sessionCookie));
-              sessionId = decoded.sessionId;
-            } catch (e) {
-              console.warn('Could not decode session cookie');
-            }
-          }
-          
-          // If we have trackId and sessionId, try to construct start page URL
-          if (data.trackId && sessionId) {
-            const parts = data.trackId.split('_');
-            if (parts.length >= 2) {
-              const mode = parts[0];
-              const location = parts.slice(1).join('_');
-              const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`;
-              setSuccessMessage(`Successfully joined ${data.teamName}! Taking you to start page...`);
-              setIsJoining(false);
-              
-              setTimeout(() => {
-                window.location.replace(startPageUrl);
-              }, 1500);
-              return;
-            }
-          }
-          
-          // Fallback to waiting room if we can't construct start page URL
-          setSuccessMessage(`Successfully joined ${data.teamName}! Waiting for the leader to start…`);
-          setIsJoining(false);
-
-          setTimeout(() => {
-            router.replace(`/waiting/${groupId}`);
+            router.replace(`/riddle/${data.nextRiddle}`);
           }, 1500);
         } else {
-          // Fallback to waiting room
+          // Game hasn't started - go to waiting room
           setSuccessMessage(`Successfully joined ${data.teamName}! Waiting for the leader to start…`);
           setIsJoining(false);
 
@@ -296,8 +179,51 @@ export default function JoinGroupPage() {
       }
     };
 
-    handleJoin();
-  }, [groupId, router]);
+    // Only run join logic if we don't have an active session
+    if (!activeSession) {
+      handleJoin();
+    }
+
+  }, [groupId, router, sessionLoading, activeSession, sessionError]);
+
+  // Show loading while checking session
+  if (sessionLoading) {
+    return (
+      <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
+        {/* Logo in consistent top-left position */}
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+          <Link href="/">
+            <Image
+              src="/riddle-city-logo.png"
+              alt="Riddle City Logo"
+              width={60}
+              height={60}
+              className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+              priority
+            />
+          </Link>
+        </div>
+
+        {/* Background logo */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-5">
+          <Image
+            src="/riddle-city-logo2.png"
+            alt=""
+            width={400}
+            height={400}
+            className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain"
+            priority={false}
+          />
+        </div>
+
+        <div className="text-center z-10 max-w-md">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">Loading your adventure...</h1>
+          <p className="text-white/70">Checking your group status...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
@@ -340,7 +266,7 @@ export default function JoinGroupPage() {
       </div>
 
       <div className="text-center z-10 max-w-md">
-        {isJoining && (
+        {(isJoining || (activeSession && activeSession.groupId === groupId)) && (
           <>
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
             <h1 className="text-2xl md:text-3xl font-bold mb-4">
@@ -360,7 +286,7 @@ export default function JoinGroupPage() {
             <p className="text-white/60 text-sm">Redirecting you now…</p>
             <div className="mt-4">
               <div className="animate-pulse bg-green-500/20 rounded-lg p-2">
-                <div className="text-sm text-green-300">Taking you to the waiting room…</div>
+                <div className="text-sm text-green-300">Taking you to the adventure…</div>
               </div>
             </div>
           </>
