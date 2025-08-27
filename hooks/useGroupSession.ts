@@ -210,7 +210,7 @@ export function useGroupSession() {
         if (parts.length >= 2) {
           const mode = parts[0] // "date" or "pub"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
-          return `/${location}/${mode}/start/${sessionId}`
+          return `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
         }
       }
       

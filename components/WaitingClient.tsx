@@ -124,6 +124,7 @@ export default function WaitingClient({
 
         // Check if game started (only use the actual game_started flag)
         const gameStarted = Boolean(group.game_started);
+        console.log('🔍 WAITING: Setting isStarted to:', gameStarted, '(from database game_started:', group.game_started, ')');
         setIsStarted(gameStarted);
 
         // ENHANCED: If game started and we have a current riddle, redirect immediately
