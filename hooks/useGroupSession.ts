@@ -214,9 +214,9 @@ export function useGroupSession() {
         }
       }
       
-      // Fallback to game confirmation if we can't construct the start page URL
-      console.log('🔍 USE GROUP SESSION: Could not construct start page URL, falling back to game confirmation')
-      return `/game-confirmation/${activeSession.groupId}`
+      // Fallback to waiting page if we can't construct the start page URL
+      console.log('🔍 USE GROUP SESSION: Could not construct start page URL, falling back to waiting page')
+      return `/waiting/${activeSession.groupId}`
     }
     
     // If game is active and has a current riddle, go to that riddle
@@ -224,8 +224,8 @@ export function useGroupSession() {
       return `/riddle/${activeSession.currentRiddleId}`
     }
     
-    // Fallback to game confirmation
-    return `/game-confirmation/${activeSession.groupId}`
+    // Fallback to waiting page
+    return `/waiting/${activeSession.groupId}`
   }
 
   const clearSession = async () => {

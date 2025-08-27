@@ -7,17 +7,17 @@ export default function ResumeGameGate() {
   const pathname = usePathname() || "";
   
   // Hide the banner on game-related pages to avoid confusion
-  const gamePages = [
-    '/riddle/',           // Active riddle pages
-    '/waiting/',          // Waiting rooms  
-    '/start/',            // Start pages (post-payment)
+  const excludedPaths = [
+    '/riddle/', // Game pages
     '/adventure-complete/', // Completion pages
-    '/game-confirmation/', // Game confirmation pages
-    '/join/'              // Join pages
+    '/waiting/', // Waiting room pages
+    '/start/', // Start pages  
+    '/join/', // Join pages
+    '/scan', // QR scan page
   ];
   
   // Check if current path matches any game page
-  const isOnGamePage = gamePages.some(page => pathname.includes(page));
+  const isOnGamePage = excludedPaths.some(path => pathname.includes(path));
   
   if (isOnGamePage) {
     console.log('🚫 RESUME GATE: Hiding banner on game page:', pathname);

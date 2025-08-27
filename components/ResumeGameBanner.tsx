@@ -89,9 +89,9 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
         }
       }
       
-      // Fallback to game confirmation if we can't construct the start page URL
-      console.log('🔍 RESUME BANNER: Could not construct start page URL, falling back to game confirmation');
-      return `/game-confirmation/${groupId}`;
+      // Fallback to waiting page if we can't construct the start page URL
+      console.log('🔍 RESUME BANNER: Could not construct start page URL, falling back to waiting page');
+      return `/waiting/${groupId}`;
     }
 
     // If game started and has current riddle, go to that riddle
@@ -106,7 +106,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const check = async () => {
     try {
       // Don't show banner on game pages to avoid distraction
-      const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/game-confirmation/', '/start/', '/join/'];
+      const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/start/', '/join/'];
       const isOnGamePage = gamePages.some(page => pathname.includes(page));
       
       if (isOnGamePage) {
