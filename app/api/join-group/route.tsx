@@ -124,6 +124,7 @@ export async function POST(req: Request) {
         teamName: group.team_name || "Your Team",
         nextRiddle: group.current_riddle_id,
         gameStarted: Boolean(group.game_started), // Use actual database value
+        trackId: group.track_id, // Add trackId for start page URL construction
         isRejoining: true
       });
       
@@ -178,6 +179,7 @@ export async function POST(req: Request) {
       teamName: group.team_name || "Your Team", 
       nextRiddle: group.current_riddle_id,
       gameStarted: Boolean(group.game_started), // Use actual database value
+      trackId: group.track_id, // Add trackId for start page URL construction
       isRejoining: false
     });
     

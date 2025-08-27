@@ -124,13 +124,46 @@ export default function JoinGroupPage() {
                 setSuccessMessage("Welcome back to your group!");
                 setIsJoining(false);
 
-                // If game is started and has a current riddle, go there
+                // Use the SAME smart logic as resume buttons
                 if (statusData.gameStarted && statusData.currentRiddleId) {
+                  // User has clicked Start - go to current riddle
                   setTimeout(() => {
                     window.location.replace(`/riddle/${statusData.currentRiddleId}`);
                   }, 1200);
+                } else if (!statusData.gameStarted) {
+                  // User hasn't clicked Start yet - construct start page URL
+                  const sessionCookie = getCookie('riddlecity-session');
+                  let sessionId = null;
+                  
+                  if (sessionCookie) {
+                    try {
+                      const decoded = JSON.parse(atob(sessionCookie));
+                      sessionId = decoded.sessionId;
+                    } catch (e) {
+                      console.warn('Could not decode session cookie');
+                    }
+                  }
+                  
+                  // Extract location and mode from trackId
+                  if (statusData.trackId && sessionId) {
+                    const parts = statusData.trackId.split('_');
+                    if (parts.length >= 2) {
+                      const mode = parts[0];
+                      const location = parts.slice(1).join('_');
+                      const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`;
+                      setTimeout(() => {
+                        window.location.replace(startPageUrl);
+                      }, 1200);
+                      return;
+                    }
+                  }
+                  
+                  // Fallback to waiting room if we can't construct start page URL
+                  setTimeout(() => {
+                    window.location.replace(`/waiting/${groupId}`);
+                  }, 1200);
                 } else {
-                  // Otherwise go to waiting room
+                  // Fallback to waiting room
                   setTimeout(() => {
                     window.location.replace(`/waiting/${groupId}`);
                   }, 1200);
@@ -199,15 +232,55 @@ export default function JoinGroupPage() {
         
         setSessionCookie(sessionData);
 
-        // Check if game has started
+        // Use the SAME smart logic as resume buttons for new members too
         if (data.gameStarted && data.nextRiddle) {
+          // User has clicked Start (game is active) - go to current riddle
           setSuccessMessage(`Joining ${data.teamName} adventure in progress...`);
           setIsJoining(false);
 
           setTimeout(() => {
             window.location.replace(`/riddle/${data.nextRiddle}`);
           }, 1500);
+        } else if (!data.gameStarted) {
+          // User hasn't clicked Start yet - check if we can construct start page URL
+          const sessionCookie = getCookie('riddlecity-session');
+          let sessionId = null;
+          
+          if (sessionCookie) {
+            try {
+              const decoded = JSON.parse(atob(sessionCookie));
+              sessionId = decoded.sessionId;
+            } catch (e) {
+              console.warn('Could not decode session cookie');
+            }
+          }
+          
+          // If we have trackId and sessionId, try to construct start page URL
+          if (data.trackId && sessionId) {
+            const parts = data.trackId.split('_');
+            if (parts.length >= 2) {
+              const mode = parts[0];
+              const location = parts.slice(1).join('_');
+              const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`;
+              setSuccessMessage(`Successfully joined ${data.teamName}! Taking you to start page...`);
+              setIsJoining(false);
+              
+              setTimeout(() => {
+                window.location.replace(startPageUrl);
+              }, 1500);
+              return;
+            }
+          }
+          
+          // Fallback to waiting room if we can't construct start page URL
+          setSuccessMessage(`Successfully joined ${data.teamName}! Waiting for the leader to start…`);
+          setIsJoining(false);
+
+          setTimeout(() => {
+            router.replace(`/waiting/${groupId}`);
+          }, 1500);
         } else {
+          // Fallback to waiting room
           setSuccessMessage(`Successfully joined ${data.teamName}! Waiting for the leader to start…`);
           setIsJoining(false);
 

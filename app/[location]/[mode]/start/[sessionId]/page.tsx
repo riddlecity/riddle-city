@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import ShareLink from "@/components/ShareLink";
+import StartAdventureButton from "@/components/StartAdventureButton";
 
 interface Props {
   params: Promise<{ location: string; mode: string; sessionId: string }>;
@@ -339,16 +340,10 @@ export default async function StartPage({ params, searchParams }: Props) {
                   {teamName || "Your Team"}
                 </div>
               </div>
-              <a
-                href={riddleHref}
-                className="inline-flex items-center justify-center w-full md:w-auto
-                           bg-gradient-to-r from-green-600 to-emerald-600
-                           hover:from-green-700 hover:to-emerald-700
-                           text-white font-semibold px-8 py-4 rounded-xl
-                           transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
-              >
-                🚀 Start
-              </a>
+              <StartAdventureButton 
+                groupId={groupId!}
+                riddleHref={riddleHref}
+              />
             </div>
 
             {/* Mobile: Share link below */}

@@ -189,16 +189,15 @@ export function useGroupSession() {
       return `/adventure-complete/${activeSession.groupId}`
     }
     
-    // ENHANCED LOGIC: If there's a current riddle, user has progressed past start page
-    // Take them to the riddle regardless of game_started status
-    if (activeSession.currentRiddleId) {
-      console.log('🔍 USE GROUP SESSION: Has current riddle, going to riddle:', activeSession.currentRiddleId)
+    // SMART LOGIC: If game started, user has clicked the Start button - go to current riddle
+    if (activeSession.gameStarted && activeSession.currentRiddleId) {
+      console.log('🔍 USE GROUP SESSION: Game started (user clicked Start), going to riddle:', activeSession.currentRiddleId)
       return `/riddle/${activeSession.currentRiddleId}`
     }
     
-    // If no current riddle and game hasn't started, go to start page (user hasn't clicked start yet)
+    // If game hasn't started, user hasn't clicked Start yet - go to session page
     if (!activeSession.gameStarted) {
-      console.log('🔍 USE GROUP SESSION: No riddle and game not started, constructing start page URL')
+      console.log('🔍 USE GROUP SESSION: Game not started (user hasn\'t clicked Start), constructing start page URL')
       
       // Try to get sessionId from session cookie
       const sessionCookie = document.cookie
