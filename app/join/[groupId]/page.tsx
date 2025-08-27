@@ -20,6 +20,7 @@ export default function JoinGroupPage() {
   const [isJoining, setIsJoining] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("Checking your group status...");
+  const [forceJoin, setForceJoin] = useState(false);
 
   // Use the hook WITH auto-redirect enabled
   const { loading: sessionLoading, activeSession, error: sessionError } = useGroupSession(true);
@@ -30,6 +31,14 @@ export default function JoinGroupPage() {
       : Array.isArray(params?.groupId)
       ? params.groupId[0]
       : "";
+
+  console.log("🔍 JOIN PAGE STATE:", {
+    groupId,
+    sessionLoading,
+    activeSession: activeSession?.groupId,
+    isJoining,
+    sessionError
+  });
 
   // Helper functions for cookie management
   const clearAllCookies = () => {
@@ -70,34 +79,46 @@ export default function JoinGroupPage() {
       return;
     }
 
-    // If useGroupSession found an active session, it will auto-redirect
-    // We just need to show appropriate loading/success messages
-    if (sessionLoading) {
+    let sessionTimeout: NodeJS.Timeout;
+
+    // Add timeout to prevent infinite loading from useGroupSession
+    if (sessionLoading && !forceJoin) {
       setStatusMessage("Checking your group status...");
-      return;
+      sessionTimeout = setTimeout(() => {
+        console.warn("⏰ JOIN: Session loading timeout, proceeding with join");
+        setForceJoin(true);
+      }, 10000); // 10 second timeout
+      
+      return () => clearTimeout(sessionTimeout);
     }
 
-    if (sessionError) {
-      console.warn("Session error:", sessionError);
-      // Continue with join flow
-    }
-
+    // If useGroupSession found an active session for THIS group, let it auto-redirect
     if (activeSession && activeSession.groupId === groupId) {
-      // User already has an active session, useGroupSession will handle redirect
       setStatusMessage("Welcome back! Taking you to your adventure...");
       setSuccessMessage("Welcome back to your group!");
-      return;
+      // useGroupSession will handle the redirect, don't interfere
+      return () => {};
     }
 
-    // If we get here, user needs to join the group
+    // If user has a different active session, clear it first
+    if (activeSession && activeSession.groupId !== groupId) {
+      console.log("🔄 JOIN: Clearing different active session before joining new group");
+      clearAllCookies();
+      // Continue to join new group
+    }
+
+    // If we get here, user needs to join this specific group
     const handleJoin = async () => {
       try {
         setIsJoining(true);
         setError(null);
         setStatusMessage("Joining your group...");
 
-        // Clear any conflicting cookies before joining
+        // Clear any conflicting cookies before joining (ensure clean state)
         clearAllCookies();
+
+        // Small delay to ensure cookies are cleared
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         const res = await fetch("/api/join-group", {
           method: "POST",
@@ -171,15 +192,20 @@ export default function JoinGroupPage() {
       }
     };
 
-    // Only run join logic if we don't have an active session
-    if (!activeSession) {
+    // Only run join logic if:
+    // 1. We don't have an active session for this group
+    // 2. We're not already in the joining process
+    // 3. useGroupSession is not loading (or we forced join due to timeout)
+    if ((!sessionLoading || forceJoin) && !isJoining && (!activeSession || activeSession.groupId !== groupId)) {
       handleJoin();
     }
 
-  }, [groupId, router, sessionLoading, activeSession, sessionError]);
+    return () => {}; // Cleanup function
 
-  // Show loading while checking session
-  if (sessionLoading) {
+  }, [groupId, router, sessionLoading, activeSession, sessionError, isJoining, forceJoin]);
+
+  // Show loading while checking session or joining
+  if (sessionLoading && !forceJoin) {
     return (
       <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
         {/* Logo in consistent top-left position */}
@@ -199,24 +225,130 @@ export default function JoinGroupPage() {
         {/* Background logo */}
         <div className="absolute inset-0 flex items-center justify-center opacity-5">
           <Image
-            src="/riddle-city-logo2.png"
-            alt=""
+            src="/riddle-city-logo.png"
+            alt="Background Logo"
             width={400}
             height={400}
-            className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain"
-            priority={false}
+            className="max-w-[80vw] max-h-[80vh]"
+            priority
           />
         </div>
 
-        <div className="text-center z-10 max-w-md">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-4">Loading your adventure...</h1>
-          <p className="text-white/70">Checking your group status...</p>
+        <div className="z-10 max-w-md w-full text-center space-y-6">
+          <div className="text-6xl animate-spin mb-4">🔍</div>
+          <h1 className="text-2xl font-bold">Joining Your Team</h1>
+          <p className="text-white/70 mb-6">{statusMessage}</p>
+          
+          {/* Manual join button as fallback */}
+          <button
+            onClick={() => setForceJoin(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+          >
+            Having trouble? Click to continue
+          </button>
         </div>
       </main>
     );
   }
 
+  // Show joining/loading state
+  if (isJoining) {
+    return (
+      <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
+        {/* Logo in consistent top-left position */}
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+          <Link href="/">
+            <Image
+              src="/riddle-city-logo.png"
+              alt="Riddle City Logo"
+              width={60}
+              height={60}
+              className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+              priority
+            />
+          </Link>
+        </div>
+
+        {/* Background logo */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-5">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Background Logo"
+            width={400}
+            height={400}
+            className="max-w-[80vw] max-h-[80vh]"
+            priority
+          />
+        </div>
+
+        <div className="text-center z-10 max-w-md">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">{successMessage || statusMessage}</h1>
+          <p className="text-white/70">Please wait...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
+        {/* Logo in consistent top-left position */}
+        <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+          <Link href="/">
+            <Image
+              src="/riddle-city-logo.png"
+              alt="Riddle City Logo"
+              width={60}
+              height={60}
+              className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+              priority
+            />
+          </Link>
+        </div>
+
+        {/* Background logo */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-5">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Background Logo"
+            width={400}
+            height={400}
+            className="max-w-[80vw] max-h-[80vh]"
+            priority
+          />
+        </div>
+
+        <div className="text-center z-10 max-w-md space-y-6">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-red-400">Join Failed</h1>
+          <p className="text-white/70 mb-6">{error}</p>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null);
+                setForceJoin(true);
+              }}
+              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            >
+              Try Again
+            </button>
+            
+            <Link
+              href="/"
+              className="block w-full bg-gray-600/50 hover:bg-gray-600/70 text-white/90 font-medium py-2 px-6 rounded-lg transition-colors duration-200 text-sm border border-gray-500/30"
+            >
+              Go to Homepage
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Default loading state (should rarely be seen)
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 relative">
       {/* Logo in consistent top-left position */}
@@ -236,80 +368,19 @@ export default function JoinGroupPage() {
       {/* Background logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-5">
         <Image
-          src="/riddle-city-logo2.png"
-          alt=""
+          src="/riddle-city-logo.png"
+          alt="Background Logo"
           width={400}
           height={400}
-          className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain"
-          priority={false}
-        />
-      </div>
-
-      {/* Center logo */}
-      <div className="mb-8 z-10">
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={120}
-          height={120}
-          className="drop-shadow-lg"
+          className="max-w-[80vw] max-h-[80vh]"
           priority
         />
       </div>
 
       <div className="text-center z-10 max-w-md">
-        {(isJoining || (activeSession && activeSession.groupId === groupId)) && (
-          <>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">
-              {statusMessage.includes("Welcome back") ? "Welcome Back!" : "Joining Group..."}
-            </h1>
-            <p className="text-white/70">{statusMessage}</p>
-          </>
-        )}
-
-        {successMessage && !isJoining && !error && (
-          <>
-            <div className="text-6xl mb-6">🎉</div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-4 text-green-400">
-              {successMessage.includes("Welcome back") ? "Welcome Back!" : "Success!"}
-            </h1>
-            <p className="text-white/80 mb-4">{successMessage}</p>
-            <p className="text-white/60 text-sm">Redirecting you now…</p>
-            <div className="mt-4">
-              <div className="animate-pulse bg-green-500/20 rounded-lg p-2">
-                <div className="text-sm text-green-300">Taking you to the adventure…</div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {error && !isJoining && (
-          <>
-            <div className="text-6xl mb-6">❌</div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-4 text-red-400">Could Not Join Group</h1>
-            <p className="text-white/80 mb-8">{error}</p>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => {
-                  clearAllCookies();
-                  window.location.reload();
-                }}
-                className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-              >
-                Clear Data & Try Again
-              </button>
-
-              <button
-                onClick={() => router.push("/locations")}
-                className="block w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-              >
-                Go to Riddle City
-              </button>
-            </div>
-          </>
-        )}
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-6"></div>
+        <h1 className="text-2xl md:text-3xl font-bold mb-4">Loading...</h1>
+        <p className="text-white/70">Please wait...</p>
       </div>
     </main>
   );

@@ -15,7 +15,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const pathname = usePathname() || '';
   
   // Use the same hook as main page to ensure identical logic!
-  const { hasActiveGroup, getResumeUrl, activeSession } = useGroupSession();
+  const { hasActiveGroup, getResumeUrl, activeSession, isLeader } = useGroupSession();
 
   const updateVisibility = (newVisible: boolean) => {
     setVisible(newVisible);
@@ -79,14 +79,20 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   // Determine button text and description based on game state
   const getButtonText = () => {
     if (!activeSession?.paid) return 'Complete Payment';
-    if (!activeSession?.gameStarted) return 'Start Adventure';
+    if (!activeSession?.gameStarted) {
+      return isLeader ? 'Go to Session' : 'Join Team';
+    }
     if (activeSession?.finished) return 'View Results';
     return 'Resume Game';
   };
 
   const getDescription = () => {
     if (!activeSession?.paid) return 'Complete your payment to start the adventure';
-    if (!activeSession?.gameStarted) return 'Return to start your adventure';
+    if (!activeSession?.gameStarted) {
+      return isLeader 
+        ? 'Return to your session page to start the adventure' 
+        : 'Waiting for your team leader to start the adventure';
+    }
     if (activeSession?.finished) return 'View your completed adventure';
     return 'Continue your adventure where you left off';
   };

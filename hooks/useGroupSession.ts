@@ -13,6 +13,7 @@ interface GroupSession {
   active: boolean
   paid: boolean
   teamName: string
+  isLeader: boolean
 }
 
 export function useGroupSession(autoRedirect: boolean = false) {
@@ -120,7 +121,8 @@ export function useGroupSession(autoRedirect: boolean = false) {
             finished: data.isFinished || groupData.finished,
             active: groupData.active,
             paid: groupData.paid,
-            teamName: teamName || groupData.team_name || 'Your Team'
+            teamName: teamName || groupData.team_name || 'Your Team',
+            isLeader: Boolean(data.isLeader) // Capture leadership status from API
           }
           
           setActiveSession(session)
@@ -155,7 +157,8 @@ export function useGroupSession(autoRedirect: boolean = false) {
               finished: true,
               active: false,
               paid: groupData.paid,
-              teamName: teamName || groupData.team_name || 'Your Team'
+              teamName: teamName || groupData.team_name || 'Your Team',
+              isLeader: Boolean(data.isLeader) // Capture leadership status from API
             }
             
             setActiveSession(session)
@@ -225,7 +228,16 @@ export function useGroupSession(autoRedirect: boolean = false) {
     
     // If game hasn't started, user hasn't clicked Start yet - go to session page
     if (!session.gameStarted) {
-      console.log('🔍 USE GROUP SESSION: Game not started (user hasn\'t clicked Start), constructing start page URL')
+      console.log('🔍 USE GROUP SESSION: Game not started (user hasn\'t clicked Start)')
+      
+      // If user is NOT the group leader, send them to waiting page
+      if (!session.isLeader) {
+        console.log('🔍 USE GROUP SESSION: User is not leader, going to waiting page')
+        return `/waiting/${session.groupId}`
+      }
+      
+      // User is the group leader - try to construct start page URL
+      console.log('🔍 USE GROUP SESSION: User is leader, constructing start page URL')
       
       // Try to get sessionId from session cookie
       const sessionCookie = document.cookie
@@ -251,13 +263,25 @@ export function useGroupSession(autoRedirect: boolean = false) {
           const mode = parts[0] // "date" or "pub"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
           const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
-          console.log('🔍 USE GROUP SESSION: Constructed start page URL:', startPageUrl)
+          console.log('🔍 USE GROUP SESSION: Constructed start page URL for leader:', startPageUrl)
           return startPageUrl
         }
       }
       
-      // Fallback to waiting page if we can't construct the start page URL
-      console.log('🔍 USE GROUP SESSION: Could not construct start page URL, falling back to waiting page')
+      // For group leaders, if we can't construct the start page URL, try a basic format
+      if (session.trackId) {
+        const parts = session.trackId.split('_')
+        if (parts.length >= 2) {
+          const mode = parts[0] // "date" or "pub"
+          const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
+          const basicStartUrl = `/${location}/${mode}`
+          console.log('🔍 USE GROUP SESSION: Using basic start URL for leader (no sessionId):', basicStartUrl)
+          return basicStartUrl
+        }
+      }
+      
+      // Final fallback for leaders - if all else fails, go to waiting page
+      console.log('🔍 USE GROUP SESSION: Could not construct start page URL, leader falling back to waiting page')
       return `/waiting/${session.groupId}`
     }
     
@@ -305,6 +329,7 @@ export function useGroupSession(autoRedirect: boolean = false) {
     currentRiddleId: activeSession?.currentRiddleId || null,
     groupId: activeSession?.groupId || null,
     teamName: activeSession?.teamName || null,
-    trackId: activeSession?.trackId || null
+    trackId: activeSession?.trackId || null,
+    isLeader: activeSession?.isLeader || false
   }
 }
