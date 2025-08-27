@@ -62,9 +62,16 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
       return '/locations';
     }
     
-    // If game hasn't started yet, go to actual start page (not game confirmation)
+    // ENHANCED LOGIC: If there's a current riddle, user has progressed past start page
+    // Take them to the riddle regardless of game_started status
+    if (currentRiddleId) {
+      console.log('🔍 RESUME BANNER: Has current riddle, going to riddle:', currentRiddleId);
+      return `/riddle/${currentRiddleId}`;
+    }
+    
+    // If no current riddle and game hasn't started, go to start page (user hasn't clicked start yet)
     if (!gameStarted) {
-      console.log('🔍 RESUME BANNER: Game not started, going to start page');
+      console.log('🔍 RESUME BANNER: No riddle and game not started, going to start page');
       
       // Try to get sessionId from session cookie
       const sessionCookie = getCookie('riddlecity-session');
@@ -92,12 +99,6 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
       // Fallback to waiting page if we can't construct the start page URL
       console.log('🔍 RESUME BANNER: Could not construct start page URL, falling back to waiting page');
       return `/waiting/${groupId}`;
-    }
-
-    // If game started and has current riddle, go to that riddle
-    if (gameStarted && currentRiddleId) {
-      console.log('🔍 RESUME BANNER: Game started with riddle, going to riddle');
-      return `/riddle/${currentRiddleId}`;
     }    // Fallback to waiting page
     console.log('🔍 RESUME BANNER: Fallback to waiting page');
     return `/waiting/${groupId}`;

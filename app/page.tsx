@@ -5,8 +5,11 @@ import { useState } from "react";
 import { useGroupSession } from "@/hooks/useGroupSession";
 
 export default function Home() {
-  const { loading, hasActiveGroup, currentRiddleId, clearSession } = useGroupSession();
+  const { loading, hasActiveGroup, getResumeUrl, clearSession } = useGroupSession();
   const [showInfo, setShowInfo] = useState(false);
+  
+  // Get resume URL
+  const resumeUrl = getResumeUrl();
 
   // WhatsApp share function
   const shareOnWhatsApp = () => {
@@ -63,16 +66,17 @@ export default function Home() {
       </h1>
       
       {/* Show rejoin options if user has active group */}
-      {hasActiveGroup && currentRiddleId && (
-        <div className="mb-6 p-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl text-center max-w-md w-full">
-          <div className="text-2xl mb-2">🎮</div>
-          <h3 className="text-lg font-bold text-blue-200 mb-2">Welcome Back, Detective!</h3>
+      {hasActiveGroup && resumeUrl && (
+        <div className="bg-blue-900/30 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6 mb-8 max-w-md w-full shadow-xl">
+          <h2 className="text-xl font-semibold text-blue-100 mb-2">
+            🎮 Game Found!
+          </h2>
           <p className="text-blue-200/80 text-sm mb-4">
             You have an ongoing adventure waiting
           </p>
           <div className="space-y-3">
             <Link
-              href={`/riddle/${currentRiddleId}`}
+              href={resumeUrl}
               className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               🔍 Resume Adventure

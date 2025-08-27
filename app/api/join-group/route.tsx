@@ -36,11 +36,13 @@ export async function POST(req: Request) {
     
     if (existingSession) {
       try {
-        existingSessionData = JSON.parse(Buffer.from(existingSession, 'base64').toString('utf8'));
+        // Decode base64 to match client-side btoa/atob encoding
+        const decodedSession = Buffer.from(existingSession, 'base64').toString('utf-8');
+        existingSessionData = JSON.parse(decodedSession);
         userId = existingSessionData?.userId ?? uuidv4();
-        console.log("👤 JOIN GROUP: Using existing session user:", userId);
+        console.log("👤 JOIN GROUP: Using existing session user:", userId, "from session data:", existingSessionData);
       } catch (e) {
-        console.warn("⚠️ JOIN GROUP: Invalid session cookie, creating new user");
+        console.warn("⚠️ JOIN GROUP: Invalid session cookie, creating new user. Error:", e);
         userId = uuidv4();
       }
     } else {
@@ -95,9 +97,14 @@ export async function POST(req: Request) {
     console.log("📋 JOIN GROUP: Group details - Team:", group.team_name, "Started:", group.game_started);
     
     // Check if user is already a member
+    console.log("🔍 JOIN GROUP: Checking if user is already a member. UserId:", userId);
+    console.log("📋 JOIN GROUP: Current members:", group.group_members?.map(m => ({ user_id: m.user_id, id: m.id })));
+    
     const existingMember = group.group_members?.find(
       (member: GroupMember) => member.user_id === userId
     );
+    
+    console.log("🔍 JOIN GROUP: Existing member found:", existingMember ? "YES" : "NO", existingMember);
     
     if (existingMember) {
       // User is already a member, let them rejoin

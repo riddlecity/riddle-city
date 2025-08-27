@@ -113,7 +113,7 @@ export function useGroupSession() {
             userId: userId,
             trackId: groupData.track_id,
             currentRiddleId: groupData.current_riddle_id || data.currentRiddleId,
-            gameStarted: data.gameStarted || groupData.game_started,
+            gameStarted: Boolean(groupData.game_started), // Use only database value
             finished: data.isFinished || groupData.finished,
             active: groupData.active,
             paid: groupData.paid,
@@ -170,7 +170,13 @@ export function useGroupSession() {
   const getResumeUrl = (): string | null => {
     if (!activeSession) return null
     
-    console.log('🔍 USE GROUP SESSION: Getting resume URL for session:', activeSession)
+    console.log('🔍 USE GROUP SESSION: Getting resume URL for session:', {
+      groupId: activeSession.groupId,
+      gameStarted: activeSession.gameStarted,
+      currentRiddleId: activeSession.currentRiddleId,
+      paid: activeSession.paid,
+      trackId: activeSession.trackId
+    })
     
     // If not paid, go to locations page  
     if (!activeSession.paid) {
@@ -183,9 +189,16 @@ export function useGroupSession() {
       return `/adventure-complete/${activeSession.groupId}`
     }
     
-    // If game hasn't started yet, go to actual start page (not waiting room)
+    // ENHANCED LOGIC: If there's a current riddle, user has progressed past start page
+    // Take them to the riddle regardless of game_started status
+    if (activeSession.currentRiddleId) {
+      console.log('🔍 USE GROUP SESSION: Has current riddle, going to riddle:', activeSession.currentRiddleId)
+      return `/riddle/${activeSession.currentRiddleId}`
+    }
+    
+    // If no current riddle and game hasn't started, go to start page (user hasn't clicked start yet)
     if (!activeSession.gameStarted) {
-      console.log('🔍 USE GROUP SESSION: Game not started, constructing start page URL')
+      console.log('🔍 USE GROUP SESSION: No riddle and game not started, constructing start page URL')
       
       // Try to get sessionId from session cookie
       const sessionCookie = document.cookie
@@ -210,7 +223,9 @@ export function useGroupSession() {
         if (parts.length >= 2) {
           const mode = parts[0] // "date" or "pub"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
-          return `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
+          const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
+          console.log('🔍 USE GROUP SESSION: Constructed start page URL:', startPageUrl)
+          return startPageUrl
         }
       }
       
@@ -219,12 +234,8 @@ export function useGroupSession() {
       return `/waiting/${activeSession.groupId}`
     }
     
-    // If game is started and has a current riddle, go to that riddle
-    if (activeSession.gameStarted && activeSession.currentRiddleId) {
-      return `/riddle/${activeSession.currentRiddleId}`
-    }
-    
     // Fallback to waiting page
+    console.log('🔍 USE GROUP SESSION: Fallback to waiting page')
     return `/waiting/${activeSession.groupId}`
   }
 
