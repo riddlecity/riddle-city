@@ -76,8 +76,7 @@ export async function POST(req: Request) {
         finished, 
         active, 
         paid, 
-        game_started, 
-        stripe_session_id,
+        game_started,
         group_members(*)
       `)
       .eq("id", groupId)
@@ -126,7 +125,7 @@ export async function POST(req: Request) {
         groupId,
         userId,
         teamName: group.team_name || "Your Team",
-        sessionId: group.stripe_session_id || groupId // Use Stripe session ID or fallback to group ID
+        sessionId: groupId // Use group ID as session ID
       };
       const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
       
@@ -137,7 +136,7 @@ export async function POST(req: Request) {
         nextRiddle: group.current_riddle_id,
         gameStarted: Boolean(group.game_started), // Use actual database value
         trackId: group.track_id, // Add trackId for start page URL construction
-        sessionId: group.stripe_session_id || groupId, // Include sessionId in response
+        sessionId: groupId, // Include sessionId in response
         isRejoining: true
       });
       
@@ -183,7 +182,7 @@ export async function POST(req: Request) {
       groupId,
       userId,
       teamName: group.team_name || "Your Team",
-      sessionId: group.stripe_session_id || groupId // Use Stripe session ID or fallback to group ID
+      sessionId: groupId // Use group ID as session ID
     };
     const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
     
@@ -194,7 +193,7 @@ export async function POST(req: Request) {
       nextRiddle: group.current_riddle_id,
       gameStarted: Boolean(group.game_started), // Use actual database value
       trackId: group.track_id, // Add trackId for start page URL construction
-      sessionId: group.stripe_session_id || groupId, // Include sessionId in response
+      sessionId: groupId, // Include sessionId in response
       isRejoining: false
     });
     
