@@ -219,8 +219,8 @@ export function useGroupSession() {
       return `/waiting/${activeSession.groupId}`
     }
     
-    // If game is active and has a current riddle, go to that riddle
-    if (activeSession.currentRiddleId) {
+    // If game is started and has a current riddle, go to that riddle
+    if (activeSession.gameStarted && activeSession.currentRiddleId) {
       return `/riddle/${activeSession.currentRiddleId}`
     }
     
