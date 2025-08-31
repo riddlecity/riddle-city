@@ -16,6 +16,7 @@ export default function JoinGroupPage() {
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("Checking your group status...");
   const [forceJoin, setForceJoin] = useState(false);
+  const [hasAttemptedJoin, setHasAttemptedJoin] = useState(false);
 
   // Use the hook WITH auto-redirect enabled
   const { loading: sessionLoading, activeSession, error: sessionError } = useGroupSession(true);
@@ -112,7 +113,13 @@ export default function JoinGroupPage() {
 
     // If we get here, user needs to join this specific group
     const handleJoin = async () => {
+      if (hasAttemptedJoin) {
+        console.log("🚫 JOIN: Already attempted join, skipping");
+        return;
+      }
+      
       try {
+        setHasAttemptedJoin(true);
         setIsJoining(true);
         setError(null);
         setStatusMessage("Joining your group...");
@@ -188,13 +195,14 @@ export default function JoinGroupPage() {
     // 1. We don't have an active session for this group
     // 2. We're not already in the joining process
     // 3. useGroupSession is not loading (or we forced join due to timeout)
-    if ((!sessionLoading || forceJoin) && !isJoining && (!activeSession || activeSession.groupId !== groupId)) {
+    // 4. We don't have an error state
+    if ((!sessionLoading || forceJoin) && !isJoining && !error && (!activeSession || activeSession.groupId !== groupId)) {
       handleJoin();
     }
 
     return () => {}; // Cleanup function
 
-  }, [groupId, router, sessionLoading, activeSession, sessionError, isJoining, forceJoin]);
+  }, [groupId, router, sessionLoading, activeSession, sessionError, isJoining, forceJoin, error, hasAttemptedJoin]);
 
   // Show loading while checking session or joining
   if (sessionLoading && !forceJoin) {
@@ -321,6 +329,7 @@ export default function JoinGroupPage() {
             <button
               onClick={() => {
                 setError(null);
+                setHasAttemptedJoin(false);
                 setForceJoin(true);
               }}
               className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"

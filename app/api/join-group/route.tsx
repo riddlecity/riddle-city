@@ -120,12 +120,12 @@ export async function POST(req: Request) {
       // User is already a member, let them rejoin
       console.log("🔄 JOIN GROUP: User rejoining group");
       
-      // Create complete session data including sessionId
+      // Create complete session data - preserve existing sessionId from incoming cookie if available
       const sessionData = {
         groupId,
         userId,
         teamName: group.team_name || "Your Team",
-        sessionId: groupId // Use group ID as session ID
+        sessionId: existingSessionData?.sessionId || groupId // Preserve original Stripe session ID
       };
       const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
       
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
         nextRiddle: group.current_riddle_id,
         gameStarted: Boolean(group.game_started), // Use actual database value
         trackId: group.track_id, // Add trackId for start page URL construction
-        sessionId: groupId, // Include sessionId in response
+        sessionId: existingSessionData?.sessionId || groupId, // Preserve original Stripe session ID
         isRejoining: true
       });
       
@@ -191,12 +191,12 @@ export async function POST(req: Request) {
     
     console.log("✅ JOIN GROUP: Successfully added user to group");
     
-    // Create complete session data including sessionId
+    // Create complete session data - preserve existing sessionId if available
     const sessionData = {
       groupId,
       userId,
       teamName: group.team_name || "Your Team",
-      sessionId: groupId // Use group ID as session ID
+      sessionId: existingSessionData?.sessionId || groupId // Preserve original Stripe session ID if user had one
     };
     const encodedData = Buffer.from(JSON.stringify(sessionData)).toString("base64");
     
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
       nextRiddle: group.current_riddle_id,
       gameStarted: Boolean(group.game_started), // Use actual database value
       trackId: group.track_id, // Add trackId for start page URL construction
-      sessionId: groupId, // Include sessionId in response
+      sessionId: existingSessionData?.sessionId || groupId, // Preserve original Stripe session ID
       isRejoining: false
     });
     

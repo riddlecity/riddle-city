@@ -274,9 +274,17 @@ export function useGroupSession(autoRedirect: boolean = false) {
         if (parts.length >= 2) {
           const mode = parts[0] // "date" or "pub"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
-          const basicStartUrl = `/${location}/${mode}`
-          console.log('🔍 USE GROUP SESSION: Using basic start URL for leader (no sessionId):', basicStartUrl)
-          return basicStartUrl
+          
+          // If we have sessionId, use the full start URL (this is the preferred path for leaders)
+          if (sessionId) {
+            const fullStartUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
+            console.log('🔍 USE GROUP SESSION: Using full start URL for leader (with sessionId):', fullStartUrl)
+            return fullStartUrl
+          } else {
+            // If no sessionId available, direct leader to waiting page with start capability
+            console.log('🔍 USE GROUP SESSION: No sessionId for leader, directing to waiting page with start button')
+            return `/waiting/${session.groupId}`
+          }
         }
       }
       
