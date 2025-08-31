@@ -23,6 +23,24 @@ export const metadata: Metadata = {
 async function getCookiesWithRetry(maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const cookieStore = await cookies();
+    
+    // Try new format first (riddlecity-session)
+    const sessionCookie = cookieStore.get("riddlecity-session")?.value;
+    if (sessionCookie) {
+      try {
+        const decoded = Buffer.from(sessionCookie, 'base64').toString('utf8');
+        const sessionData = JSON.parse(decoded);
+        return { 
+          groupId: sessionData.groupId, 
+          userId: sessionData.userId, 
+          teamName: sessionData.teamName 
+        };
+      } catch (e) {
+        console.warn("Failed to parse riddlecity-session cookie:", e);
+      }
+    }
+    
+    // Fallback to old format
     const groupId = cookieStore.get("group_id")?.value;
     const userId = cookieStore.get("user_id")?.value;
     const teamName = cookieStore.get("team_name")?.value;
@@ -30,6 +48,7 @@ async function getCookiesWithRetry(maxRetries = 3) {
     if (groupId && userId) {
       return { groupId, userId, teamName };
     }
+    
     if (attempt < maxRetries) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }

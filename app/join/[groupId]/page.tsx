@@ -53,16 +53,24 @@ export default function JoinGroupPage() {
       // Without secure flag
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; samesite=lax`;
     });
+    console.log("🧹 JOIN: Cleared all session cookies");
   };
 
   const setSessionCookie = (sessionData: SessionData) => {
     try {
-      // Use btoa instead of Buffer for browser compatibility
+      // Set new format cookie
       const encoded = btoa(JSON.stringify(sessionData));
       const maxAge = 48 * 60 * 60; // 48 hours
       const isProduction = window.location.hostname !== 'localhost';
       
       document.cookie = `riddlecity-session=${encoded}; max-age=${maxAge}; path=/; ${isProduction ? 'secure; ' : ''}samesite=lax`;
+      
+      // ALSO set legacy cookies for backward compatibility
+      document.cookie = `group_id=${sessionData.groupId}; max-age=${maxAge}; path=/; ${isProduction ? 'secure; ' : ''}samesite=lax`;
+      document.cookie = `user_id=${sessionData.userId}; max-age=${maxAge}; path=/; ${isProduction ? 'secure; ' : ''}samesite=lax`;
+      document.cookie = `team_name=${sessionData.teamName}; max-age=${maxAge}; path=/; ${isProduction ? 'secure; ' : ''}samesite=lax`;
+      
+      console.log("✅ JOIN: Set both new and legacy cookies for compatibility");
     } catch (e) {
       console.error("Failed to set session cookie:", e);
     }

@@ -14,8 +14,30 @@ export async function POST() {
   console.log("=== SKIP RIDDLE API START ===");
   
   const cookieStore = await cookies();
-  const groupId = cookieStore.get("group_id")?.value;
-  const userId = cookieStore.get("user_id")?.value;
+  
+  // Try new format first (riddlecity-session)
+  let groupId: string | undefined;
+  let userId: string | undefined;
+  
+  const sessionCookie = cookieStore.get("riddlecity-session")?.value;
+  if (sessionCookie) {
+    try {
+      const decoded = Buffer.from(sessionCookie, 'base64').toString('utf8');
+      const sessionData = JSON.parse(decoded);
+      groupId = sessionData.groupId;
+      userId = sessionData.userId;
+      console.log("🔍 SKIP RIDDLE: Using new session cookie format");
+    } catch (e) {
+      console.warn("Failed to parse riddlecity-session cookie:", e);
+    }
+  }
+  
+  // Fallback to old format
+  if (!groupId || !userId) {
+    groupId = cookieStore.get("group_id")?.value;
+    userId = cookieStore.get("user_id")?.value;
+    console.log("🔍 SKIP RIDDLE: Using legacy cookie format");
+  }
 
   if (!groupId || !userId) {
     console.error("Missing required cookies");

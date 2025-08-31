@@ -149,7 +149,21 @@ export async function POST(req: Request) {
         path: "/"
       });
       
+      // ALSO set individual cookies for backward compatibility with existing riddle/API pages
+      const cookieOptions = {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax" as const,
+        maxAge: 48 * 60 * 60,
+        path: "/"
+      };
+      
+      response.cookies.set("group_id", groupId, cookieOptions);
+      response.cookies.set("user_id", userId, cookieOptions);
+      response.cookies.set("team_name", group.team_name || "Your Team", cookieOptions);
+      
       console.log("✅ JOIN GROUP: User rejoined successfully with sessionId:", sessionData.sessionId);
+      console.log("✅ JOIN GROUP: Set both new and legacy cookies for compatibility");
       return response;
     }
     
@@ -206,7 +220,21 @@ export async function POST(req: Request) {
       path: "/"
     });
     
+    // ALSO set individual cookies for backward compatibility with existing riddle/API pages
+    const cookieOptions = {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      maxAge: 48 * 60 * 60,
+      path: "/"
+    };
+    
+    response.cookies.set("group_id", groupId, cookieOptions);
+    response.cookies.set("user_id", userId, cookieOptions);
+    response.cookies.set("team_name", group.team_name || "Your Team", cookieOptions);
+    
     console.log("✅ JOIN GROUP: Join process completed successfully with sessionId:", sessionData.sessionId);
+    console.log("✅ JOIN GROUP: Set both new and legacy cookies for compatibility");
     return response;
     
   } catch (error) {
