@@ -6,12 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useGroupSession } from "@/hooks/useGroupSession";
-
-interface SessionData {
-  groupId: string;
-  userId: string;
-  teamName: string;
-}
+import { SessionData } from "@/types/group";
 
 export default function JoinGroupPage() {
   const router = useRouter();
@@ -157,7 +152,7 @@ export default function JoinGroupPage() {
           return;
         }
 
-        // Set session cookie for the new member
+        // Set session cookie for immediate client-side access
         const sessionData: SessionData = {
           groupId,
           userId: data.userId,
@@ -165,25 +160,14 @@ export default function JoinGroupPage() {
         };
         
         setSessionCookie(sessionData);
+        console.log("✅ JOIN: Set client-side session cookie for immediate access");
 
-        // Simple redirect logic - let the game flow handle the complexity
-        if (data.gameStarted && data.nextRiddle) {
-          // Game is active - go directly to current riddle
-          setSuccessMessage(`Joining ${data.teamName} adventure in progress...`);
-          setIsJoining(false);
-
-          setTimeout(() => {
-            router.replace(`/riddle/${data.nextRiddle}`);
-          }, 1500);
-        } else {
-          // Game hasn't started - go to waiting room
-          setSuccessMessage(`Successfully joined ${data.teamName}! Waiting for the leader to start…`);
-          setIsJoining(false);
-
-          setTimeout(() => {
-            router.replace(`/waiting/${groupId}`);
-          }, 1500);
-        }
+        // Always redirect to waiting page first, let the waiting page handle game-started redirects
+        setSuccessMessage(`Successfully joined ${data.teamName}! ${data.gameStarted ? 'Joining adventure in progress...' : 'Waiting for the leader to start…'}`);
+        
+        setTimeout(() => {
+          router.replace(`/waiting/${groupId}`);
+        }, 1500);
 
       } catch (err) {
         console.error("Unexpected error joining group:", err);

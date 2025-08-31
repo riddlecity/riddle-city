@@ -22,4 +22,5 @@ export interface SessionData {
   groupId: string;
   userId: string;
   teamName: string;
+  sessionId?: string;
 }
