@@ -381,9 +381,12 @@ export default function PreferencesPage() {
           <div className="grid grid-cols-2 gap-3 items-center">
             {/* Friends message */}
             <div className="text-center sm:text-left">
-              <h3 className="text-sm sm:text-base font-medium text-white mb-2">
-                👥 This adventure is better with friends! (2 Player Minimum)
+              <h3 className="text-sm sm:text-base font-medium text-white mb-1">
+                👥 This adventure is better with friends!
               </h3>
+              <p className="text-xs text-white/60 mb-2">
+                (2 Player Minimum)
+              </p>
               <p className="text-xs text-white/70 leading-relaxed">
                 You can only share the game session to the number of players you select! This cannot be changed later.
               </p>
