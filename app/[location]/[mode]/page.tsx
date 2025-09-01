@@ -25,21 +25,29 @@ export default function PreferencesPage() {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  // Content filtering for team names - only the most egregious terms
+  // Content filtering for team names - comprehensive list of inappropriate terms
   const offensiveWords = [
     // Major swear words (full words only to avoid false positives)
     'fuck', 'fucking', 'fucked', 'fucker', 'shit', 'shitting', 'bitch', 'bitches', 
-    'bastard', 'bastards', 'cocksucker', 'motherfucker',
+    'bastard', 'bastards', 'cocksucker', 'motherfucker', 'asshole', 'assholes',
+    'damn', 'damned', 'hell', 'bloody', 'crap', 'piss', 'pissed',
     // Hateful terms
     'hitler', 'nazi', 'nazis', 'fascist', 'racist', 'nigger', 'nigga', 'faggot', 'faggots',
+    'retard', 'retarded', 'gay', 'homo', 'lesbian', 'queer',
     // Explicit sexual terms
     'pussy', 'cock', 'dick', 'penis', 'vagina', 'porn', 'pornhub', 'sex', 'sexual',
+    'boobs', 'tits', 'ass', 'butt', 'nude', 'naked', 'horny',
     // Violence/harmful
-    'kill', 'killing', 'murder', 'suicide', 'death', 'die', 'dying',
+    'kill', 'killing', 'murder', 'suicide', 'death', 'die', 'dying', 'dead',
+    'bomb', 'terrorist', 'violence', 'shoot', 'gun', 'knife', 'weapon',
     // Drugs
-    'cocaine', 'heroin', 'meth', 'drugs',
-    // Common substitutions
-    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht'
+    'cocaine', 'heroin', 'meth', 'drugs', 'weed', 'marijuana', 'cannabis', 'alcohol',
+    'drunk', 'high', 'stoned', 'crack', 'ecstasy', 'mdma',
+    // Common substitutions and variations
+    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht', 'wtf', 'stfu',
+    'omfg', 'lmfao', 'd*ck', 'p*ss', 'a*s', 'h*ll',
+    // Inappropriate references
+    'trump', 'biden', 'politics', 'religion', 'jesus', 'god', 'allah', 'buddha'
   ];
 
   const containsOffensiveContent = (text: string): boolean => {
@@ -95,11 +103,32 @@ export default function PreferencesPage() {
     'The Deciphers', 'Clue Crushers', 'Adventure Addicts', 'The Seekers',
     'Mystery Mavericks', 'Puzzle Panthers', 'The Challengers', 'Quest Queens',
     'Riddle Rockstars', 'The Game Changers', 'Mystery Ninjas', 'Puzzle Wizards',
-    'The Escape Artists', 'Adventure Alliance', 'Mystery Squad', 'The Solvers'
+    'The Escape Artists', 'Adventure Alliance', 'Mystery Squad', 'The Solvers',
+    // Additional creative suggestions
+    'Cipher Champions', 'Riddle Royalty', 'The Brain Squad', 'Puzzle Pioneers',
+    'Mystery Moguls', 'Clue Collectors', 'The Enigma Elite', 'Adventure Aces',
+    'Riddle Rangers', 'Puzzle Powerhouse', 'The Code Crushers', 'Mystery Mavens',
+    'Quest Crusaders', 'The Puzzle Patrol', 'Riddle Revolution', 'Mystery Misfits',
+    'The Logic League', 'Puzzle Perfection', 'Riddle Racers', 'The Brain Brigade',
+    'Mystery Masters United', 'Puzzle Palace', 'The Riddle Realm', 'Code Command',
+    'Adventure Architects', 'The Puzzle Pursuit', 'Riddle Republic', 'Mystery Matrix',
+    'Quest Quartet', 'The Puzzle Pack', 'Riddle Rush', 'Adventure Assembly',
+    'The Mystery Machine 2.0', 'Puzzle Paradise', 'Riddle Renaissance', 'Code Collective',
+    'The Brain Bunch', 'Mystery Momentum', 'Puzzle Phenomena', 'Riddle Rampage',
+    'The Quest Crew', 'Adventure Academy', 'Mystery Mayhem', 'Puzzle Pursuit Force',
+    'Riddle Riot Squad', 'The Code Commandos', 'Mystery Mirage', 'Puzzle Power Rangers',
+    'Riddle Resistance', 'The Brain Busters', 'Adventure Avengers', 'Mystery Moon Squad',
+    'Puzzle Prodigies', 'Riddle Renegades', 'The Code Conjurers', 'Mystery Magnets',
+    'Puzzle Phantoms', 'Riddle Rebels United', 'The Logic Lords', 'Adventure Assassins',
+    'Mystery Mechanics', 'Puzzle Predators', 'Riddle Revolutionaries', 'The Code Craft',
+    'Adventure Arsenal', 'Mystery Militia', 'Puzzle Pioneers Plus', 'Riddle Regiment'
   ];
 
   const getRandomSuggestion = () => {
-    const randomSuggestion = teamSuggestions[Math.floor(Math.random() * teamSuggestions.length)];
+    // Ensure true randomization by using current timestamp as additional entropy
+    const timestamp = Date.now();
+    const randomIndex = Math.floor((Math.random() + timestamp * 0.000001) % 1 * teamSuggestions.length);
+    const randomSuggestion = teamSuggestions[randomIndex];
     // Pass true to indicate this is a random suggestion - this will NOT trigger the clear timeout
     handleTeamNameChange(randomSuggestion, true);
   };
@@ -353,40 +382,46 @@ export default function PreferencesPage() {
       </div>
       
       <div className="w-full max-w-lg space-y-4">
-        {/* Number of players with friendly messaging */}
-        <div className="text-center bg-white/5 border border-white/10 rounded-xl p-4">
-          <div className="mb-3">
-            <h3 className="text-base font-medium text-white mb-2">
-              👥 This adventure is better with friends!
-            </h3>
-            <p className="text-xs text-white/70 leading-relaxed">
-              You can only share the game session to the number of players you select! This cannot be changed later.
-            </p>
-          </div>
-          
-          <label className="block text-base font-medium mb-3">
-            Number of players:
-          </label>
-          <select
-            value={players}
-            onChange={(e) => handlePlayerChange(parseInt(e.target.value))}
-            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
-              <option key={n} value={n} className="bg-neutral-800">
-                {n} {n === 2 ? 'players (minimum)' : 'players'}
-              </option>
-            ))}
-          </select>
-          
-          {/* Dynamic pricing display */}
-          <div className="mt-2 text-center">
-            <p className="text-white/60 text-xs">
-              Total cost: <span className="text-white font-semibold">£{players * 15}</span>
-              {players > 2 && (
-                <span className="text-white/50"> ({players} players × £15 each)</span>
-              )}
-            </p>
+        {/* Number of players with friendly messaging - Side by side layout */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div className="grid grid-cols-2 gap-3 items-center">
+            {/* Friends message */}
+            <div className="text-center sm:text-left">
+              <h3 className="text-sm sm:text-base font-medium text-white mb-2">
+                👥 This adventure is better with friends!
+              </h3>
+              <p className="text-xs text-white/70 leading-relaxed">
+                You can only share the game session to the number of players you select! This cannot be changed later.
+              </p>
+            </div>
+            
+            {/* Player selection */}
+            <div className="text-center">
+              <label className="block text-base font-medium mb-3">
+                Number of players:
+              </label>
+              <select
+                value={players}
+                onChange={(e) => handlePlayerChange(parseInt(e.target.value))}
+                className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full max-w-[200px]"
+              >
+                {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
+                  <option key={n} value={n} className="bg-neutral-800">
+                    {n} {n === 2 ? 'players (minimum)' : 'players'}
+                  </option>
+                ))}
+              </select>
+              
+              {/* Dynamic pricing display */}
+              <div className="mt-2 text-center">
+                <p className="text-white/60 text-xs">
+                  Total cost: <span className="text-white font-semibold">£{players * 15}</span>
+                  {players > 2 && (
+                    <span className="text-white/50"> ({players} players × £15 each)</span>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -426,18 +461,26 @@ export default function PreferencesPage() {
           </div>
         </div>
 
-        {/* Collapsible Email fields */}
+        {/* Email invitation section with clearer messaging */}
         <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setShowEmails(!showEmails)}
-            className="flex items-center gap-2 text-base font-medium text-white/80 hover:text-white transition-colors duration-200"
-          >
-            <span className={`transform transition-transform duration-200 ${showEmails ? 'rotate-90' : 'rotate-0'}`}>
-              ▶
-            </span>
-            {isAdminMode ? 'Enter Player Emails (Optional for testing - you can share the game link later)' : 'Enter Player Emails (Optional - you can share the game link later)'}
-          </button>
+          <div className="text-center bg-white/5 border border-white/10 rounded-xl p-4">
+            <h3 className="text-base font-medium text-white mb-2">
+              📧 Invite Your Team
+            </h3>
+            <p className="text-xs text-white/70 mb-3">
+              You can share the game link later, or enter player emails below to send invites now:
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowEmails(!showEmails)}
+              className="flex items-center justify-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 mx-auto"
+            >
+              <span className={`transform transition-transform duration-200 ${showEmails ? 'rotate-90' : 'rotate-0'}`}>
+                ▶
+              </span>
+              {showEmails ? 'Hide Email Fields' : 'Enter Player Emails'}
+            </button>
+          </div>
           
           {showEmails && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
