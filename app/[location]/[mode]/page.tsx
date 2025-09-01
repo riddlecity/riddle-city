@@ -382,10 +382,10 @@ export default function PreferencesPage() {
             {/* Friends message */}
             <div className="text-center sm:text-left">
               <h3 className="text-sm sm:text-base font-medium text-white mb-2">
-                👥 This adventure is better with friends!
+                👥 This adventure is better with friends! (2 Player Minimum)
               </h3>
               <p className="text-xs text-white/70 leading-relaxed">
-                You can only share the game session to the number of players you select! This cannot be changed later. (2 players minimum)
+                You can only share the game session to the number of players you select! This cannot be changed later.
               </p>
             </div>
             
@@ -397,10 +397,10 @@ export default function PreferencesPage() {
               <select
                 value={players}
                 onChange={(e) => handlePlayerChange(parseInt(e.target.value))}
-                className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full max-w-[200px]"
+                className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full max-w-[200px] text-center"
               >
                 {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
-                  <option key={n} value={n} className="bg-neutral-800">
+                  <option key={n} value={n} className="bg-neutral-800 text-center">
                     {n} players
                   </option>
                 ))}
