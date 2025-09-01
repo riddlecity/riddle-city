@@ -354,32 +354,32 @@ export default async function AdventureCompletePage({ params }: Props) {
           {/* Primary Actions - All buttons side-by-side for maximum compactness */}
           <div className="grid grid-cols-3 gap-2 md:gap-3">
             {/* WhatsApp Share */}
-            <div className="p-2 bg-green-600/20 border border-green-500/30 rounded-lg">
+            <div className="p-2 bg-green-600/20 border border-green-500/30 rounded-lg flex">
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-2 rounded-lg transition-all duration-200 text-center text-xs"
+                className="flex-1 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-2 rounded-lg transition-all duration-200 text-center text-xs min-h-[44px]"
               >
                 📱 Share on WhatsApp
               </a>
             </div>
 
             {/* Leave Review */}
-            <div className="p-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg">
+            <div className="p-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg flex">
               <a
                 href="#"
-                className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-2 rounded-lg transition-all duration-200 text-center text-xs"
+                className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-2 rounded-lg transition-all duration-200 text-center text-xs min-h-[44px]"
               >
                 ⭐ Leave us a Review
               </a>
             </div>
 
             {/* Return to Riddle City */}
-            <div className="p-2 bg-red-600/20 border border-red-500/30 rounded-lg">
+            <div className="p-2 bg-red-600/20 border border-red-500/30 rounded-lg flex">
               <Link
                 href="/"
-                className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-2 rounded-lg transition-all duration-200 text-center text-xs"
+                className="flex-1 flex items-center justify-center bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-2 rounded-lg transition-all duration-200 text-center text-xs min-h-[44px]"
               >
                 🏠 Homepage
               </Link>
