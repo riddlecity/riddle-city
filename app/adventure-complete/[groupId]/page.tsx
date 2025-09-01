@@ -351,46 +351,48 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           )}
 
-          {/* Primary Actions - Compact side-by-side boxes */}
-          <div className="space-y-3">
-            {/* WhatsApp Share & Review - Side by side in compact boxes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* WhatsApp Share */}
-              <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg">
-                <p className="text-green-200 text-xs mb-2 text-center">
-                  💬 Share with friends!
-                </p>
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 text-center text-sm"
-                >
-                  📱 Share on WhatsApp
-                </a>
-              </div>
-
-              {/* Leave Review */}
-              <div className="p-3 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg">
-                <p className="text-blue-200 text-xs mb-2 text-center">
-                  ⭐ Help others discover us!
-                </p>
-                <a
-                  href="#"
-                  className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 text-center text-sm"
-                >
-                  ⭐ Leave us a Review
-                </a>
-              </div>
+          {/* Primary Actions - All buttons side-by-side for maximum compactness */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* WhatsApp Share */}
+            <div className="p-2 bg-green-600/20 border border-green-500/30 rounded-lg">
+              <p className="text-green-200 text-xs mb-1 text-center">
+                💬 Share!
+              </p>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-2 rounded-lg transition-all duration-200 text-center text-xs"
+              >
+                📱 WhatsApp
+              </a>
             </div>
 
-            {/* Return to Riddle City - Single button */}
-            <Link
-              href="/"
-              className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base text-center"
-            >
-              🏠 Return to Riddle City
-            </Link>
+            {/* Leave Review */}
+            <div className="p-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg">
+              <p className="text-blue-200 text-xs mb-1 text-center">
+                ⭐ Review!
+              </p>
+              <a
+                href="#"
+                className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-2 rounded-lg transition-all duration-200 text-center text-xs"
+              >
+                ⭐ Review
+              </a>
+            </div>
+
+            {/* Return to Riddle City */}
+            <div className="p-2 bg-red-600/20 border border-red-500/30 rounded-lg">
+              <p className="text-red-200 text-xs mb-1 text-center">
+                🏠 Homepage
+              </p>
+              <Link
+                href="/"
+                className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 px-2 rounded-lg transition-all duration-200 text-center text-xs"
+              >
+                🏠 Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>
