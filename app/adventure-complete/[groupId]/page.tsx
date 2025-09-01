@@ -239,7 +239,7 @@ export default async function AdventureCompletePage({ params }: Props) {
           </p>
 
           {/* Stats - More compact */}
-          <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-6">
+          <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {/* Final Completion Time */}
               <div className="text-center">
@@ -283,21 +283,19 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           </div>
 
-          {/* Leaderboard - More compact with inline button */}
+          {/* Leaderboard - With inline "See Full Leaderboard" button */}
           {leaderboard.length > 0 && (
-            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-5">
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
                 <h3 className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
                   🏆 {adventureType} Leaderboard - {cityName}
                 </h3>
-                {leaderboard.length > 5 && (
-                  <Link
-                    href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 text-xs md:text-sm whitespace-nowrap"
-                  >
-                    View All {leaderboard.length} Teams
-                  </Link>
-                )}
+                <Link
+                  href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 text-xs md:text-sm whitespace-nowrap"
+                >
+                  See Full Leaderboard
+                </Link>
               </div>
               <div className="space-y-2">
                 {leaderboard.slice(0, 5).map((entry, index) => (
@@ -353,39 +351,46 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           )}
 
-          {/* Primary Actions */}
+          {/* Primary Actions - Compact side-by-side boxes */}
           <div className="space-y-3">
-            {/* WhatsApp Share - Primary action */}
-            <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg">
-              <p className="text-green-200 text-xs md:text-sm mb-2 text-center">
-                💬 Share this epic adventure with friends!
-              </p>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 text-center text-sm md:text-base"
-              >
-                � Share on WhatsApp
-              </a>
-            </div>
-
-            {/* Secondary Actions */}
+            {/* WhatsApp Share & Review - Side by side in compact boxes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <a
-                href="#"
-                className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base text-center"
-              >
-                ⭐ Leave us a Review
-              </a>
+              {/* WhatsApp Share */}
+              <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg">
+                <p className="text-green-200 text-xs mb-2 text-center">
+                  💬 Share with friends!
+                </p>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 text-center text-sm"
+                >
+                  📱 Share on WhatsApp
+                </a>
+              </div>
 
-              <Link
-                href="/"
-                className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base text-center"
-              >
-                🏠 Return to Riddle City
-              </Link>
+              {/* Leave Review */}
+              <div className="p-3 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg">
+                <p className="text-blue-200 text-xs mb-2 text-center">
+                  ⭐ Help others discover us!
+                </p>
+                <a
+                  href="#"
+                  className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-200 text-center text-sm"
+                >
+                  ⭐ Leave us a Review
+                </a>
+              </div>
             </div>
+
+            {/* Return to Riddle City - Single button */}
+            <Link
+              href="/"
+              className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base text-center"
+            >
+              🏠 Return to Riddle City
+            </Link>
           </div>
         </div>
       </div>
