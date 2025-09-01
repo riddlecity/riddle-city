@@ -79,7 +79,13 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
       console.log("Group ID:", groupId);
 
       const channel = supabase
-        .channel(`riddle-updates-${groupId}`)
+        .channel(`riddle-updates-${groupId}`, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: groupId },
+            private: false
+          }
+        })
         .on(
           'postgres_changes',
           {

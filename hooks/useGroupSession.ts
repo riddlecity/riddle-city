@@ -115,13 +115,13 @@ export function useGroupSession(autoRedirect: boolean = false) {
           const session: GroupSession = {
             groupId: data.groupId,
             userId: userId,
-            trackId: groupData.track_id,
+            trackId: String(groupData.track_id),
             currentRiddleId: groupData.current_riddle_id || data.currentRiddleId,
             gameStarted: Boolean(groupData.game_started), // Use only database value
             finished: data.isFinished || groupData.finished,
-            active: groupData.active,
-            paid: groupData.paid,
-            teamName: teamName || groupData.team_name || 'Your Team',
+            active: Boolean(groupData.active),
+            paid: Boolean(groupData.paid),
+            teamName: teamName || String(groupData.team_name || 'Your Team'),
             isLeader: Boolean(data.isLeader) // Capture leadership status from API
           }
           
@@ -151,13 +151,13 @@ export function useGroupSession(autoRedirect: boolean = false) {
             const session: GroupSession = {
               groupId: data.groupId,
               userId: userId,
-              trackId: groupData.track_id,
+              trackId: String(groupData.track_id),
               currentRiddleId: groupData.current_riddle_id || data.currentRiddleId,
               gameStarted: data.gameStarted || groupData.game_started,
               finished: true,
               active: false,
-              paid: groupData.paid,
-              teamName: teamName || groupData.team_name || 'Your Team',
+              paid: Boolean(groupData.paid),
+              teamName: teamName || String(groupData.team_name || 'Your Team'),
               isLeader: Boolean(data.isLeader) // Capture leadership status from API
             }
             

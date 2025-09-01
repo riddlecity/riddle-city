@@ -30,7 +30,7 @@ export default function LocationPage({ params }: Props) {
         .select("start_label")
         .eq("id", `date_${locationSlug}`)
         .maybeSingle();
-      setDateStartLabel(dateData?.start_label ?? null);
+      setDateStartLabel(String(dateData?.start_label || ''));
 
       // For Pub Crawl
       const { data: pubData } = await supabase
@@ -38,7 +38,7 @@ export default function LocationPage({ params }: Props) {
         .select("start_label")
         .eq("id", `pub_${locationSlug}`)
         .maybeSingle();
-      setPubStartLabel(pubData?.start_label ?? null);
+      setPubStartLabel(String(pubData?.start_label || ''));
     };
 
     fetchLabels();

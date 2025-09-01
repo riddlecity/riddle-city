@@ -24,6 +24,11 @@ export async function createClient() {
           }
         },
       },
+      realtime: {
+        params: {
+          eventsPerSecond: 5, // Reduce server-side real-time events
+        },
+      }
     }
   )
 }

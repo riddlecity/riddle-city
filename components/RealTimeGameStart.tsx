@@ -85,7 +85,13 @@ export default function RealTimeGameStart({ groupId }: RealTimeGameStartProps) {
       console.log("Group ID:", groupId);
 
       const channel = supabase
-        .channel(`game-start-${groupId}`)
+        .channel(`game-start-${groupId}`, {
+          config: {
+            broadcast: { self: false }, // Don't receive own broadcasts
+            presence: { key: groupId }, // Use groupId as presence key
+            private: false // Use public channel to reduce connection overhead
+          }
+        })
         .on(
           'postgres_changes',
           {

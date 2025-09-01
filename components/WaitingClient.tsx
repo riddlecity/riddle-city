@@ -99,8 +99,8 @@ export default function WaitingClient({
         });
 
         // Update state
-        setTeamName(group.team_name || "Your Team");
-        setCurrentRiddleId(group.current_riddle_id ?? null);
+        setTeamName(String(group.team_name || "Your Team"));
+        setCurrentRiddleId(String(group.current_riddle_id || ''));
         setMembersCount(group.group_members?.length ?? 0);
 
         // Check if group is no longer active, finished, or not paid
@@ -140,13 +140,18 @@ export default function WaitingClient({
       }
     };
 
-    // Initial fetch + polling (more frequent polling)
+    // Initial fetch + polling (reduce frequency to save connections)
     fetchGroup();
-    const interval = setInterval(fetchGroup, 2000); // Poll every 2 seconds instead of 3
+    const interval = setInterval(fetchGroup, 5000); // Poll every 5 seconds instead of 2
 
     // Enhanced realtime subscription with better debugging and error handling
     const channel = supabase
-      .channel(`waiting-${groupId}`)
+      .channel(`waiting-${groupId}`, {
+        config: {
+          broadcast: { self: false }, // Don't receive own broadcasts
+          presence: { key: groupId } // Use groupId as presence key
+        }
+      })
       .on(
         'postgres_changes' as any, // Type assertion for Supabase client
         { 
@@ -200,7 +205,10 @@ export default function WaitingClient({
     return () => {
       cancelled = true;
       clearInterval(interval);
-      supabase.removeChannel(channel);
+      // Force close channel to prevent connection leaks
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [groupId, supabase, router, isRedirecting]);
 
