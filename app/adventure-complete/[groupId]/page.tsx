@@ -191,7 +191,7 @@ export default async function AdventureCompletePage({ params }: Props) {
       .sort((a, b) => a!.totalTimeMs - b!.totalTimeMs) || [];
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-3 py-4 md:px-4 md:py-6 relative overflow-hidden">
       {/* Clear cookies when page loads */}
       <CookieCleaner />
 
@@ -202,86 +202,86 @@ export default async function AdventureCompletePage({ params }: Props) {
           alt=""
           width={600}
           height={600}
-          className="w-[500px] h-[500px] md:w-[700px] md:h-[700px] object-contain"
+          className="w-[400px] h-[400px] md:w-[500px] md:h-[500px] object-contain"
           priority={false}
         />
       </div>
 
       {/* Logo */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+      <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
         <Link href="/">
           <Image
             src="/riddle-city-logo.png"
             alt="Riddle City Logo"
-            width={60}
-            height={60}
-            className="md:w-[80px] md:h-[80px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            width={50}
+            height={50}
+            className="md:w-[60px] md:h-[60px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
             priority
           />
         </Link>
       </div>
 
       {/* Completion content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10 max-w-4xl mx-auto">
+      <div className="flex-1 flex flex-col items-center justify-center px-2 relative z-10 max-w-3xl mx-auto">
         <div className="w-full text-center">
           {/* Celebration */}
-          <div className="text-6xl md:text-8xl mb-6">🎉</div>
+          <div className="text-4xl md:text-6xl mb-3">🎉</div>
 
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
+          <h1 className="text-2xl md:text-4xl font-bold text-white mb-3 leading-tight">
             Adventure Complete!
           </h1>
 
           {/* Show session cleanup notice */}
-          <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-3 mb-6">
-            <p className="text-blue-200 text-sm">
+          <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-2 mb-4">
+            <p className="text-blue-200 text-xs md:text-sm">
               🧹 Your session has been cleared! You can now start a new adventure.
             </p>
           </div>
 
-          <p className="text-lg md:text-xl text-white/70 mb-6">
+          <p className="text-base md:text-lg text-white/70 mb-4">
             {group.team_name
               ? `Well done ${group.team_name}!`
               : "Congratulations!"}{" "}
             You completed the {adventureType} in {cityName}!
           </p>
 
-          {/* Stats */}
-          <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-2xl p-6 md:p-8 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* Stats - More compact */}
+          <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {/* Final Completion Time */}
               <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <div className="text-lg md:text-2xl font-bold text-white mb-1">
                   ⏱️ {formattedTime}
                 </div>
-                <div className="text-white/60 text-sm">Final Time</div>
+                <div className="text-white/60 text-xs md:text-sm">Final Time</div>
               </div>
 
               {/* Team Size */}
               <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <div className="text-lg md:text-2xl font-bold text-white mb-1">
                   👥 {memberCount}
                 </div>
-                <div className="text-white/60 text-sm">
+                <div className="text-white/60 text-xs md:text-sm">
                   {memberCount === 1 ? "Solo Explorer" : "Team Members"}
                 </div>
               </div>
 
               {/* Skips Used */}
               <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <div className="text-lg md:text-2xl font-bold text-white mb-1">
                   ⏭️ {skipsUsed}
                 </div>
-                <div className="text-white/60 text-sm">
+                <div className="text-white/60 text-xs md:text-sm">
                   Riddle{skipsUsed !== 1 ? "s" : ""} Skipped
                 </div>
               </div>
 
               {/* Adventure Type */}
               <div className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <div className="text-lg md:text-2xl font-bold text-white mb-1">
                   {adventureType === "Date Day Adventure" ? "💘" : "🎮"}
                 </div>
-                <div className="text-white/60 text-sm">
+                <div className="text-white/60 text-xs md:text-sm">
                   {adventureType === "Date Day Adventure"
                     ? "Date Day"
                     : "Adventure"}
@@ -290,25 +290,25 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           </div>
 
-          {/* Leaderboard */}
+          {/* Leaderboard - More compact */}
           {leaderboard.length > 0 && (
-            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-2xl p-6 md:p-8 mb-8">
-              <h3 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-5">
+              <h3 className="text-lg md:text-xl font-bold text-white mb-3 flex items-center justify-center gap-2">
                 🏆 {adventureType} Leaderboard - {cityName}
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {leaderboard.slice(0, 5).map((entry, index) => (
                   <div
                     key={index}
-                    className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center justify-between p-2 md:p-3 rounded-lg transition-all duration-200 ${
                       entry.isCurrentTeam
                         ? "bg-yellow-500/20 border border-yellow-500/30"
                         : "bg-white/5 hover:bg-white/10"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 md:gap-3">
                       <div
-                        className={`text-lg font-bold ${
+                        className={`text-sm md:text-lg font-bold ${
                           index === 0
                             ? "text-yellow-400"
                             : index === 1
@@ -322,7 +322,7 @@ export default async function AdventureCompletePage({ params }: Props) {
                       </div>
                       <div>
                         <div
-                          className={`font-semibold ${
+                          className={`text-sm md:text-base font-semibold ${
                             entry.isCurrentTeam
                               ? "text-yellow-200"
                               : "text-white"
@@ -338,7 +338,7 @@ export default async function AdventureCompletePage({ params }: Props) {
                       </div>
                     </div>
                     <div
-                      className={`font-mono font-bold ${
+                      className={`font-mono font-bold text-sm md:text-base ${
                         entry.isCurrentTeam ? "text-yellow-200" : "text-white"
                       }`}
                     >
@@ -348,7 +348,7 @@ export default async function AdventureCompletePage({ params }: Props) {
                 ))}
               </div>
               {leaderboard.length > 5 && (
-                <div className="mt-4 text-center">
+                <div className="mt-3 text-center">
                   <Link
                     href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
                     className="text-white/60 hover:text-white/80 text-sm underline"
@@ -360,40 +360,42 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="space-y-4">
+          {/* Action buttons - More compact */}
+          <div className="space-y-3">
             <Link
               href="/locations"
-              className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
             >
               🚀 Start New Adventure
             </Link>
 
-            <Link
-              href={`/leaderboard/${group.track_id}`}
-              className="block w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              🏆 View Full Leaderboard
-            </Link>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Link
+                href={`/leaderboard/${group.track_id}`}
+                className="block w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
+              >
+                🏆 Full Leaderboard
+              </Link>
 
-            <Link
-              href={`/${cityName.toLowerCase()}`}
-              className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30"
-            >
-              🔄 Try Another Adventure
-            </Link>
+              <Link
+                href={`/${cityName.toLowerCase()}`}
+                className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30 text-sm md:text-base"
+              >
+                🔄 Try Another
+              </Link>
+            </div>
           </div>
 
-          {/* WhatsApp Share */}
-          <div className="mt-8 p-4 bg-green-600/20 border border-green-500/30 rounded-lg">
-            <p className="text-green-200 text-sm mb-3 text-center">
+          {/* WhatsApp Share - More compact */}
+          <div className="mt-6 p-3 bg-green-600/20 border border-green-500/30 rounded-lg">
+            <p className="text-green-200 text-xs md:text-sm mb-2 text-center">
               💬 Share this epic adventure with friends!
             </p>
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 text-center"
+              className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 md:py-3 px-4 rounded-lg transition-all duration-200 text-center text-sm md:text-base"
             >
               📱 Share on WhatsApp
             </a>

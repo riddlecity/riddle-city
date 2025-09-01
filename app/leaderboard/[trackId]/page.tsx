@@ -75,7 +75,7 @@ export default async function LeaderboardPage({ params }: Props) {
         totalTimeMs: actualTimeMs,
         skips: entry.riddles_skipped || 0,
         members: entry.group_members?.length || 0,
-        completedDate: new Date(entry.completed_at).toLocaleDateString(),
+        completedDate: new Date(entry.completed_at).toLocaleDateString('en-GB'),
         status: 'finished' as const,
         hasAccurateStartTime: !!entry.started_at // Track if we have accurate timing
       };
@@ -87,7 +87,7 @@ export default async function LeaderboardPage({ params }: Props) {
         totalTimeMs: Infinity,
         skips: entry.riddles_skipped || 0,
         members: entry.group_members?.length || 0,
-        completedDate: new Date(entry.created_at).toLocaleDateString(),
+        completedDate: new Date(entry.created_at).toLocaleDateString('en-GB'),
         status: 'unfinished' as const,
         hasAccurateStartTime: !!entry.started_at
       };
