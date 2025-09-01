@@ -25,29 +25,17 @@ export default function PreferencesPage() {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  // Content filtering for team names - comprehensive list of inappropriate terms
+  // Content filtering for team names - only the most offensive terms
   const offensiveWords = [
-    // Major swear words (full words only to avoid false positives)
+    // Major swear words only
     'fuck', 'fucking', 'fucked', 'fucker', 'shit', 'shitting', 'bitch', 'bitches', 
-    'bastard', 'bastards', 'cocksucker', 'motherfucker', 'asshole', 'assholes',
-    'damn', 'damned', 'hell', 'bloody', 'crap', 'piss', 'pissed',
-    // Hateful terms
-    'hitler', 'nazi', 'nazis', 'fascist', 'racist', 'nigger', 'nigga', 'faggot', 'faggots',
-    'retard', 'retarded', 'gay', 'homo', 'lesbian', 'queer',
-    // Explicit sexual terms
-    'pussy', 'cock', 'dick', 'penis', 'vagina', 'porn', 'pornhub', 'sex', 'sexual',
-    'boobs', 'tits', 'ass', 'butt', 'nude', 'naked', 'horny',
-    // Violence/harmful
-    'kill', 'killing', 'murder', 'suicide', 'death', 'die', 'dying', 'dead',
-    'bomb', 'terrorist', 'violence', 'shoot', 'gun', 'knife', 'weapon',
-    // Drugs
-    'cocaine', 'heroin', 'meth', 'drugs', 'weed', 'marijuana', 'cannabis', 'alcohol',
-    'drunk', 'high', 'stoned', 'crack', 'ecstasy', 'mdma',
-    // Common substitutions and variations
-    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht', 'wtf', 'stfu',
-    'omfg', 'lmfao', 'd*ck', 'p*ss', 'a*s', 'h*ll',
-    // Inappropriate references
-    'trump', 'biden', 'politics', 'religion', 'jesus', 'god', 'allah', 'buddha'
+    'bastard', 'bastards', 'cocksucker', 'motherfucker', 'cunt', 'cunts',
+    // Hateful/discriminatory terms
+    'hitler', 'nazi', 'nazis', 'nigger', 'nigga', 'faggot', 'faggots',
+    // Most explicit sexual terms
+    'pussy', 'cock', 'dick', 'porn', 'pornhub',
+    // Common substitutions for major swears
+    'f*ck', 'sh*t', 'b*tch', 'f**k', 's**t', 'fck', 'sht'
   ];
 
   const containsOffensiveContent = (text: string): boolean => {
@@ -90,7 +78,7 @@ export default function PreferencesPage() {
     }
   };
 
-  // Expanded team name suggestions
+  // Expanded team name suggestions - all family-friendly and filter-safe
   const teamSuggestions = [
     'Mystery Masters', 'The Puzzle Squad', 'Riddle Runners', 'Code Crackers',
     'Date Detectives', 'Adventure Squad', 'The Explorers', 'Barnsley Bunch',
@@ -121,7 +109,13 @@ export default function PreferencesPage() {
     'Puzzle Prodigies', 'Riddle Renegades', 'The Code Conjurers', 'Mystery Magnets',
     'Puzzle Phantoms', 'Riddle Rebels United', 'The Logic Lords', 'Adventure Assassins',
     'Mystery Mechanics', 'Puzzle Predators', 'Riddle Revolutionaries', 'The Code Craft',
-    'Adventure Arsenal', 'Mystery Militia', 'Puzzle Pioneers Plus', 'Riddle Regiment'
+    'Adventure Arsenal', 'Mystery Militia', 'Puzzle Pioneers Plus', 'Riddle Regiment',
+    // Extra creative additions
+    'The Puzzle Pros', 'Mystery Legends', 'Code Creators', 'Adventure Champions',
+    'Riddle Experts', 'The Mystery Crew', 'Puzzle Legends', 'Code Warriors',
+    'Adventure Experts', 'Mystery Pros', 'Riddle Champions', 'The Code Masters',
+    'Puzzle Experts', 'Adventure Legends', 'Mystery Warriors', 'The Riddle Pros',
+    'Code Legends', 'Puzzle Warriors', 'Adventure Pros', 'Mystery Experts'
   ];
 
   const getRandomSuggestion = () => {
@@ -391,7 +385,7 @@ export default function PreferencesPage() {
                 👥 This adventure is better with friends!
               </h3>
               <p className="text-xs text-white/70 leading-relaxed">
-                You can only share the game session to the number of players you select! This cannot be changed later.
+                You can only share the game session to the number of players you select! This cannot be changed later. (2 players minimum)
               </p>
             </div>
             
@@ -407,7 +401,7 @@ export default function PreferencesPage() {
               >
                 {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
                   <option key={n} value={n} className="bg-neutral-800">
-                    {n} {n === 2 ? 'players (minimum)' : 'players'}
+                    {n} players
                   </option>
                 ))}
               </select>
