@@ -336,16 +336,18 @@ export default function PreferencesPage() {
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-3 py-8 relative">
-      {/* Logo in top-left (no hyperlink) */}
+      {/* Logo in top-left with homepage link */}
       <div className="absolute top-3 left-3 md:top-6 md:left-6 z-10">
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={50}
-          height={50}
-          className="md:w-[80px] md:h-[80px] drop-shadow-lg"
-          priority
-        />
+        <Link href="/" className="block hover:opacity-80 transition-opacity duration-200">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={50}
+            height={50}
+            className="md:w-[80px] md:h-[80px] drop-shadow-lg"
+            priority
+          />
+        </Link>
       </div>
 
       {/* Back to Choose Adventure link */}
