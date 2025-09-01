@@ -312,21 +312,21 @@ export default function PreferencesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-3 py-8 relative">
       {/* Logo in top-left (no hyperlink) */}
-      <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+      <div className="absolute top-3 left-3 md:top-6 md:left-6 z-10">
         <Image
           src="/riddle-city-logo.png"
           alt="Riddle City Logo"
-          width={60}
-          height={60}
+          width={50}
+          height={50}
           className="md:w-[80px] md:h-[80px] drop-shadow-lg"
           priority
         />
       </div>
 
       {/* Back to Choose Adventure link */}
-      <div className="absolute top-6 right-6">
+      <div className="absolute top-4 right-4 md:top-6 md:right-6">
         <Link
           href={`/${location}`}
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 text-sm font-medium"
@@ -339,38 +339,38 @@ export default function PreferencesPage() {
 
       {/* 🔧 Admin Mode Indicator */}
       {isAdminMode && (
-        <div className="w-full max-w-lg mb-6 bg-yellow-600/20 border border-yellow-500/50 rounded-xl p-4 text-center">
-          <h2 className="text-yellow-300 font-bold">🔧 ADMIN TEST MODE</h2>
-          <p className="text-yellow-200 text-sm">Bypass payment for testing</p>
+        <div className="w-full max-w-lg mb-4 bg-yellow-600/20 border border-yellow-500/50 rounded-xl p-3 text-center">
+          <h2 className="text-yellow-300 font-bold text-sm">🔧 ADMIN TEST MODE</h2>
+          <p className="text-yellow-200 text-xs">Bypass payment for testing</p>
         </div>
       )}
 
       {/* Main heading with better spacing */}
-      <div className="w-full text-center mt-8 sm:mt-4 mb-10">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center tracking-tight leading-tight">
+      <div className="w-full text-center mt-4 sm:mt-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center tracking-tight leading-tight">
           Start your {mode} in {capitalize(location)}
         </h1>
       </div>
       
-      <div className="w-full max-w-lg space-y-6">
+      <div className="w-full max-w-lg space-y-4">
         {/* Number of players with friendly messaging */}
-        <div className="text-center bg-white/5 border border-white/10 rounded-xl p-6">
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-white mb-2">
+        <div className="text-center bg-white/5 border border-white/10 rounded-xl p-4">
+          <div className="mb-3">
+            <h3 className="text-base font-medium text-white mb-2">
               👥 This adventure is better with friends!
             </h3>
-            <p className="text-sm text-white/70 leading-relaxed">
-              Choose how many people will be playing together. Your invite link will only allow that number of players to join—so make sure to select the full group now!
+            <p className="text-xs text-white/70 leading-relaxed">
+              You can only share the game session to the number of players you select! This cannot be changed later.
             </p>
           </div>
           
-          <label className="block text-lg font-medium mb-4">
+          <label className="block text-base font-medium mb-3">
             Number of players:
           </label>
           <select
             value={players}
             onChange={(e) => handlePlayerChange(parseInt(e.target.value))}
-            className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
               <option key={n} value={n} className="bg-neutral-800">
@@ -380,8 +380,8 @@ export default function PreferencesPage() {
           </select>
           
           {/* Dynamic pricing display */}
-          <div className="mt-3 text-center">
-            <p className="text-white/60 text-sm">
+          <div className="mt-2 text-center">
+            <p className="text-white/60 text-xs">
               Total cost: <span className="text-white font-semibold">£{players * 15}</span>
               {players > 2 && (
                 <span className="text-white/50"> ({players} players × £15 each)</span>
@@ -392,10 +392,10 @@ export default function PreferencesPage() {
 
         {/* Team Name - Required with purple styling */}
         <div>
-          <label className="block text-lg font-medium mb-2">
+          <label className="block text-base font-medium mb-2">
             Team Name: <span className="text-red-400">*</span>
           </label>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className={`border-2 rounded-lg transition-colors duration-200 ${
               teamName.trim() 
                 ? 'border-purple-500 bg-purple-500/10' 
@@ -407,7 +407,7 @@ export default function PreferencesPage() {
                 onChange={(e) => handleTeamNameChange(e.target.value)}
                 placeholder="Enter your team name to proceed..."
                 maxLength={30}
-                className="w-full bg-transparent px-4 py-3 text-white placeholder:text-white/50 focus:outline-none"
+                className="w-full bg-transparent px-3 py-2 text-white placeholder:text-white/50 focus:outline-none text-sm"
                 required
               />
             </div>
@@ -415,7 +415,7 @@ export default function PreferencesPage() {
               <button
                 type="button"
                 onClick={getRandomSuggestion}
-                className="text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200"
+                className="text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200"
               >
                 💡 Random name suggestion
               </button>
@@ -427,23 +427,23 @@ export default function PreferencesPage() {
         </div>
 
         {/* Collapsible Email fields */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <button
             type="button"
             onClick={() => setShowEmails(!showEmails)}
-            className="flex items-center gap-2 text-lg font-medium text-white/80 hover:text-white transition-colors duration-200"
+            className="flex items-center gap-2 text-base font-medium text-white/80 hover:text-white transition-colors duration-200"
           >
             <span className={`transform transition-transform duration-200 ${showEmails ? 'rotate-90' : 'rotate-0'}`}>
               ▶
             </span>
-            {isAdminMode ? 'Enter Player Emails (Optional for testing)' : 'Enter Player Emails (Optional)'}
+            {isAdminMode ? 'Enter Player Emails (Optional for testing - you can share the game link later)' : 'Enter Player Emails (Optional - you can share the game link later)'}
           </button>
           
           {showEmails && (
-            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
               {/* Duplicate warning */}
               {duplicateWarning && (
-                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-red-200 text-sm">
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-2 text-red-200 text-xs">
                   ⚠️ {duplicateWarning}
                 </div>
               )}
@@ -462,7 +462,7 @@ export default function PreferencesPage() {
                       placeholder={`Email for Player ${index + 1}`}
                       value={email}
                       onChange={(e) => handleEmailChange(index, e.target.value)}
-                      className={`w-full rounded-lg px-4 py-3 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 transition-all duration-200 ${
+                      className={`w-full rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 transition-all duration-200 text-sm ${
                         isDuplicate 
                           ? 'bg-red-500/10 border border-red-500/50 focus:ring-red-500' 
                           : 'bg-white/10 border border-white/20 focus:ring-purple-500 focus:border-transparent'
@@ -494,7 +494,7 @@ export default function PreferencesPage() {
             hasDuplicateEmails() || 
             (teamName.trim() !== '' && containsOffensiveContent(teamName))
           }
-          className={`w-full font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg ${
+          className={`w-full font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg text-sm ${
             loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() !== '' && containsOffensiveContent(teamName))
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
               : isAdminMode
@@ -504,7 +504,7 @@ export default function PreferencesPage() {
         >
           {loading ? (
             <div className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               {isAdminMode ? 'Creating Test Game...' : 'Processing...'}
             </div>
           ) : (
