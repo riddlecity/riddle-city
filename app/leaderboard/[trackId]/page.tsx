@@ -3,14 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import BackButton from "@/components/BackButton";
 
 interface Props {
   params: Promise<{ trackId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function LeaderboardPage({ params }: Props) {
+export default async function LeaderboardPage({ params, searchParams }: Props) {
   const { trackId } = await params;
+  const searchParamsData = await searchParams;
   const supabase = await createClient();
 
   const { data: track, error: trackError } = await supabase
@@ -114,7 +115,7 @@ export default async function LeaderboardPage({ params }: Props) {
   const cityName = track.location.charAt(0).toUpperCase() + track.location.slice(1);
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-4 py-4 md:py-8 relative overflow-hidden">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-3 py-4 md:px-4 md:py-6 relative overflow-hidden">
       {/* Background maze logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-5">
         <Image
@@ -122,49 +123,63 @@ export default async function LeaderboardPage({ params }: Props) {
           alt=""
           width={600}
           height={600}
-          className="w-[300px] h-[300px] md:w-[500px] md:h-[500px] lg:w-[700px] lg:h-[700px] object-contain"
+          className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] object-contain"
           priority={false}
         />
       </div>
 
       {/* Logo */}
-      <div className="absolute top-2 left-2 md:top-6 md:left-6 z-10">
-        <Image
-          src="/riddle-city-logo.png"
-          alt="Riddle City Logo"
-          width={60}
-          height={60}
-          className="md:w-[80px] md:h-[80px] lg:w-[100px] lg:h-[100px] drop-shadow-lg"
-          priority
-        />
+      <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
+        <Link href="/">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={50}
+            height={50}
+            className="md:w-[60px] md:h-[60px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            priority
+          />
+        </Link>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col justify-start pt-16 md:pt-20 pb-4 relative z-10 max-w-4xl mx-auto w-full">
         <div className="text-center">
+          {/* Back to Completion Page - Moved to top */}
+          <div className="mb-4">
+            <Link 
+              href={`/adventure-complete/${searchParamsData?.from_group || ''}`}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
+            >
+              ← Back to Completion
+            </Link>
+          </div>
+
           {/* Header */}
-          <div className="text-3xl md:text-4xl lg:text-6xl mb-3 md:mb-4">🏆</div>
+          <div className="text-4xl md:text-6xl mb-4">🏆</div>
           
-          <h1 className="text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-2 leading-tight px-2">
+          <h1 className="text-2xl md:text-4xl font-bold text-white mb-3 leading-tight">
             Leaderboard
           </h1>
           
-          <p className="text-base md:text-lg lg:text-xl text-white/70 mb-6 md:mb-8 px-2">
+          <p className="text-base md:text-lg text-white/70 mb-4">
             {adventureType} - {cityName}
           </p>
 
           {/* Stats summary */}
           {leaderboard.length > 0 && (
-            <div className="mb-4 md:mb-6 text-center">
-              <p className="text-white/60 text-sm">
-                {finishedEntries.length} completed • {unfinishedEntries.length} in progress
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 mb-6">
+              <p className="text-white/80 text-sm md:text-base">
+                <span className="text-green-400 font-semibold">{finishedEntries.length}</span> completed • 
+                <span className="text-yellow-400 font-semibold ml-1">{unfinishedEntries.length}</span> in progress
               </p>
             </div>
           )}
 
           {/* Leaderboard */}
           {leaderboard.length > 0 ? (
-            <div className="w-full max-w-2xl mx-auto space-y-2 md:space-y-3">
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-6">
+              <div className="w-full max-w-3xl mx-auto space-y-2 md:space-y-3">
               {leaderboard.map((entry) => {
                 const isFinished = entry.status === 'finished';
                 const position = isFinished ? finishedEntries.findIndex(e => e.id === entry.id) + 1 : null;
@@ -180,7 +195,7 @@ export default async function LeaderboardPage({ params }: Props) {
                           ? 'bg-gradient-to-r from-gray-400/20 to-gray-300/20 border border-gray-400/30'
                           : position === 3
                           ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/20 border border-orange-500/30'
-                          : 'bg-white/5 border border-white/10'
+                          : 'bg-white/10 border border-white/20 hover:bg-white/15'
                         : 'bg-gray-800/50 border border-gray-600/30'
                     }`}
                   >
@@ -195,7 +210,7 @@ export default async function LeaderboardPage({ params }: Props) {
                           <div className="text-xl md:text-2xl">🥉</div>
                         ) : (
                           <div className="text-sm md:text-base text-white/60 font-semibold">
-                            {position}
+                            {position}.
                           </div>
                         )
                       ) : (
@@ -209,11 +224,11 @@ export default async function LeaderboardPage({ params }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="text-left flex-1 min-w-0">
-                          <div className={`font-semibold text-base md:text-lg truncate ${
+                          <div className={`font-semibold text-sm md:text-base truncate ${
                             isFinished ? 'text-white' : 'text-gray-300'
                           }`}>
                             {entry.team_name}
-                            {!isFinished && <span className="text-gray-400 text-sm ml-1">(In Progress)</span>}
+                            {!isFinished && <span className="text-gray-400 text-xs ml-1">(In Progress)</span>}
                           </div>
                           <div className={`text-xs md:text-sm ${isFinished ? 'text-white/60' : 'text-gray-400'}`}>
                             {entry.members} member{entry.members !== 1 ? 's' : ''}
@@ -240,7 +255,7 @@ export default async function LeaderboardPage({ params }: Props) {
                               : 'text-white'
                             : 'text-gray-400'
                         }`}>
-                          <div className="text-lg md:text-xl font-bold">
+                          <div className="text-base md:text-lg font-bold font-mono">
                             {entry.time}
                           </div>
                         </div>
@@ -250,24 +265,14 @@ export default async function LeaderboardPage({ params }: Props) {
                 );
               })}
             </div>
+            </div>
           ) : (
-            <div className="text-center text-white/60 py-8">
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-6 md:p-8 text-center">
               <div className="text-4xl mb-4">🎯</div>
-              <p className="text-lg">No teams have started this adventure yet!</p>
-              <p className="text-sm mt-2">Be the first to take on the challenge.</p>
+              <p className="text-lg text-white/80 mb-2">No teams have started this adventure yet!</p>
+              <p className="text-sm text-white/60">Be the first to take on the challenge.</p>
             </div>
           )}
-
-          {/* Back to locations button */}
-          <div className="mt-8 md:mt-12">
-            <Link 
-              href="/locations" 
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-lg transition-all"
-            >
-              <BackButton />
-              Back to Locations
-            </Link>
-          </div>
         </div>
       </div>
     </main>

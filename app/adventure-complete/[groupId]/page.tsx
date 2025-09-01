@@ -231,13 +231,6 @@ export default async function AdventureCompletePage({ params }: Props) {
             Adventure Complete!
           </h1>
 
-          {/* Show session cleanup notice */}
-          <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-2 mb-4">
-            <p className="text-blue-200 text-xs md:text-sm">
-              🧹 Your session has been cleared! You can now start a new adventure.
-            </p>
-          </div>
-
           <p className="text-base md:text-lg text-white/70 mb-4">
             {group.team_name
               ? `Well done ${group.team_name}!`
@@ -290,12 +283,22 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           </div>
 
-          {/* Leaderboard - More compact */}
+          {/* Leaderboard - More compact with inline button */}
           {leaderboard.length > 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-5">
-              <h3 className="text-lg md:text-xl font-bold text-white mb-3 flex items-center justify-center gap-2">
-                🏆 {adventureType} Leaderboard - {cityName}
-              </h3>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
+                <h3 className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
+                  🏆 {adventureType} Leaderboard - {cityName}
+                </h3>
+                {leaderboard.length > 5 && (
+                  <Link
+                    href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 text-xs md:text-sm whitespace-nowrap"
+                  >
+                    View All {leaderboard.length} Teams
+                  </Link>
+                )}
+              </div>
               <div className="space-y-2">
                 {leaderboard.slice(0, 5).map((entry, index) => (
                   <div
@@ -347,58 +350,42 @@ export default async function AdventureCompletePage({ params }: Props) {
                   </div>
                 ))}
               </div>
-              {leaderboard.length > 5 && (
-                <div className="mt-3 text-center">
-                  <Link
-                    href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
-                    className="text-white/60 hover:text-white/80 text-sm underline"
-                  >
-                    View all {leaderboard.length} teams →
-                  </Link>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Action buttons - More compact */}
+          {/* Primary Actions */}
           <div className="space-y-3">
-            <Link
-              href="/locations"
-              className="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
-            >
-              🚀 Start New Adventure
-            </Link>
+            {/* WhatsApp Share - Primary action */}
+            <div className="p-3 bg-green-600/20 border border-green-500/30 rounded-lg">
+              <p className="text-green-200 text-xs md:text-sm mb-2 text-center">
+                💬 Share this epic adventure with friends!
+              </p>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 text-center text-sm md:text-base"
+              >
+                � Share on WhatsApp
+              </a>
+            </div>
 
+            {/* Secondary Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Link
-                href={`/leaderboard/${group.track_id}`}
-                className="block w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
+              <a
+                href="#"
+                className="block w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base text-center"
               >
-                🏆 Full Leaderboard
-              </Link>
+                ⭐ Leave us a Review
+              </a>
 
               <Link
-                href={`/${cityName.toLowerCase()}`}
-                className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30 text-sm md:text-base"
+                href="/"
+                className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base text-center"
               >
-                🔄 Try Another
+                🏠 Return to Riddle City
               </Link>
             </div>
-          </div>
-
-          {/* WhatsApp Share - More compact */}
-          <div className="mt-6 p-3 bg-green-600/20 border border-green-500/30 rounded-lg">
-            <p className="text-green-200 text-xs md:text-sm mb-2 text-center">
-              💬 Share this epic adventure with friends!
-            </p>
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 md:py-3 px-4 rounded-lg transition-all duration-200 text-center text-sm md:text-base"
-            >
-              📱 Share on WhatsApp
-            </a>
           </div>
         </div>
       </div>
