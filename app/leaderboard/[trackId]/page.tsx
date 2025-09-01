@@ -1,4 +1,4 @@
-// app/leaderboard/[trackId]/page.tsx - Mobile Responsive Version
+// app/leaderboard/[trackId]/page.tsx - Fixed version with proper time tracking and skip display
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -30,10 +30,12 @@ export default async function LeaderboardPage({ params }: Props) {
       id,
       team_name, 
       created_at, 
+      started_at,
       completed_at,
       riddles_skipped,
       finished,
       paid,
+      game_started,
       group_members(user_id)
     `)
     .eq("track_id", trackId)
@@ -58,43 +60,50 @@ export default async function LeaderboardPage({ params }: Props) {
 
   // Process all groups (finished and unfinished)
   const allEntries = leaderboardData?.map(entry => {
-    const startTime = new Date(entry.created_at);
+    // Use started_at if available (more accurate), otherwise fall back to created_at
+    const startTime = new Date(entry.started_at || entry.created_at);
     
     if (entry.finished && entry.completed_at) {
       const endTime = new Date(entry.completed_at);
       const actualTimeMs = endTime.getTime() - startTime.getTime();
-      const skipPenaltyMs = (entry.riddles_skipped || 0) * 20 * 60 * 1000;
-      const totalTimeMs = actualTimeMs + skipPenaltyMs;
+      // No more skip penalties - just show actual time
       
       return {
         id: entry.id,
-        team_name: entry.team_name,
-        time: formatTime(totalTimeMs),
-        totalTimeMs,
+        team_name: entry.team_name || 'Unknown Team',
+        time: formatTime(actualTimeMs),
+        totalTimeMs: actualTimeMs,
         skips: entry.riddles_skipped || 0,
         members: entry.group_members?.length || 0,
         completedDate: new Date(entry.completed_at).toLocaleDateString(),
-        actualTime: formatTime(actualTimeMs),
-        status: 'finished' as const
+        status: 'finished' as const,
+        hasAccurateStartTime: !!entry.started_at // Track if we have accurate timing
       };
     } else {
       return {
         id: entry.id,
-        team_name: entry.team_name,
-        time: 'Unfinished',
+        team_name: entry.team_name || 'Unknown Team',
+        time: 'In Progress',
         totalTimeMs: Infinity,
         skips: entry.riddles_skipped || 0,
         members: entry.group_members?.length || 0,
         completedDate: new Date(entry.created_at).toLocaleDateString(),
-        actualTime: '',
-        status: 'unfinished' as const
+        status: 'unfinished' as const,
+        hasAccurateStartTime: !!entry.started_at
       };
     }
   }) || [];
 
   const finishedEntries = allEntries
     .filter(entry => entry.status === 'finished')
-    .sort((a, b) => a.totalTimeMs - b.totalTimeMs);
+    .sort((a, b) => {
+      // First sort by time
+      if (a.totalTimeMs !== b.totalTimeMs) {
+        return a.totalTimeMs - b.totalTimeMs;
+      }
+      // If times are equal, sort by skips (fewer skips = better)
+      return a.skips - b.skips;
+    });
     
   const unfinishedEntries = allEntries
     .filter(entry => entry.status === 'unfinished')
@@ -118,7 +127,7 @@ export default async function LeaderboardPage({ params }: Props) {
         />
       </div>
 
-      {/* Logo - Made smaller on mobile */}
+      {/* Logo */}
       <div className="absolute top-2 left-2 md:top-6 md:left-6 z-10">
         <Image
           src="/riddle-city-logo.png"
@@ -130,10 +139,10 @@ export default async function LeaderboardPage({ params }: Props) {
         />
       </div>
 
-      {/* Content - Better mobile spacing */}
+      {/* Content */}
       <div className="flex-1 flex flex-col justify-start pt-16 md:pt-20 pb-4 relative z-10 max-w-4xl mx-auto w-full">
         <div className="text-center">
-          {/* Header - Responsive text sizes */}
+          {/* Header */}
           <div className="text-3xl md:text-4xl lg:text-6xl mb-3 md:mb-4">🏆</div>
           
           <h1 className="text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-2 leading-tight px-2">
@@ -148,117 +157,115 @@ export default async function LeaderboardPage({ params }: Props) {
           {leaderboard.length > 0 && (
             <div className="mb-4 md:mb-6 text-center">
               <p className="text-white/60 text-sm">
-                {finishedEntries.length} completed • {unfinishedEntries.length} unfinished
+                {finishedEntries.length} completed • {unfinishedEntries.length} in progress
               </p>
             </div>
           )}
 
-          {/* Leaderboard - Mobile optimized */}
+          {/* Leaderboard */}
           {leaderboard.length > 0 ? (
-            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl md:rounded-2xl p-3 md:p-6 lg:p-8 mb-6 md:mb-8">
-              <div className="space-y-2 md:space-y-3">
-                {leaderboard.map((entry, index) => {
-                  const isFinished = entry.status === 'finished';
-                  const isTopThree = isFinished && index < 3;
-                  const medals = ['🥇', '🥈', '🥉'];
-                  const finishedPosition = isFinished ? finishedEntries.findIndex(e => e.id === entry.id) + 1 : null;
-                  
-                  return (
-                    <div 
-                      key={entry.id}
-                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 md:p-4 rounded-lg transition-all duration-200 ${
-                        isTopThree
-                        ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30'
-                        : isFinished
-                        ? 'bg-white/5 hover:bg-white/10'
-                        : 'bg-gray-600/20 border border-gray-500/30'
-                      }`}
-                    >
-                      {/* Top section - Rank and Team Info */}
-                      <div className="flex items-center gap-2 md:gap-4 mb-2 sm:mb-0">
-                        <div className={`text-lg md:text-2xl font-bold min-w-[2rem] md:min-w-[3rem] ${
-                          isTopThree ? 'text-yellow-400' : 
-                          isFinished ? 'text-white/70' : 'text-gray-400'
-                        }`}>
-                          {isTopThree ? medals[index] : 
-                           isFinished ? `${finishedPosition}.` : '—'}
+            <div className="w-full max-w-2xl mx-auto space-y-2 md:space-y-3">
+              {leaderboard.map((entry) => {
+                const isFinished = entry.status === 'finished';
+                const position = isFinished ? finishedEntries.findIndex(e => e.id === entry.id) + 1 : null;
+                
+                return (
+                  <div
+                    key={entry.id}
+                    className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg transition-all ${
+                      isFinished 
+                        ? position === 1 
+                          ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-500/20 border border-yellow-500/30' 
+                          : position === 2
+                          ? 'bg-gradient-to-r from-gray-400/20 to-gray-300/20 border border-gray-400/30'
+                          : position === 3
+                          ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/20 border border-orange-500/30'
+                          : 'bg-white/5 border border-white/10'
+                        : 'bg-gray-800/50 border border-gray-600/30'
+                    }`}
+                  >
+                    {/* Position/Trophy */}
+                    <div className="flex-shrink-0 w-8 md:w-10 text-center">
+                      {isFinished ? (
+                        position === 1 ? (
+                          <div className="text-xl md:text-2xl">🥇</div>
+                        ) : position === 2 ? (
+                          <div className="text-xl md:text-2xl">🥈</div>
+                        ) : position === 3 ? (
+                          <div className="text-xl md:text-2xl">🥉</div>
+                        ) : (
+                          <div className="text-sm md:text-base text-white/60 font-semibold">
+                            {position}
+                          </div>
+                        )
+                      ) : (
+                        <div className="text-gray-400 text-xs md:text-sm">
+                          ⏳
                         </div>
+                      )}
+                    </div>
+
+                    {/* Team Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="text-left flex-1 min-w-0">
                           <div className={`font-semibold text-base md:text-lg truncate ${
                             isFinished ? 'text-white' : 'text-gray-300'
                           }`}>
                             {entry.team_name}
-                            {!isFinished && <span className="text-gray-400 text-sm ml-1">(Unfinished)</span>}
+                            {!isFinished && <span className="text-gray-400 text-sm ml-1">(In Progress)</span>}
                           </div>
                           <div className={`text-xs md:text-sm ${isFinished ? 'text-white/60' : 'text-gray-400'}`}>
-                            {entry.members} member{entry.members !== 1 ? 's' : ''} • 
-                            {entry.skips} skip{entry.skips !== 1 ? 's' : ''}
-                            {isFinished && entry.skips > 0 && (
-                              <>
-                                <br className="sm:hidden" />
-                                <span className="text-orange-300"> (+{entry.skips * 20}min penalty)</span>
-                              </>
+                            {entry.members} member{entry.members !== 1 ? 's' : ''}
+                            {entry.skips > 0 && (
+                              <span className="text-yellow-400 ml-2">
+                                • {entry.skips} skip{entry.skips !== 1 ? 's' : ''}
+                              </span>
                             )}
                           </div>
-                          <div className={`text-xs ${isFinished ? 'text-white/50' : 'text-gray-500'}`}>
+                          <div className="text-xs text-white/50">
                             {isFinished ? `Completed ${entry.completedDate}` : `Started ${entry.completedDate}`}
                           </div>
-                          {/* Show actual time if penalties were applied */}
-                          {isFinished && entry.skips > 0 && (
-                            <div className="text-xs text-white/50 mt-1">
-                              Actual: {entry.actualTime}
-                            </div>
-                          )}
+                        </div>
+
+                        {/* Time */}
+                        <div className={`text-right ${
+                          isFinished 
+                            ? position === 1 
+                              ? 'text-yellow-300' 
+                              : position === 2
+                              ? 'text-gray-300'
+                              : position === 3
+                              ? 'text-orange-300'
+                              : 'text-white'
+                            : 'text-gray-400'
+                        }`}>
+                          <div className="text-lg md:text-xl font-bold">
+                            {entry.time}
+                          </div>
                         </div>
                       </div>
-                      
-                      {/* Time - Better mobile placement */}
-                      <div className={`font-mono font-bold text-lg md:text-xl self-end sm:self-center ${
-                        isFinished ? 'text-white' : 'text-gray-400'
-                      }`}>
-                        {entry.time}
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
-              
-              {leaderboard.length >= 50 && (
-                <div className="text-center mt-4 md:mt-6 text-white/60 text-sm">
-                  Showing up to 50 teams
-                </div>
-              )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl md:rounded-2xl p-6 md:p-8 mb-6 md:mb-8 text-center">
-              <div className="text-3xl md:text-4xl mb-4">🏁</div>
-              <h3 className="text-lg md:text-xl font-semibold text-white mb-2">
-                No teams yet!
-              </h3>
-              <p className="text-white/70 text-sm md:text-base">
-                Be the first team to start this adventure.
-              </p>
+            <div className="text-center text-white/60 py-8">
+              <div className="text-4xl mb-4">🎯</div>
+              <p className="text-lg">No teams have started this adventure yet!</p>
+              <p className="text-sm mt-2">Be the first to take on the challenge.</p>
             </div>
           )}
 
-          {/* Action buttons - Better mobile spacing */}
-          <div className="space-y-3 md:space-y-4 px-2">
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg md:rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+          {/* Back to locations button */}
+          <div className="mt-8 md:mt-12">
+            <Link 
+              href="/locations" 
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-lg transition-all"
+            >
               <BackButton />
-            </div>
-            
-            <Link
-              href="/locations"
-              className="block w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
-            >
-              🏠 Return to Riddle City
-            </Link>
-            
-            <Link
-              href={`/${cityName.toLowerCase()}`}
-              className="block w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg md:rounded-xl transition-all duration-200 border border-white/20 hover:border-white/30 text-sm md:text-base"
-            >
-              🔄 Try Another Adventure
+              Back to Locations
             </Link>
           </div>
         </div>

@@ -87,12 +87,14 @@ export async function POST(req: Request) {
     
     console.log("🎯 START ADVENTURE: Starting game with riddle:", track.start_riddle_id);
     
-    // Start the game - Clean update without modifying created_at
+    // Start the game - Track actual start time
+    const gameStartTime = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("groups")
       .update({
         game_started: true,
-        current_riddle_id: track.start_riddle_id
+        current_riddle_id: track.start_riddle_id,
+        started_at: gameStartTime // Track when game actually started
       })
       .eq("id", groupId);
     
