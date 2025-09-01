@@ -3,10 +3,10 @@ import { createClient } from '../../../../lib/supabase/server';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { trackId: string } }
+  { params }: { params: Promise<{ trackId: string }> }
 ) {
   try {
-    const trackId = params.trackId;
+    const { trackId } = await params;
     
     if (!trackId) {
       return NextResponse.json({ error: 'Track ID is required' }, { status: 400 });
