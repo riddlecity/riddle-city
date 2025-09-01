@@ -3,6 +3,9 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useLocationHours } from "../../../hooks/useLocationHours";
+import { getOverallTimeWarning } from "../../../lib/timeWarnings";
+import TimeWarningModal from "../../../components/TimeWarningModal";
 
 export default function PreferencesPage() {
   const router = useRouter();
@@ -10,6 +13,8 @@ export default function PreferencesPage() {
   const searchParams = useSearchParams();
   const location = (params?.location as string) || "unknown";
   const mode = (params?.mode as string) || "unknown";
+  const trackId = `${mode}_${location}`; // e.g., "date_barnsley"
+  
   const [players, setPlayers] = useState(2);
   const [teamName, setTeamName] = useState("");
   const [emails, setEmails] = useState<string[]>(["", ""]);
@@ -18,6 +23,10 @@ export default function PreferencesPage() {
   const [showEmails, setShowEmails] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [showTimeWarning, setShowTimeWarning] = useState(false);
+  
+  // Load location hours for time warnings
+  const { locations, loading: locationsLoading } = useLocationHours(trackId);
   const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to capitalize first letter
@@ -214,6 +223,30 @@ export default function PreferencesPage() {
       return;
     }
 
+    // Check time warnings before proceeding
+    if (!locationsLoading && locations.length > 0) {
+      const locationsWithHours = locations
+        .filter(loc => loc.opening_hours)
+        .map(loc => ({
+          name: loc.name,
+          hours: loc.opening_hours!
+        }));
+
+      if (locationsWithHours.length > 0) {
+        const timeWarning = getOverallTimeWarning(locationsWithHours);
+        
+        if (timeWarning.shouldWarn) {
+          setShowTimeWarning(true);
+          return; // Stop here and show warning modal
+        }
+      }
+    }
+
+    // Proceed with normal payment flow
+    await proceedWithPayment();
+  };
+
+  const proceedWithPayment = async () => {
     setLoading(true);
     try {
       // 🔧 Check for admin parameter
@@ -268,6 +301,7 @@ export default function PreferencesPage() {
     } catch (err) {
       console.error("❌ Checkout error:", err);
       alert("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -569,6 +603,27 @@ export default function PreferencesPage() {
           </div>
         )}
       </div>
+
+      {/* Time Warning Modal */}
+      {showTimeWarning && !locationsLoading && locations.length > 0 && (
+        <TimeWarningModal
+          isOpen={showTimeWarning}
+          onClose={() => setShowTimeWarning(false)}
+          onContinue={() => {
+            setShowTimeWarning(false);
+            proceedWithPayment();
+          }}
+          warning={(() => {
+            const locationsWithHours = locations
+              .filter(loc => loc.opening_hours)
+              .map(loc => ({
+                name: loc.name,
+                hours: loc.opening_hours!
+              }));
+            return getOverallTimeWarning(locationsWithHours);
+          })()}
+        />
+      )}
     </main>
   );
 }
