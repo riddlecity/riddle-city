@@ -5,6 +5,9 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useLocationHours } from "../../hooks/useLocationHours";
+import { getOverallTimeWarning } from "../../lib/timeWarnings";
+import TimeWarningModal from "../../components/TimeWarningModal";
 
 interface Props {
   params: Promise<{ location: string }>;
@@ -19,6 +22,14 @@ export default function LocationPage({ params }: Props) {
 
   const [dateStartLabel, setDateStartLabel] = useState<string | null>(null);
   const [pubStartLabel, setPubStartLabel] = useState<string | null>(null);
+  const [showTimeWarning, setShowTimeWarning] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<string | null>(null);
+
+  // Load location hours for time warnings  
+  const dateTrackId = `date_${locationSlug}`;
+  const pubTrackId = `standard_${locationSlug}`;
+  const { locations: dateLocations, loading: dateLoading } = useLocationHours(dateTrackId);
+  const { locations: pubLocations, loading: pubLoading } = useLocationHours(pubTrackId);
 
   useEffect(() => {
     const supabase = createClient();
@@ -45,6 +56,44 @@ export default function LocationPage({ params }: Props) {
   }, [locationSlug]);
 
   const handleModeSelect = (mode: string) => {
+    console.log('🔍 Adventure selected:', mode);
+    
+    // Determine which locations to check based on mode
+    const locationsToCheck = mode === 'date' ? dateLocations : pubLocations;
+    const isLoading = mode === 'date' ? dateLoading : pubLoading;
+    
+    console.log('🔍 Checking locations for warnings:', {
+      mode,
+      locationsCount: locationsToCheck.length,
+      isLoading,
+      locations: locationsToCheck.map(loc => ({ name: loc.name, hasHours: !!loc.opening_hours }))
+    });
+
+    // Check time warnings before proceeding
+    if (!isLoading && locationsToCheck.length > 0) {
+      const locationsWithHours = locationsToCheck
+        .filter(loc => loc.opening_hours)
+        .map(loc => ({
+          name: loc.name,
+          hours: loc.opening_hours!
+        }));
+
+      console.log('🔍 Locations with hours:', locationsWithHours);
+
+      if (locationsWithHours.length > 0) {
+        const timeWarning = getOverallTimeWarning(locationsWithHours);
+        console.log('🔍 Time warning result:', timeWarning);
+        
+        if (timeWarning.shouldWarn) {
+          console.log('🔍 Showing time warning modal for mode:', mode);
+          setSelectedMode(mode);
+          setShowTimeWarning(true);
+          return; // Stop here and show warning modal
+        }
+      }
+    }
+
+    // Proceed to adventure setup page
     router.push(`/${resolvedParams.location}/${mode}`);
   };
 
@@ -175,6 +224,32 @@ export default function LocationPage({ params }: Props) {
           </p>
         </div>
       </div>
+
+      {/* Time Warning Modal */}
+      {showTimeWarning && selectedMode && (
+        <TimeWarningModal
+          isOpen={showTimeWarning}
+          onClose={() => {
+            setShowTimeWarning(false);
+            setSelectedMode(null);
+          }}
+          onContinue={() => {
+            setShowTimeWarning(false);
+            router.push(`/${resolvedParams.location}/${selectedMode}`);
+            setSelectedMode(null);
+          }}
+          warning={(() => {
+            const locationsToCheck = selectedMode === 'date' ? dateLocations : pubLocations;
+            const locationsWithHours = locationsToCheck
+              .filter(loc => loc.opening_hours)
+              .map(loc => ({
+                name: loc.name,
+                hours: loc.opening_hours!
+              }));
+            return getOverallTimeWarning(locationsWithHours);
+          })()}
+        />
+      )}
     </main>
   );
 }

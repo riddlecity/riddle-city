@@ -14,28 +14,45 @@ export async function GET(
 
     const supabase = await createClient();
     
-    // Fetch riddles with Google Place URLs for this track
-    const { data, error } = await supabase
+    console.log('🔍 Fetching locations for trackId:', trackId);
+    
+    // Get locations for the specified track (no opening hours from DB)
+    const { data: locations, error } = await supabase
       .from('riddles')
-      .select('id, riddle_name, location_name, google_place_url')
+      .select(`
+        id,
+        order_index,
+        location_id,
+        google_place_url
+      `)
       .eq('track_id', trackId)
-      .not('google_place_url', 'is', null); // Only get riddles with Google URLs
+      .order('order_index');
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('🔍 Error fetching locations:', error);
       return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
     }
 
-    // Transform the data to match our interface
-    const locations = (data || []).map((item: any) => ({
-      id: item.id as string,
-      name: (item.location_name || item.riddle_name || 'Unknown Location') as string,
-      google_place_url: item.google_place_url as string
+    if (!locations || locations.length === 0) {
+      console.log('🔍 No locations found for trackId:', trackId);
+      return NextResponse.json({ locations: [] });
+    }
+
+    // Transform the data to match expected format
+    const formattedLocations = locations.map(location => ({
+      id: location.id,
+      order: location.order_index,
+      name: location.location_id,
+      google_place_url: location.google_place_url
     }));
 
-    return NextResponse.json({ locations });
+    console.log('🔍 Successfully fetched', formattedLocations.length, 'locations');
+    
+    return NextResponse.json({ 
+      locations: formattedLocations 
+    });
   } catch (error) {
-    console.error('Error fetching locations:', error);
+    console.error('🔍 Unexpected error in locations API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

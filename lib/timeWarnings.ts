@@ -48,7 +48,7 @@ export function hoursUntilClose(hours: OpeningHours, ukTime: Date = getUKTime())
   return minutesUntilClose > 0 ? minutesUntilClose / 60 : 0;
 }
 
-// Generate time-based warning for a location
+// Generate time-based warning for a location (without revealing location name)
 export function generateLocationWarning(
   locationName: string, 
   hours: OpeningHours, 
@@ -60,9 +60,9 @@ export function generateLocationWarning(
   if (!isOpen) {
     return {
       type: 'closed',
-      message: `⚠️ ${locationName} is currently closed`,
+      message: `⚠️ A riddle location is currently closed`,
       severity: 'high',
-      location: locationName
+      location: locationName // Keep for internal use, don't show to user
     };
   }
   
@@ -74,9 +74,9 @@ export function generateLocationWarning(
     
     return {
       type: 'closing_soon',
-      message: `⏰ Warning: Access to this riddle closes at ${closingTime}`,
+      message: `⏰ Warning: A riddle location closes at ${closingTime}`,
       severity: hoursLeft <= 1 ? 'high' : 'medium',
-      location: locationName,
+      location: locationName, // Keep for internal use
       closingTime,
       hoursUntilClose: hoursLeft
     };
@@ -84,7 +84,7 @@ export function generateLocationWarning(
   
   return {
     type: 'open',
-    message: `✅ ${locationName} is currently open`,
+    message: `✅ All riddle locations are currently open`,
     severity: 'low',
     location: locationName
   };
@@ -92,7 +92,7 @@ export function generateLocationWarning(
 
 // Check multiple locations and get overall warning status
 export function getOverallTimeWarning(
-  locations: Array<{ name: string; hours: OpeningHours }>,
+  locations: Array<{ name: string; hours: OpeningHours; riddle_order?: number }>,
   ukTime: Date = getUKTime()
 ): {
   shouldWarn: boolean;
@@ -100,10 +100,26 @@ export function getOverallTimeWarning(
   closingSoonCount: number;
   message: string;
   severity: 'high' | 'medium' | 'low';
+  closingSoonDetails: Array<{ riddleNumber: string; closingTime: string }>;
 } {
-  const warnings = locations.map(loc => generateLocationWarning(loc.name, loc.hours, ukTime));
+  const warnings = locations.map((loc, index) => {
+    const warning = generateLocationWarning(loc.name, loc.hours, ukTime);
+    return {
+      ...warning,
+      riddleNumber: loc.riddle_order ? `${loc.riddle_order}` : `${index + 1}`
+    };
+  });
+  
   const closedCount = warnings.filter(w => w?.type === 'closed').length;
   const closingSoonCount = warnings.filter(w => w?.type === 'closing_soon').length;
+  
+  // Get details of locations closing soon with riddle numbers
+  const closingSoonDetails = warnings
+    .filter(w => w?.type === 'closing_soon')
+    .map(w => ({
+      riddleNumber: w!.riddleNumber,
+      closingTime: w!.closingTime || 'unknown time'
+    }));
   
   let message = '';
   let severity: 'high' | 'medium' | 'low' = 'low';
@@ -116,7 +132,13 @@ export function getOverallTimeWarning(
   } else if (closingSoonCount > 0) {
     shouldWarn = true;
     severity = closingSoonCount > 2 ? 'high' : 'medium';
-    message = `⏰ ${closingSoonCount} riddle location${closingSoonCount > 1 ? 's close' : ' closes'} within 2 hours. You may need to hurry to complete all riddles. Are you sure you wish to continue?`;
+    
+    if (closingSoonCount === 1) {
+      const location = closingSoonDetails[0];
+      message = `⏰ The ${getOrdinal(parseInt(location.riddleNumber))} riddle location closes at ${location.closingTime}. You may need to hurry to complete all riddles. Are you sure you wish to continue?`;
+    } else {
+      message = `⏰ ${closingSoonCount} riddle locations close within 2 hours. You may need to hurry to complete all riddles. Are you sure you wish to continue?`;
+    }
   }
   
   return {
@@ -124,6 +146,14 @@ export function getOverallTimeWarning(
     closedCount,
     closingSoonCount,
     message,
-    severity
+    severity,
+    closingSoonDetails
   };
+}
+
+// Helper function to get ordinal numbers (1st, 2nd, 3rd, etc.)
+function getOrdinal(num: number): string {
+  const suffix = ['th', 'st', 'nd', 'rd'];
+  const remainder = num % 100;
+  return num + (suffix[(remainder - 20) % 10] || suffix[remainder] || suffix[0]);
 }

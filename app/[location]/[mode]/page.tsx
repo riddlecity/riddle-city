@@ -29,6 +29,11 @@ export default function PreferencesPage() {
   const { locations, loading: locationsLoading } = useLocationHours(trackId);
   const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Debug: Log locations data
+  useEffect(() => {
+    console.log('🔍 Debug locations:', { trackId, locations, locationsLoading });
+  }, [trackId, locations, locationsLoading]);
+
   // Function to capitalize first letter
   const capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -223,6 +228,12 @@ export default function PreferencesPage() {
       return;
     }
 
+    console.log('🔍 Debug handleStart:', { 
+      locationsLoading, 
+      locationsCount: locations.length,
+      locations: locations.map(loc => ({ name: loc.name, hasHours: !!loc.opening_hours }))
+    });
+
     // Check time warnings before proceeding
     if (!locationsLoading && locations.length > 0) {
       const locationsWithHours = locations
@@ -232,10 +243,14 @@ export default function PreferencesPage() {
           hours: loc.opening_hours!
         }));
 
+      console.log('🔍 Locations with hours:', locationsWithHours);
+
       if (locationsWithHours.length > 0) {
         const timeWarning = getOverallTimeWarning(locationsWithHours);
+        console.log('🔍 Time warning result:', timeWarning);
         
         if (timeWarning.shouldWarn) {
+          console.log('🔍 Showing time warning modal');
           setShowTimeWarning(true);
           return; // Stop here and show warning modal
         }

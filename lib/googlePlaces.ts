@@ -20,27 +20,27 @@ export interface RiddleLocation {
 
 // Extract Place ID from Google URL
 export function extractPlaceIdFromUrl(googleUrl: string): string | null {
-  // Handle different Google URL formats:
-  // - https://maps.google.com/maps?cid=XXXXX
-  // - https://goo.gl/maps/XXXXX
-  // - https://maps.app.goo.gl/XXXXX (like your example)
-  // - https://www.google.com/maps/place/Name/@lat,lng,zoom/data=XXXXX
-  // - https://share.google/XXXXX (shortened sharing links)
+  // For maps.app.goo.gl URLs, the ID after the last slash is the place ID
+  // Example: https://maps.app.goo.gl/NvpzkEAzq6JCD5o49 -> NvpzkEAzq6JCD5o49
   
   const patterns = [
+    /maps\.app\.goo\.gl\/([a-zA-Z0-9_-]+)/, // For maps.app.goo.gl URLs like yours
     /cid=(\d+)/,
     /place_id=([a-zA-Z0-9_-]+)/,
     /maps\/place\/[^\/]+\/[^\/]*data=.*!1s([a-zA-Z0-9_-]+)/,
-    /maps\.app\.goo\.gl\/([a-zA-Z0-9_-]+)/, // For maps.app.goo.gl URLs like yours
     /goo\.gl\/maps\/([a-zA-Z0-9_-]+)/,
     /share\.google\/([a-zA-Z0-9_-]+)/ // For share.google URLs
   ];
   
   for (const pattern of patterns) {
     const match = googleUrl.match(pattern);
-    if (match) return match[1];
+    if (match) {
+      console.log('🔍 Extracted place ID:', match[1], 'from URL:', googleUrl);
+      return match[1];
+    }
   }
   
+  console.log('🔍 No place ID found in URL:', googleUrl);
   return null;
 }
 
@@ -65,22 +65,76 @@ export function getUKTime(): Date {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
 }
 
-// Fetch opening hours from Google Places API (client-side call to our API)
-export async function fetchLocationHours(googlePlaceUrl: string): Promise<OpeningHours | null> {
+// Direct Google Places API function (no HTTP calls for server-side use)
+async function fetchGooglePlacesData(googlePlaceUrl: string, locationName: string): Promise<any> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) {
+    console.error('Google Places API key not configured');
+    return null;
+  }
+
   try {
-    const placeId = extractPlaceIdFromUrl(googlePlaceUrl);
-    if (!placeId) return null;
-
-    const response = await fetch('/api/google-places', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ placeId })
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch hours');
+    // For maps.app.goo.gl URLs, resolve and search for business
+    if (googlePlaceUrl.includes('maps.app.goo.gl')) {
+      let searchQuery = locationName || '';
+      
+      // Extract business name from resolved URL
+      const resolveResponse = await fetch(googlePlaceUrl, {
+        method: 'HEAD',
+        redirect: 'follow'
+      });
+      
+      const resolvedUrl = resolveResponse.url;
+      console.log('🔍 Resolved URL:', resolvedUrl);
+      
+      // Extract business name from URL path
+      const nameMatch = resolvedUrl.match(/\/place\/([^\/]+)\//);
+      if (nameMatch) {
+        searchQuery = decodeURIComponent(nameMatch[1]).replace(/\+/g, ' ');
+        console.log('🔍 Extracted business name:', searchQuery);
+      }
+      
+      // Find Place using extracted name
+      const findPlaceUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
+      const findResponse = await fetch(findPlaceUrl);
+      const findData = await findResponse.json();
+      
+      if (findData.candidates && findData.candidates.length > 0) {
+        const placeId = findData.candidates[0].place_id;
+        
+        // Get place details including opening hours
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours&key=${apiKey}`;
+        const detailsResponse = await fetch(detailsUrl);
+        const detailsData = await detailsResponse.json();
+        
+        if (detailsData.result && detailsData.result.opening_hours) {
+          return detailsData.result.opening_hours;
+        }
+      }
+    }
     
-    const data = await response.json();
-    return data.opening_hours;
+    return null;
+  } catch (error) {
+    console.error('Error fetching Google Places data:', error);
+    return null;
+  }
+}
+
+// Fetch opening hours from Google Places API (server-side direct call)
+export async function fetchLocationHours(googlePlaceUrl: string, locationName?: string): Promise<OpeningHours | null> {
+  try {
+    console.log('🔍 Fetching hours for URL:', googlePlaceUrl, 'Location:', locationName);
+    
+    // Use direct Google Places API call (no HTTP requests to our own API)
+    const apiData = await fetchGooglePlacesData(googlePlaceUrl, locationName || 'Unknown');
+    
+    if (apiData) {
+      console.log('🔍 Successfully fetched opening hours for:', locationName);
+      return apiData;
+    } else {
+      console.log('🔍 No opening hours found for:', locationName);
+      return null;
+    }
   } catch (error) {
     console.error('Error fetching location hours:', error);
     return null;
