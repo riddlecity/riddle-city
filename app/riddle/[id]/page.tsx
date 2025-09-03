@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import ShareLink from "@/components/ShareLink";
 import RestrictedSkipRiddleForm from "@/components/RestrictedSkipRiddleForm";
 import GameProgress from "@/components/GameProgress";
+import RiddleTimeWarning from "@/components/RiddleTimeWarning";
 import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import CookieHandler from "@/components/CookieHandler";
 import ManualAnswerForm from "@/components/ManualAnswerForm";
@@ -255,6 +256,9 @@ export default async function RiddlePage({ params }: Props) {
           />
         </div>
       )}
+
+      {/* Time Warning for this riddle's location */}
+      <RiddleTimeWarning riddleId={id} trackId={track_id} />
 
       {/* Main content area - riddle centered in logo */}
       <div className="flex-1 flex items-center justify-center px-4 z-10">
