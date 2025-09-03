@@ -31,17 +31,17 @@ export default function TimeWarningModal({
         };
       case 'medium':
         return {
+          background: 'bg-red-900/90 border-red-400',
+          button: 'bg-red-600 hover:bg-red-700',
+          icon: '🚨',
+          textColor: 'text-red-100'
+        };
+      default:
+        return {
           background: 'bg-yellow-900/90 border-yellow-400',
           button: 'bg-yellow-600 hover:bg-yellow-700',
           icon: '⚠️',
           textColor: 'text-yellow-100'
-        };
-      default:
-        return {
-          background: 'bg-blue-900/90 border-blue-400',
-          button: 'bg-blue-600 hover:bg-blue-700',
-          icon: 'ℹ️',
-          textColor: 'text-blue-100'
         };
     }
   };

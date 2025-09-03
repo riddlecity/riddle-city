@@ -173,9 +173,9 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
       case 'high':
         return 'bg-red-900/80 border-red-500 text-red-100';
       case 'medium':
-        return 'bg-orange-900/80 border-orange-500 text-orange-100';
+        return 'bg-red-900/80 border-red-500 text-red-100';
       default:
-        return 'bg-blue-900/80 border-blue-500 text-blue-100';
+        return 'bg-yellow-900/80 border-yellow-500 text-yellow-100';
     }
   };
 
