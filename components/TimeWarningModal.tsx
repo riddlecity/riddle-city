@@ -7,7 +7,8 @@ interface TimeWarningModalProps {
     severity: 'high' | 'medium' | 'low';
     closedCount: number;
     closingSoonCount: number;
-    closingSoonDetails: Array<{ riddleNumber: string; closingTime: string }>;
+    closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
+    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
   };
 }
 
@@ -76,14 +77,46 @@ export default function TimeWarningModal({
             ⏰ <strong>Closing soon:</strong> <span className="text-yellow-300">{warning.closingSoonCount}</span>
           </p>
           
+          {/* Show closed locations with opening times */}
+          {warning.closedDetails.length > 0 && (
+            <div className="border-t border-white/20 pt-3 mb-3">
+              <p className="text-white/90 font-medium mb-2 text-xs">CLOSED - OPENING TIMES:</p>
+              {warning.closedDetails.map((location, index) => (
+                <div key={index} className="text-red-200 text-xs mb-1">
+                  🔒 The <strong>{getOrdinal(parseInt(location.riddleNumber))} riddle</strong> is closed
+                  {location.hoursUntilOpen !== undefined && (
+                    <span className="text-green-300 block ml-4">
+                      ➜ Opens in {
+                        location.hoursUntilOpen < 1 
+                          ? `${Math.round(location.hoursUntilOpen * 60)} minute${Math.round(location.hoursUntilOpen * 60) !== 1 ? 's' : ''}` 
+                          : location.hoursUntilOpen < 24 
+                          ? `${(Math.round(location.hoursUntilOpen * 10) / 10)} hour${(Math.round(location.hoursUntilOpen * 10) / 10) !== 1 ? 's' : ''}`
+                          : location.opensAt || 'later'
+                      }
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
           {/* Show closing times with riddle numbers (no location spoilers) */}
           {warning.closingSoonDetails.length > 0 && (
             <div className="border-t border-white/20 pt-3">
               <p className="text-white/90 font-medium mb-2 text-xs">CLOSING TIMES:</p>
               {warning.closingSoonDetails.map((location, index) => (
-                <p key={index} className="text-yellow-200 text-xs mb-1">
+                <div key={index} className="text-yellow-200 text-xs mb-1">
                   🕐 The <strong>{getOrdinal(parseInt(location.riddleNumber))} riddle</strong> location closes at <span className="font-bold">{location.closingTime}</span>
-                </p>
+                  {location.hoursLeft !== undefined && (
+                    <span className="text-orange-300 block ml-4">
+                      ➜ {
+                        location.hoursLeft < 1 
+                          ? `Only ${Math.round(location.hoursLeft * 60)} minute${Math.round(location.hoursLeft * 60) !== 1 ? 's' : ''} left!` 
+                          : `${(Math.round(location.hoursLeft * 10) / 10)} hour${(Math.round(location.hoursLeft * 10) / 10) !== 1 ? 's' : ''} remaining`
+                      }
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
           )}

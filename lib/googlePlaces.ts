@@ -102,13 +102,18 @@ async function fetchGooglePlacesData(googlePlaceUrl: string, locationName: strin
       if (findData.candidates && findData.candidates.length > 0) {
         const placeId = findData.candidates[0].place_id;
         
-        // Get place details including opening hours
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours&key=${apiKey}`;
+        // Get place details including complete opening hours
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours,current_opening_hours&key=${apiKey}`;
         const detailsResponse = await fetch(detailsUrl);
         const detailsData = await detailsResponse.json();
         
         if (detailsData.result && detailsData.result.opening_hours) {
-          return detailsData.result.opening_hours;
+          // Return complete opening hours with all weekly data
+          return {
+            ...detailsData.result.opening_hours,
+            // Include current opening hours if available (more accurate)
+            current_opening_hours: detailsData.result.current_opening_hours || null
+          };
         }
       }
     }

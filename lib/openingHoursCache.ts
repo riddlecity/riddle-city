@@ -7,13 +7,74 @@ import path from 'path';
 const CACHE_FILE = path.join(process.cwd(), 'opening-hours-cache.json');
 
 interface CacheEntry {
-  opening_hours: any;
+  opening_hours: {
+    open_now?: boolean;
+    periods?: Array<{
+      close?: { day: number; time: string };
+      open?: { day: number; time: string };
+    }>;
+    weekday_text?: string[];
+    // Also store parsed format for easy access
+    parsed_hours?: {
+      [key: string]: { open: string; close: string } | null;
+    };
+  };
+  current_opening_hours?: any; // Additional current status if available
   last_updated: string;
   location_name: string;
 }
 
 interface Cache {
   [googlePlaceUrl: string]: CacheEntry;
+}
+
+// Helper function to parse Google Places opening hours into our format
+function parseOpeningHours(googleHours: any): {
+  open_now?: boolean;
+  periods?: Array<{
+    close?: { day: number; time: string };
+    open?: { day: number; time: string };
+  }>;
+  weekday_text?: string[];
+  parsed_hours?: {
+    [key: string]: { open: string; close: string } | null;
+  };
+} {
+  if (!googleHours) return {};
+  
+  // Parse periods into daily format for easy lookup
+  const parsed_hours: { [key: string]: { open: string; close: string } | null } = {};
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  
+  // Initialize all days as closed
+  dayNames.forEach(day => {
+    parsed_hours[day] = null;
+  });
+  
+  // Parse periods if available
+  if (googleHours.periods) {
+    googleHours.periods.forEach((period: any) => {
+      if (period.open) {
+        const dayName = dayNames[period.open.day];
+        const openTime = period.open.time.slice(0, 2) + ':' + period.open.time.slice(2);
+        const closeTime = period.close 
+          ? period.close.time.slice(0, 2) + ':' + period.close.time.slice(2)
+          : '23:59'; // If no close time, assume open late
+          
+        parsed_hours[dayName] = {
+          open: openTime,
+          close: closeTime
+        };
+      }
+    });
+  }
+  
+  return {
+    open_now: googleHours.open_now,
+    periods: googleHours.periods,
+    weekday_text: googleHours.weekday_text,
+    parsed_hours
+  };
 }
 
 // Check if opening hours data needs refresh (different month/year)
@@ -49,14 +110,15 @@ async function saveCache(cache: Cache): Promise<void> {
 // Get opening hours from cache or fetch fresh data
 export async function getCachedOpeningHours(
   googlePlaceUrl: string, 
-  locationName: string
+  locationName: string,
+  forceRefresh: boolean = false
 ): Promise<any> {
   try {
     const cache = await loadCache();
     const cacheEntry = cache[googlePlaceUrl];
 
-    // If we have fresh data (same month/year), use it
-    if (cacheEntry && cacheEntry.opening_hours && !needsMonthlyRefresh(cacheEntry.last_updated)) {
+    // If we have fresh data (same month/year) and not forcing refresh, use it
+    if (!forceRefresh && cacheEntry && cacheEntry.opening_hours && !needsMonthlyRefresh(cacheEntry.last_updated)) {
       console.log('🔍 Using cached opening hours for:', locationName);
       return cacheEntry.opening_hours;
     }
@@ -66,9 +128,12 @@ export async function getCachedOpeningHours(
     const freshHours = await fetchLocationHours(googlePlaceUrl, locationName);
     
     if (freshHours) {
+      const parsedHours = parseOpeningHours(freshHours);
+      
       // Update the cache with fresh opening hours
       cache[googlePlaceUrl] = {
-        opening_hours: freshHours,
+        opening_hours: parsedHours,
+        current_opening_hours: (freshHours as any).current_opening_hours || null,
         last_updated: new Date().toISOString(),
         location_name: locationName
       };
@@ -109,8 +174,11 @@ export async function refreshAllOpeningHours(): Promise<void> {
         const freshHours = await fetchLocationHours(riddle.google_place_url, riddle.location_id);
         
         if (freshHours) {
+          const parsedHours = parseOpeningHours(freshHours);
+          
           cache[riddle.google_place_url] = {
-            opening_hours: freshHours,
+            opening_hours: parsedHours,
+            current_opening_hours: (freshHours as any).current_opening_hours || null,
             last_updated: new Date().toISOString(),
             location_name: riddle.location_id
           };
