@@ -24,12 +24,32 @@ export default function LocationPage({ params }: Props) {
   const [pubStartLabel, setPubStartLabel] = useState<string | null>(null);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [loadTimeout, setLoadTimeout] = useState(false);
 
-  // Load location hours for time warnings  
+  // Load location hours for time warnings IMMEDIATELY when page loads 
   const dateTrackId = `date_${locationSlug}`;
   const pubTrackId = `standard_${locationSlug}`;
   const { locations: dateLocations, loading: dateLoading } = useLocationHours(dateTrackId);
   const { locations: pubLocations, loading: pubLoading } = useLocationHours(pubTrackId);
+
+  // TIMEOUT: If data takes longer than 10 seconds, allow user to proceed anyway
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (dateLoading || pubLoading) {
+        console.log('🔍 Loading timeout - allowing user to proceed without waiting');
+        setLoadTimeout(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timer);
+  }, [dateLoading, pubLoading]);
+
+  // PRELOAD: Start loading both tracks immediately for faster response
+  useEffect(() => {
+    console.log('🔍 Preloading location hours data for faster selection');
+    console.log('🔍 Date track loading:', dateLoading, 'locations:', dateLocations.length);
+    console.log('🔍 Pub track loading:', pubLoading, 'locations:', pubLocations.length);
+  }, [dateLoading, pubLoading, dateLocations.length, pubLocations.length]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -66,16 +86,24 @@ export default function LocationPage({ params }: Props) {
       mode,
       locationsCount: locationsToCheck.length,
       isLoading,
+      loadTimeout,
       locations: locationsToCheck.map(loc => ({ name: loc.name, hasHours: !!loc.opening_hours }))
     });
 
-    // Check time warnings before proceeding
-    if (!isLoading && locationsToCheck.length > 0) {
+    // PREVENT PROCEEDING IF STILL LOADING DATA (unless timeout occurred)
+    if (isLoading && !loadTimeout) {
+      console.log('🔍 Still loading location data, please wait...');
+      return; // Don't proceed until data is loaded or timeout
+    }
+
+    // Check time warnings before proceeding (skip if timeout occurred)
+    if (locationsToCheck.length > 0 && !loadTimeout) {
       const locationsWithHours = locationsToCheck
         .filter(loc => loc.opening_hours)
         .map(loc => ({
           name: loc.name,
-          hours: loc.opening_hours!
+          hours: loc.opening_hours!,
+          riddle_order: loc.order
         }));
 
       console.log('🔍 Locations with hours:', locationsWithHours);
@@ -91,6 +119,8 @@ export default function LocationPage({ params }: Props) {
           return; // Stop here and show warning modal
         }
       }
+    } else if (loadTimeout) {
+      console.log('🔍 Proceeding without time warnings due to load timeout');
     }
 
     // Proceed to adventure setup page
@@ -136,13 +166,27 @@ export default function LocationPage({ params }: Props) {
           {/* Date Day Adventure */}
           <button
             onClick={() => handleModeSelect("date")}
-            className="w-full bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left"
+            disabled={dateLoading && !loadTimeout}
+            className={`w-full ${
+              dateLoading && !loadTimeout
+                ? 'bg-gray-600/50 cursor-wait opacity-70' 
+                : 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer'
+            } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-lg font-bold">💘 Date Day Adventure</div>
+                <div className="text-lg font-bold">
+                  💘 Date Day Adventure
+                  {dateLoading && !loadTimeout && <span className="ml-2 text-sm">⏳</span>}
+                  {loadTimeout && <span className="ml-2 text-sm">⚡</span>}
+                </div>
                 <div className="text-sm font-normal text-pink-100 mt-1">
-                  Perfect for couples exploring together
+                  {dateLoading && !loadTimeout 
+                    ? 'Loading location data...' 
+                    : loadTimeout 
+                    ? 'Ready (time warnings may not be available)'
+                    : 'Perfect for couples exploring together'
+                  }
                 </div>
               </div>
               <div className="text-right">
@@ -169,29 +213,38 @@ export default function LocationPage({ params }: Props) {
           {/* Pub Crawl Adventure */}
           <div
             className={`w-full ${
-              pubStartLabel
+              pubStartLabel && !pubLoading
                 ? "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 cursor-pointer"
+                : pubLoading
+                ? "bg-gray-600/50 cursor-wait opacity-70"
                 : "bg-gray-600/30 cursor-not-allowed"
             } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-left`}
             onClick={() =>
-              pubStartLabel ? handleModeSelect("standard") : null
+              pubStartLabel && !pubLoading ? handleModeSelect("standard") : null
             }
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-lg font-bold">🍻 Pub Crawl Adventure</div>
+                <div className="text-lg font-bold">
+                  🍻 Pub Crawl Adventure
+                  {pubLoading && <span className="ml-2 text-sm">⏳</span>}
+                </div>
                 <div className="text-sm font-normal text-yellow-100 mt-1">
-                  Explore local pubs and bars
+                  {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
                 </div>
               </div>
               <div className="text-right">
-                {pubStartLabel ? (
+                {pubStartLabel && !pubLoading ? (
                   <>
                     <div className="text-xl font-bold">£20</div>
                     <div className="text-xs font-normal text-yellow-100">
                       per person
                     </div>
                   </>
+                ) : pubLoading ? (
+                  <div className="text-lg font-bold text-gray-300">
+                    Loading...
+                  </div>
                 ) : (
                   <div className="text-lg font-bold text-gray-500">
                     Coming Soon

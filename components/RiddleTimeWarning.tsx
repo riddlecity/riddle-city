@@ -105,9 +105,10 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
                 opensAt: todayHours.open
               });
             } else {
+              const formattedHours = Math.ceil(hoursUntilOpen * 2) / 2; // Round up to nearest 0.5
               setWarning({
                 type: 'closed',
-                message: `⚠️ This riddle's location opens at ${todayHours.open}. You can solve the riddle now, but won't have access until then.`,
+                message: `⚠️ This riddle's location opens in ${formattedHours}h (at ${todayHours.open}). You can solve the riddle now, but won't have access until then.`,
                 severity: 'high',
                 opensAt: todayHours.open
               });
@@ -134,7 +135,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
               message = `🚨 Hurry! This riddle's location closes in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} (at ${todayHours.close})`;
               severity = 'high';
             } else {
-              const roundedHours = Math.round(hoursUntilClose * 10) / 10;
+              const roundedHours = Math.ceil(hoursUntilClose * 2) / 2;
               message = `⏰ This riddle's location closes in ${roundedHours} hour${roundedHours !== 1 ? 's' : ''} (at ${todayHours.close})`;
             }
 
