@@ -26,7 +26,27 @@ interface CachedOpeningHours {
 
 // Get current UK time as a proper Date object
 export function getUKTime(): Date {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
+  // Use Intl.DateTimeFormat for more reliable timezone conversion
+  const now = new Date();
+  const ukTime = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(now);
+
+  const year = parseInt(ukTime.find(part => part.type === 'year')?.value || '0');
+  const month = parseInt(ukTime.find(part => part.type === 'month')?.value || '1') - 1; // Month is 0-indexed
+  const day = parseInt(ukTime.find(part => part.type === 'day')?.value || '1');
+  const hour = parseInt(ukTime.find(part => part.type === 'hour')?.value || '0');
+  const minute = parseInt(ukTime.find(part => part.type === 'minute')?.value || '0');
+  const second = parseInt(ukTime.find(part => part.type === 'second')?.value || '0');
+
+  return new Date(year, month, day, hour, minute, second);
 }
 
 // Check if a location is currently open (enhanced for both formats)

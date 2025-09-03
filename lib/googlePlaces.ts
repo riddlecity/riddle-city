@@ -62,23 +62,46 @@ export async function resolveGoogleUrl(shortUrl: string): Promise<string | null>
 
 // Get current UK time
 export function getUKTime(): Date {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
+  // Use Intl.DateTimeFormat for more reliable timezone conversion
+  const now = new Date();
+  const ukTime = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(now);
+
+  const year = parseInt(ukTime.find(part => part.type === 'year')?.value || '0');
+  const month = parseInt(ukTime.find(part => part.type === 'month')?.value || '1') - 1; // Month is 0-indexed
+  const day = parseInt(ukTime.find(part => part.type === 'day')?.value || '1');
+  const hour = parseInt(ukTime.find(part => part.type === 'hour')?.value || '0');
+  const minute = parseInt(ukTime.find(part => part.type === 'minute')?.value || '0');
+  const second = parseInt(ukTime.find(part => part.type === 'second')?.value || '0');
+
+  return new Date(year, month, day, hour, minute, second);
 }
 
 // Direct Google Places API function (no HTTP calls for server-side use)
 async function fetchGooglePlacesData(googlePlaceUrl: string, locationName: string): Promise<any> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
-    console.error('Google Places API key not configured');
+    console.error('🔍 Google Places API key not configured');
     return null;
   }
 
   try {
+    console.log('🔍 Processing Google Place URL:', googlePlaceUrl);
+    
     // For maps.app.goo.gl URLs, resolve and search for business
     if (googlePlaceUrl.includes('maps.app.goo.gl')) {
       let searchQuery = locationName || '';
       
       // Extract business name from resolved URL
+      console.log('🔍 Resolving shortened URL...');
       const resolveResponse = await fetch(googlePlaceUrl, {
         method: 'HEAD',
         redirect: 'follow'
@@ -92,35 +115,62 @@ async function fetchGooglePlacesData(googlePlaceUrl: string, locationName: strin
       if (nameMatch) {
         searchQuery = decodeURIComponent(nameMatch[1]).replace(/\+/g, ' ');
         console.log('🔍 Extracted business name:', searchQuery);
+      } else {
+        console.log('🔍 Using provided location name:', searchQuery);
       }
       
       // Find Place using extracted name
       const findPlaceUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id&key=${apiKey}`;
+      console.log('🔍 Finding place with query:', searchQuery);
+      
       const findResponse = await fetch(findPlaceUrl);
+      if (!findResponse.ok) {
+        throw new Error(`Find Place API error: ${findResponse.status}`);
+      }
+      
       const findData = await findResponse.json();
+      console.log('🔍 Find Place API response status:', findData.status);
+      
+      if (findData.status !== 'OK') {
+        console.error('🔍 Find Place API error:', findData.status);
+        return null;
+      }
       
       if (findData.candidates && findData.candidates.length > 0) {
         const placeId = findData.candidates[0].place_id;
+        console.log('🔍 Found place ID:', placeId);
         
         // Get place details including complete opening hours
         const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours,current_opening_hours&key=${apiKey}`;
         const detailsResponse = await fetch(detailsUrl);
+        
+        if (!detailsResponse.ok) {
+          throw new Error(`Place Details API error: ${detailsResponse.status}`);
+        }
+        
         const detailsData = await detailsResponse.json();
+        console.log('🔍 Place Details API response status:', detailsData.status);
+        
+        if (detailsData.status !== 'OK') {
+          console.error('🔍 Place Details API error:', detailsData.status);
+          return null;
+        }
         
         if (detailsData.result && detailsData.result.opening_hours) {
-          // Return complete opening hours with all weekly data
-          return {
-            ...detailsData.result.opening_hours,
-            // Include current opening hours if available (more accurate)
-            current_opening_hours: detailsData.result.current_opening_hours || null
-          };
+          console.log('🔍 Successfully fetched opening hours from Google Places API');
+          // Return the structured opening hours data
+          return detailsData.result.opening_hours;
+        } else {
+          console.log('🔍 No opening hours data in Google Places API response');
         }
+      } else {
+        console.log('🔍 No place candidates found for:', searchQuery);
       }
     }
     
     return null;
   } catch (error) {
-    console.error('Error fetching Google Places data:', error);
+    console.error('🔍 Error fetching Google Places data for', locationName, ':', error);
     return null;
   }
 }
@@ -129,6 +179,11 @@ async function fetchGooglePlacesData(googlePlaceUrl: string, locationName: strin
 export async function fetchLocationHours(googlePlaceUrl: string, locationName?: string): Promise<OpeningHours | null> {
   try {
     console.log('🔍 Fetching hours for URL:', googlePlaceUrl, 'Location:', locationName);
+    
+    if (!googlePlaceUrl) {
+      console.log('🔍 No Google Place URL provided');
+      return null;
+    }
     
     // Use direct Google Places API call (no HTTP requests to our own API)
     const apiData = await fetchGooglePlacesData(googlePlaceUrl, locationName || 'Unknown');
@@ -141,7 +196,7 @@ export async function fetchLocationHours(googlePlaceUrl: string, locationName?: 
       return null;
     }
   } catch (error) {
-    console.error('Error fetching location hours:', error);
+    console.error('Error fetching location hours for', locationName, ':', error);
     return null;
   }
 }

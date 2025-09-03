@@ -40,41 +40,47 @@ function parseOpeningHours(googleHours: any): {
     [key: string]: { open: string; close: string } | null;
   };
 } {
-  if (!googleHours) return {};
-  
-  // Parse periods into daily format for easy lookup
-  const parsed_hours: { [key: string]: { open: string; close: string } | null } = {};
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  
-  // Initialize all days as closed
-  dayNames.forEach(day => {
-    parsed_hours[day] = null;
-  });
-  
-  // Parse periods if available
-  if (googleHours.periods) {
-    googleHours.periods.forEach((period: any) => {
-      if (period.open) {
-        const dayName = dayNames[period.open.day];
-        const openTime = period.open.time.slice(0, 2) + ':' + period.open.time.slice(2);
-        const closeTime = period.close 
-          ? period.close.time.slice(0, 2) + ':' + period.close.time.slice(2)
-          : '23:59'; // If no close time, assume open late
-          
-        parsed_hours[dayName] = {
-          open: openTime,
-          close: closeTime
-        };
-      }
+  // If googleHours is already in our parsed format, return it
+  if (googleHours && typeof googleHours === 'object' && 
+      ('open_now' in googleHours || 'periods' in googleHours || 'weekday_text' in googleHours)) {
+    
+    // Parse periods into daily format for easy lookup
+    const parsed_hours: { [key: string]: { open: string; close: string } | null } = {};
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    
+    // Initialize all days as closed
+    dayNames.forEach(day => {
+      parsed_hours[day] = null;
     });
+    
+    // Parse periods if available
+    if (googleHours.periods && Array.isArray(googleHours.periods)) {
+      googleHours.periods.forEach((period: any) => {
+        if (period.open && period.open.day !== undefined && period.open.time) {
+          const dayName = dayNames[period.open.day];
+          const openTime = period.open.time.slice(0, 2) + ':' + period.open.time.slice(2);
+          const closeTime = period.close && period.close.time
+            ? period.close.time.slice(0, 2) + ':' + period.close.time.slice(2)
+            : '23:59'; // If no close time, assume open late
+            
+          parsed_hours[dayName] = {
+            open: openTime,
+            close: closeTime
+          };
+        }
+      });
+    }
+    
+    return {
+      open_now: googleHours.open_now,
+      periods: googleHours.periods,
+      weekday_text: googleHours.weekday_text,
+      parsed_hours
+    };
   }
   
-  return {
-    open_now: googleHours.open_now,
-    periods: googleHours.periods,
-    weekday_text: googleHours.weekday_text,
-    parsed_hours
-  };
+  // Return empty object if no valid data
+  return {};
 }
 
 // Check if opening hours data needs refresh (different month/year)
@@ -133,16 +139,18 @@ export async function getCachedOpeningHours(
       // Update the cache with fresh opening hours
       cache[googlePlaceUrl] = {
         opening_hours: parsedHours,
-        current_opening_hours: (freshHours as any).current_opening_hours || null,
+        current_opening_hours: null, // No longer needed
         last_updated: new Date().toISOString(),
         location_name: locationName
       };
       
       await saveCache(cache);
       console.log('🔍 Opening hours cached for:', locationName);
+      return parsedHours;
+    } else {
+      console.log('🔍 Failed to fetch opening hours for:', locationName);
+      return null;
     }
-
-    return freshHours;
   } catch (error) {
     console.error('Error in getCachedOpeningHours:', error);
     return null;
@@ -178,10 +186,14 @@ export async function refreshAllOpeningHours(): Promise<void> {
           
           cache[riddle.google_place_url] = {
             opening_hours: parsedHours,
-            current_opening_hours: (freshHours as any).current_opening_hours || null,
+            current_opening_hours: null, // No longer needed
             last_updated: new Date().toISOString(),
             location_name: riddle.location_id
           };
+          
+          console.log('🔍 Cached hours for:', riddle.location_id);
+        } else {
+          console.log('🔍 Failed to fetch hours for:', riddle.location_id);
         }
         
         // Small delay to avoid hitting API rate limits
