@@ -183,35 +183,36 @@ export default function LocationPage({ params }: Props) {
                 : 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer'
             } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
           >
-            <div className="flex items-center justify-between">
+            {/* Header row with title and price */}
+            <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="text-lg font-bold">
-                    💘 Date Day Adventure
-                    {dateLoading && !loadTimeout && <span className="ml-2 text-sm">⏳</span>}
-                    {loadTimeout && <span className="ml-2 text-sm">⚡</span>}
+                <div className="text-lg font-bold flex items-center gap-2 mb-2">
+                  💘 Date Day Adventure
+                  {dateLoading && !loadTimeout && <span className="text-sm">⏳</span>}
+                  {loadTimeout && <span className="text-sm">⚡</span>}
+                </div>
+                {dateRiddleCount > 0 && !dateLoading && (
+                  <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold inline-block">
+                    {dateRiddleCount} Riddles
                   </div>
-                  {dateRiddleCount > 0 && !dateLoading && (
-                    <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                      {dateRiddleCount} Riddles
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm font-normal text-pink-100 mt-1">
-                  {dateLoading && !loadTimeout 
-                    ? 'Loading location data...' 
-                    : loadTimeout 
-                    ? 'Ready (time warnings may not be available)'
-                    : 'Perfect for couples exploring together'
-                  }
-                </div>
+                )}
               </div>
-              <div className="text-right">
+              <div className="text-right ml-4">
                 <div className="text-xl font-bold">£15</div>
                 <div className="text-xs font-normal text-pink-100">
                   per person
                 </div>
               </div>
+            </div>
+            
+            {/* Description */}
+            <div className="text-sm font-normal text-pink-100">
+              {dateLoading && !loadTimeout 
+                ? 'Loading location data...' 
+                : loadTimeout 
+                ? 'Ready (time warnings may not be available)'
+                : 'Perfect for couples exploring together'
+              }
             </div>
 
             {/* Start Point */}
@@ -253,24 +254,20 @@ export default function LocationPage({ params }: Props) {
               pubStartLabel && !pubLoading ? handleModeSelect("standard") : null
             }
           >
-            <div className="flex items-center justify-between">
+            {/* Header row with title and price */}
+            <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="text-lg font-bold">
-                    🍻 Pub Crawl Adventure
-                    {pubLoading && <span className="ml-2 text-sm">⏳</span>}
+                <div className="text-lg font-bold flex items-center gap-2 mb-2">
+                  🍻 Pub Crawl Adventure
+                  {pubLoading && <span className="text-sm">⏳</span>}
+                </div>
+                {pubRiddleCount > 0 && !pubLoading && (
+                  <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold inline-block">
+                    {pubRiddleCount} Riddles
                   </div>
-                  {pubRiddleCount > 0 && !pubLoading && (
-                    <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
-                      {pubRiddleCount} Riddles
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm font-normal text-yellow-100 mt-1">
-                  {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
-                </div>
+                )}
               </div>
-              <div className="text-right">
+              <div className="text-right ml-4">
                 {pubStartLabel && !pubLoading ? (
                   <>
                     <div className="text-xl font-bold">£20</div>
@@ -288,6 +285,11 @@ export default function LocationPage({ params }: Props) {
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Description */}
+            <div className="text-sm font-normal text-yellow-100">
+              {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
             </div>
 
             {/* Starting location */}
