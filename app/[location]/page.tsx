@@ -23,6 +23,8 @@ export default function LocationPage({ params }: Props) {
   const [pubStartLabel, setPubStartLabel] = useState<string | null>(null);
   const [dateStartTime, setDateStartTime] = useState<string | null>(null);
   const [pubStartTime, setPubStartTime] = useState<string | null>(null);
+  const [dateRiddleCount, setDateRiddleCount] = useState<number>(0);
+  const [pubRiddleCount, setPubRiddleCount] = useState<number>(0);
   const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
@@ -81,11 +83,13 @@ export default function LocationPage({ params }: Props) {
         if (dateTrack) {
           setDateStartLabel(String(dateTrack.start_label || ''));
           setDateStartTime(String(dateTrack.start_time || '') || null);
+          setDateRiddleCount(dateTrack.riddle_count || 0);
         }
 
         if (pubTrack) {
           setPubStartLabel(String(pubTrack.start_label || ''));
           setPubStartTime(String(pubTrack.start_time || '') || null);
+          setPubRiddleCount(pubTrack.riddle_count || 0);
         }
 
       } catch (error) {
@@ -191,7 +195,7 @@ export default function LocationPage({ params }: Props) {
                     ? 'Loading location data...' 
                     : loadTimeout 
                     ? 'Ready (time warnings may not be available)'
-                    : 'Perfect for couples exploring together'
+                    : `Perfect for couples exploring together${dateRiddleCount > 0 ? ` • ${dateRiddleCount} riddles` : ''}`
                   }
                 </div>
               </div>
@@ -249,7 +253,7 @@ export default function LocationPage({ params }: Props) {
                   {pubLoading && <span className="ml-2 text-sm">⏳</span>}
                 </div>
                 <div className="text-sm font-normal text-yellow-100 mt-1">
-                  {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
+                  {pubLoading ? 'Loading location data...' : `Explore local pubs and bars${pubRiddleCount > 0 ? ` • ${pubRiddleCount} riddles` : ''}`}
                 </div>
               </div>
               <div className="text-right">

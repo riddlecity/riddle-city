@@ -27,23 +27,42 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch track metadata' }, { status: 500 });
     }
 
+    // Get riddle counts for each track
+    const dateTrackId = `date_${location}`;
+    const pubTrackId = `pub_${location}`;
+    
+    const [dateRiddleCount, pubRiddleCount] = await Promise.all([
+      supabase
+        .from('riddles')
+        .select('id', { count: 'exact', head: true })
+        .eq('track_id', dateTrackId),
+      supabase
+        .from('riddles')
+        .select('id', { count: 'exact', head: true })
+        .eq('track_id', pubTrackId)
+    ]);
+
     // Organize the data by track type
     const dateTrack = tracks?.find(track => track.id === `date_${location}`) || null;
     const pubTrack = tracks?.find(track => track.id === `pub_${location}`) || null;
 
     console.log('🔍 Track metadata loaded successfully:', { 
       dateTrack: !!dateTrack, 
-      pubTrack: !!pubTrack 
+      pubTrack: !!pubTrack,
+      dateRiddleCount: dateRiddleCount.count,
+      pubRiddleCount: pubRiddleCount.count
     });
 
     return NextResponse.json({
       dateTrack: dateTrack ? {
         start_label: dateTrack.start_label,
-        start_time: dateTrack.start_time
+        start_time: dateTrack.start_time,
+        riddle_count: dateRiddleCount.count || 0
       } : null,
       pubTrack: pubTrack ? {
         start_label: pubTrack.start_label,
-        start_time: pubTrack.start_time
+        start_time: pubTrack.start_time,
+        riddle_count: pubRiddleCount.count || 0
       } : null
     });
 
