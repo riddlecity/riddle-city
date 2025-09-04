@@ -184,30 +184,25 @@ export default function LocationPage({ params }: Props) {
             } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
           >
             <div className="flex items-center justify-between">
-              <div>
-                <div className="text-lg font-bold">
-                  💘 Date Day Adventure
-                  {dateLoading && !loadTimeout && <span className="ml-2 text-sm">⏳</span>}
-                  {loadTimeout && <span className="ml-2 text-sm">⚡</span>}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="text-lg font-bold">
+                    💘 Date Day Adventure
+                    {dateLoading && !loadTimeout && <span className="ml-2 text-sm">⏳</span>}
+                    {loadTimeout && <span className="ml-2 text-sm">⚡</span>}
+                  </div>
+                  {dateRiddleCount > 0 && !dateLoading && (
+                    <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      {dateRiddleCount} Riddles
+                    </div>
+                  )}
                 </div>
                 <div className="text-sm font-normal text-pink-100 mt-1">
                   {dateLoading && !loadTimeout 
                     ? 'Loading location data...' 
                     : loadTimeout 
                     ? 'Ready (time warnings may not be available)'
-                    : (
-                      <>
-                        Perfect for couples exploring together
-                        {dateRiddleCount > 0 && (
-                          <>
-                            {' • '}
-                            <span className="font-bold text-pink-50 bg-pink-500/20 px-2 py-0.5 rounded-full text-xs">
-                              {dateRiddleCount} Riddles
-                            </span>
-                          </>
-                        )}
-                      </>
-                    )
+                    : 'Perfect for couples exploring together'
                   }
                 </div>
               </div>
@@ -259,25 +254,20 @@ export default function LocationPage({ params }: Props) {
             }
           >
             <div className="flex items-center justify-between">
-              <div>
-                <div className="text-lg font-bold">
-                  🍻 Pub Crawl Adventure
-                  {pubLoading && <span className="ml-2 text-sm">⏳</span>}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="text-lg font-bold">
+                    🍻 Pub Crawl Adventure
+                    {pubLoading && <span className="ml-2 text-sm">⏳</span>}
+                  </div>
+                  {pubRiddleCount > 0 && !pubLoading && (
+                    <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold">
+                      {pubRiddleCount} Riddles
+                    </div>
+                  )}
                 </div>
                 <div className="text-sm font-normal text-yellow-100 mt-1">
-                  {pubLoading ? 'Loading location data...' : (
-                    <>
-                      Explore local pubs and bars
-                      {pubRiddleCount > 0 && (
-                        <>
-                          {' • '}
-                          <span className="font-bold text-yellow-50 bg-yellow-500/20 px-2 py-0.5 rounded-full text-xs">
-                            {pubRiddleCount} Riddles
-                          </span>
-                        </>
-                      )}
-                    </>
-                  )}
+                  {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
                 </div>
               </div>
               <div className="text-right">
