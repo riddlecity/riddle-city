@@ -325,82 +325,88 @@ export function getOverallTimeWarning(
     shouldWarn = true;
     severity = 'high';
     
-    // Find the earliest opening time for better messaging
-    const nextOpening = closedDetails
-      .filter(d => d.hoursUntilOpen !== undefined)
-      .sort((a, b) => (a.hoursUntilOpen || 999) - (b.hoursUntilOpen || 999))[0];
+    // Separate riddles by those opening soon vs closed all day
+    const openingSoonRiddles: Array<{riddleNumber: string; hoursUntilOpen: number}> = [];
+    const closedAllDayRiddles: string[] = [];
     
-    // Get the riddle numbers for closed locations
-    const closedRiddles = closedDetails.map(d => d.riddleNumber).sort((a, b) => parseInt(a) - parseInt(b));
-    
-    if (nextOpening && nextOpening.hoursUntilOpen !== undefined) {
-      const hoursUntil = nextOpening.hoursUntilOpen;
-      
-      if (hoursUntil < 1) {
-        const minutesUntil = Math.round(hoursUntil * 60);
-        if (closedCount === 1) {
-          message = `⚠️ Riddle ${closedRiddles[0]} is closed but opens in ${minutesUntil}m`;
-        } else {
-          message = `⚠️ Riddles ${closedRiddles.join(', ')} are closed. Next opens in ${minutesUntil}m`;
-        }
-      } else if (hoursUntil < 24) {
-        const roundedHours = Math.ceil(hoursUntil * 2) / 2;
-        if (closedCount === 1) {
-          message = `⚠️ Riddle ${closedRiddles[0]} is closed but opens in ${roundedHours}h`;
-        } else {
-          message = `⚠️ Riddles ${closedRiddles.join(', ')} are closed. Next opens in ${roundedHours}h`;
-        }
-        severity = 'medium';
+    closedDetails.forEach(d => {
+      if (d.hoursUntilOpen !== undefined && d.hoursUntilOpen < 6) {
+        // Opening within 6 hours - worth mentioning
+        openingSoonRiddles.push({
+          riddleNumber: d.riddleNumber,
+          hoursUntilOpen: d.hoursUntilOpen
+        });
       } else {
-        if (closedCount === 1) {
-          message = `⚠️ Riddle ${closedRiddles[0]} is closed today`;
-        } else {
-          message = `⚠️ Riddles ${closedRiddles.join(', ')} are closed today`;
-        }
+        // Closed all day or opening tomorrow
+        closedAllDayRiddles.push(d.riddleNumber);
       }
+    });
+    
+    // Sort by riddle number for consistent display
+    openingSoonRiddles.sort((a, b) => parseInt(a.riddleNumber) - parseInt(b.riddleNumber));
+    closedAllDayRiddles.sort((a, b) => parseInt(a) - parseInt(b));
+    
+    const messageParts: string[] = [];
+    
+    // Handle riddles closed all day
+    if (closedAllDayRiddles.length > 0) {
+      if (closedAllDayRiddles.length === 1) {
+        messageParts.push(`Riddle ${closedAllDayRiddles[0]} closed today`);
+      } else {
+        messageParts.push(`Riddles ${closedAllDayRiddles.join(', ')} closed today`);
+      }
+    }
+    
+    // Handle riddles opening soon
+    if (openingSoonRiddles.length > 0) {
+      const openingTexts = openingSoonRiddles.map(r => {
+        if (r.hoursUntilOpen < 1) {
+          const minutes = Math.round(r.hoursUntilOpen * 60);
+          return `Riddle ${r.riddleNumber} opens in ${minutes}m`;
+        } else {
+          const hours = Math.ceil(r.hoursUntilOpen * 2) / 2;
+          return `Riddle ${r.riddleNumber} opens in ${hours}h`;
+        }
+      });
+      messageParts.push(...openingTexts);
+    }
+    
+    message = `⚠️ ${messageParts.join('. ')}`;
+    
+    // Set severity based on what's happening
+    if (openingSoonRiddles.some(r => r.hoursUntilOpen < 1)) {
+      severity = 'medium'; // Something opens soon
+    } else if (openingSoonRiddles.length > 0) {
+      severity = 'medium'; // Something opens later today  
     } else {
-      if (closedCount === 1) {
-        message = `⚠️ Riddle ${closedRiddles[0]} is closed`;
-      } else {
-        message = `⚠️ Riddles ${closedRiddles.join(', ')} are closed`;
-      }
+      severity = 'high'; // Everything closed all day
     }
   } else if (closingSoonCount > 0) {
     shouldWarn = true;
-    severity = closingSoonCount > 2 ? 'high' : 'medium';
+    severity = 'medium';
     
-    // Sort closing soon details by riddle number for consistent display
-    const sortedClosingDetails = closingSoonDetails.sort((a, b) => parseInt(a.riddleNumber) - parseInt(b.riddleNumber));
+    // Sort closing soon details by time remaining (earliest first)
+    const sortedClosingDetails = closingSoonDetails.sort((a, b) => (a.hoursLeft || 999) - (b.hoursLeft || 999));
     
-    const hoursLeft = Math.min(...closingSoonDetails.map(d => d.hoursLeft || 999));
+    const messageParts: string[] = [];
     
-    if (hoursLeft < 1) {
-      // For urgent closures, show individual times
-      if (closingSoonCount === 1) {
+    // Create clear individual messages for each riddle
+    sortedClosingDetails.forEach(d => {
+      const hoursLeft = d.hoursLeft || 0;
+      if (hoursLeft < 1) {
         const minutesLeft = Math.round(hoursLeft * 60);
-        message = `⏰ Riddle ${sortedClosingDetails[0].riddleNumber} closes in ${minutesLeft}m (${sortedClosingDetails[0].closingTime})!`;
+        messageParts.push(`Riddle ${d.riddleNumber} closes in ${minutesLeft}m`);
+        severity = 'high'; // Very urgent
       } else {
-        // Show each riddle with its closing time
-        const riddleDetails = sortedClosingDetails.map(d => {
-          const minutesLeft = Math.round((d.hoursLeft || 0) * 60);
-          return `${d.riddleNumber} in ${minutesLeft}m`;
-        });
-        message = `⏰ Riddles ${riddleDetails.join(', ')} closing soon!`;
-      }
-      severity = 'high';
-    } else {
-      // For less urgent closures, show individual closing times
-      if (closingSoonCount === 1) {
         const roundedHours = Math.ceil(hoursLeft * 2) / 2;
-        message = `⏰ Riddle ${sortedClosingDetails[0].riddleNumber} closes in ${roundedHours}h (${sortedClosingDetails[0].closingTime})`;
-      } else {
-        // Show each riddle with its closing time
-        const riddleDetails = sortedClosingDetails.map(d => {
-          const hours = Math.ceil((d.hoursLeft || 0) * 2) / 2;
-          return `${d.riddleNumber} in ${hours}h`;
-        });
-        message = `⏰ Riddles ${riddleDetails.join(', ')} closing soon`;
+        messageParts.push(`Riddle ${d.riddleNumber} closes in ${roundedHours}h`);
       }
+    });
+    
+    if (messageParts.length === 1) {
+      message = `⏰ ${messageParts[0]}`;
+    } else {
+      message = `⏰ ${messageParts.join('. ')}`;
     }
   }
   

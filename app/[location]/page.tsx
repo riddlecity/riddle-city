@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
 import { useLocationHours } from "../../hooks/useLocationHours";
 import { getOverallTimeWarning } from "../../lib/timeWarnings";
 import TimeWarningModal from "../../components/TimeWarningModal";
@@ -22,6 +21,9 @@ export default function LocationPage({ params }: Props) {
 
   const [dateStartLabel, setDateStartLabel] = useState<string | null>(null);
   const [pubStartLabel, setPubStartLabel] = useState<string | null>(null);
+  const [dateStartTime, setDateStartTime] = useState<string | null>(null);
+  const [pubStartTime, setPubStartTime] = useState<string | null>(null);
+  const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
@@ -51,25 +53,39 @@ export default function LocationPage({ params }: Props) {
     console.log('🔍 Pub track loading:', pubLoading, 'locations:', pubLocations.length);
   }, [dateLoading, pubLoading, dateLocations.length, pubLocations.length]);
 
+  // OPTIMIZATION: Load track metadata immediately alongside location hours
   useEffect(() => {
-    const supabase = createClient();
-
     const fetchLabels = async () => {
-      // For Date Day Adventure
-      const { data: dateData } = await supabase
-        .from("tracks")
-        .select("start_label")
-        .eq("id", `date_${locationSlug}`)
-        .maybeSingle();
-      setDateStartLabel(String(dateData?.start_label || ''));
+      console.log('🔍 Loading track metadata for faster page load');
+      setTrackMetadataLoading(true);
+      
+      try {
+        // SPEED OPTIMIZATION: Use dedicated API endpoint for faster server-side query
+        const response = await fetch(`/api/tracks/${locationSlug}`);
+        
+        if (!response.ok) {
+          console.error('🔍 Failed to fetch track metadata:', response.status);
+          return;
+        }
 
-      // For Pub Crawl
-      const { data: pubData } = await supabase
-        .from("tracks")
-        .select("start_label")
-        .eq("id", `pub_${locationSlug}`)
-        .maybeSingle();
-      setPubStartLabel(String(pubData?.start_label || ''));
+        const { dateTrack, pubTrack } = await response.json();
+
+        if (dateTrack) {
+          setDateStartLabel(String(dateTrack.start_label || ''));
+          setDateStartTime(String(dateTrack.start_time || '') || null);
+        }
+
+        if (pubTrack) {
+          setPubStartLabel(String(pubTrack.start_label || ''));
+          setPubStartTime(String(pubTrack.start_time || '') || null);
+        }
+
+        console.log('🔍 Track metadata loaded via API:', { dateTrack: !!dateTrack, pubTrack: !!pubTrack });
+      } catch (error) {
+        console.error('🔍 Error loading track metadata:', error);
+      } finally {
+        setTrackMetadataLoading(false);
+      }
     };
 
     fetchLabels();
@@ -198,12 +214,22 @@ export default function LocationPage({ params }: Props) {
             </div>
 
             {/* Start Point */}
-            {dateStartLabel && (
+            {(dateStartLabel || trackMetadataLoading) && (
               <div className="mt-3 pt-3 border-t border-white/20">
                 <span className="text-xs uppercase tracking-wide text-white/70">
                   Start Point:
                 </span>{" "}
-                <span className="text-sm font-semibold">{dateStartLabel}</span>
+                <span className="text-sm font-semibold">
+                  {trackMetadataLoading ? 'Loading...' : dateStartLabel}
+                </span>
+                {dateStartTime && !trackMetadataLoading && (
+                  <div className="mt-2">
+                    <span className="text-xs uppercase tracking-wide text-white/70">
+                      Recommended Start Time:
+                    </span>{" "}
+                    <span className="text-sm font-semibold text-pink-200">{dateStartTime}</span>
+                  </div>
+                )}
                 <div className="text-xs text-white/60 mt-1">
                 </div>
               </div>
@@ -254,15 +280,26 @@ export default function LocationPage({ params }: Props) {
             </div>
 
             {/* Starting location */}
-            {pubStartLabel && (
+            {(pubStartLabel || trackMetadataLoading) && (
               <div className="mt-3 pt-3 border-t border-white/20">
                 <span className="text-xs uppercase tracking-wide text-white/70">
                   Starting location:
                 </span>{" "}
-                <span className="text-sm font-semibold">{pubStartLabel}</span>
+                <span className="text-sm font-semibold">
+                  {trackMetadataLoading ? 'Loading...' : pubStartLabel}
+                </span>
+                {pubStartTime && !trackMetadataLoading && (
+                  <div className="mt-2">
+                    <span className="text-xs uppercase tracking-wide text-white/70">
+                      Recommended Start Time:
+                    </span>{" "}
+                    <span className="text-sm font-semibold text-yellow-200">{pubStartTime}</span>
+                  </div>
+                )}
                 <div className="text-xs text-white/60 mt-1">
-                  Head to <strong>{pubStartLabel}</strong> to be ready for your
-                  adventure
+                  {!trackMetadataLoading && pubStartLabel && (
+                    <>Head to <strong>{pubStartLabel}</strong> to be ready for your adventure</>
+                  )}
                 </div>
               </div>
             )}
