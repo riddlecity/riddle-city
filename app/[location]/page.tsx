@@ -195,7 +195,19 @@ export default function LocationPage({ params }: Props) {
                     ? 'Loading location data...' 
                     : loadTimeout 
                     ? 'Ready (time warnings may not be available)'
-                    : `Perfect for couples exploring together${dateRiddleCount > 0 ? ` • ${dateRiddleCount} riddles` : ''}`
+                    : (
+                      <>
+                        Perfect for couples exploring together
+                        {dateRiddleCount > 0 && (
+                          <>
+                            {' • '}
+                            <span className="font-bold text-pink-50 bg-pink-500/20 px-2 py-0.5 rounded-full text-xs">
+                              {dateRiddleCount} Riddles
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )
                   }
                 </div>
               </div>
@@ -253,7 +265,19 @@ export default function LocationPage({ params }: Props) {
                   {pubLoading && <span className="ml-2 text-sm">⏳</span>}
                 </div>
                 <div className="text-sm font-normal text-yellow-100 mt-1">
-                  {pubLoading ? 'Loading location data...' : `Explore local pubs and bars${pubRiddleCount > 0 ? ` • ${pubRiddleCount} riddles` : ''}`}
+                  {pubLoading ? 'Loading location data...' : (
+                    <>
+                      Explore local pubs and bars
+                      {pubRiddleCount > 0 && (
+                        <>
+                          {' • '}
+                          <span className="font-bold text-yellow-50 bg-yellow-500/20 px-2 py-0.5 rounded-full text-xs">
+                            {pubRiddleCount} Riddles
+                          </span>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
               <div className="text-right">
