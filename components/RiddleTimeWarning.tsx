@@ -75,7 +75,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
           // Location is closed today
           setWarning({
             type: 'closed',
-            message: `⚠️ This riddle's location is closed today. You can still solve the riddle, but won't be able to access the physical location.`,
+            message: `⚠️ This riddle's location is closed today. You can still find the location, but looks like you'll have to skip this one.`,
             severity: 'high'
           });
           setLoading(false);
@@ -108,7 +108,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
               const formattedHours = Math.ceil(hoursUntilOpen * 2) / 2; // Round up to nearest 0.5
               setWarning({
                 type: 'closed',
-                message: `⚠️ This riddle's location opens in ${formattedHours}h (at ${todayHours.open}). You can solve the riddle now, but won't have access until then.`,
+                message: `⚠️ This riddle's location opens in ${formattedHours}h (at ${todayHours.open}). You may have to wait to access, or you can always skip.`,
                 severity: 'high',
                 opensAt: todayHours.open
               });
@@ -117,7 +117,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
             // Location is closed for the day
             setWarning({
               type: 'closed',
-              message: `⚠️ This riddle's location is closed for today (closed at ${todayHours.close}). You can still solve the riddle!`,
+              message: `⚠️ This riddle's location is closed for today (closed at ${todayHours.close}). You can still find the location, but looks like you'll have to skip this one.`,
               severity: 'high'
             });
           }

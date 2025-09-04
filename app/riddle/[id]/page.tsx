@@ -4,7 +4,7 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import ShareLink from "@/components/ShareLink";
-import RestrictedSkipRiddleForm from "@/components/RestrictedSkipRiddleForm";
+import ConditionalSkipRiddleForm from "@/components/ConditionalSkipRiddleForm";
 import GameProgress from "@/components/GameProgress";
 import RiddleTimeWarning from "@/components/RiddleTimeWarning";
 import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
@@ -312,9 +312,14 @@ export default async function RiddlePage({ params }: Props) {
         )}
 
         {/* Skip button - Bottom Right */}
-        {groupId && userId && isLeader && (
+        {groupId && userId && (
           <div className="flex-1 flex justify-end">
-            <RestrictedSkipRiddleForm groupId={groupId} isLeader={isLeader} />
+            <ConditionalSkipRiddleForm 
+              groupId={groupId} 
+              isLeader={isLeader} 
+              riddleId={id}
+              trackId={track_id}
+            />
           </div>
         )}
       </div>
