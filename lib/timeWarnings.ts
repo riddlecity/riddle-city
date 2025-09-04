@@ -351,9 +351,9 @@ export function getOverallTimeWarning(
     // Handle riddles closed all day
     if (closedAllDayRiddles.length > 0) {
       if (closedAllDayRiddles.length === 1) {
-        messageParts.push(`Riddle ${closedAllDayRiddles[0]} closed today`);
+        messageParts.push(`Access to Riddle ${closedAllDayRiddles[0]} is now closed`);
       } else {
-        messageParts.push(`Riddles ${closedAllDayRiddles.join(', ')} closed today`);
+        messageParts.push(`Access to Riddles ${closedAllDayRiddles.join(', ')} is now closed`);
       }
     }
     
@@ -369,6 +369,22 @@ export function getOverallTimeWarning(
         }
       });
       messageParts.push(...openingTexts);
+    }
+    
+    // Handle riddles closing soon (only when there are also closed riddles)
+    if (closingSoonCount > 0) {
+      const sortedClosingDetails = closingSoonDetails.sort((a, b) => (a.hoursLeft || 999) - (b.hoursLeft || 999));
+      
+      sortedClosingDetails.forEach(d => {
+        const hoursLeft = d.hoursLeft || 0;
+        if (hoursLeft < 1) {
+          const minutesLeft = Math.round(hoursLeft * 60);
+          messageParts.push(`Riddle ${d.riddleNumber} closes in ${minutesLeft}m`);
+        } else {
+          const roundedHours = Math.ceil(hoursLeft * 2) / 2;
+          messageParts.push(`Riddle ${d.riddleNumber} closes in ${roundedHours}h`);
+        }
+      });
     }
     
     message = `⚠️ ${messageParts.join('. ')}`;
@@ -407,6 +423,38 @@ export function getOverallTimeWarning(
       message = `⏰ ${messageParts[0]}`;
     } else {
       message = `⏰ ${messageParts.join('. ')}`;
+    }
+  }
+  
+  // Handle case where no riddles are permanently closed, but some are opening soon
+  // This is especially useful for early morning starts
+  if (!shouldWarn && closedDetails.length > 0) {
+    const earlyOpeningRiddles = closedDetails.filter(d => 
+      d.hoursUntilOpen !== undefined && d.hoursUntilOpen < 4 // Opening within 4 hours
+    );
+    
+    if (earlyOpeningRiddles.length > 0) {
+      shouldWarn = true;
+      severity = 'medium';
+      
+      // Sort by opening time (earliest first)
+      earlyOpeningRiddles.sort((a, b) => (a.hoursUntilOpen || 999) - (b.hoursUntilOpen || 999));
+      
+      const openingTexts = earlyOpeningRiddles.map(r => {
+        if (r.hoursUntilOpen! < 1) {
+          const minutes = Math.round(r.hoursUntilOpen! * 60);
+          return `Riddle ${r.riddleNumber} opens in ${minutes}m`;
+        } else {
+          const hours = Math.ceil(r.hoursUntilOpen! * 2) / 2;
+          return `Riddle ${r.riddleNumber} opens in ${hours}h`;
+        }
+      });
+      
+      if (openingTexts.length === 1) {
+        message = `🕐 ${openingTexts[0]}`;
+      } else {
+        message = `🕐 ${openingTexts.join('. ')}`;
+      }
     }
   }
   

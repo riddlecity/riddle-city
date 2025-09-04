@@ -20,7 +20,11 @@ export const metadata: Metadata = {
   title: "Riddle City - Your Mystery Awaits",
   description:
     "Puzzle-based adventures through your town or city. Scan QR codes, solve riddles, and explore with friends.",
-  icons: { icon: "/favicon-custom.ico" },
+  manifest: "/site.webmanifest",
+  other: {
+    "msapplication-TileColor": "#dc2626",
+    "msapplication-config": "/browserconfig.xml",
+  },
 };
 
 // ✅ Make the viewport fill behind notches and handle mobile URL bars correctly
@@ -35,6 +39,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Additional favicon meta tags for better mobile support */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Riddle City" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#dc2626" />
+        <link rel="mask-icon" href="/favicon-custom.png" color="#dc2626" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black flex flex-col
                     min-h-[100svh] md:min-h-dvh`}

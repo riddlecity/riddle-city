@@ -10,6 +10,8 @@ interface ResumeGameBannerProps {
 }
 
 export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBannerProps) {
+  console.log('🔍 RESUME BANNER: Component rendered on pathname:', usePathname());
+  
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname() || '';
@@ -25,11 +27,20 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   useEffect(() => {
     const check = () => {
       try {
+        console.log('🔍 RESUME BANNER: Check triggered', {
+          pathname,
+          hasActiveGroup,
+          activeSession,
+          isLeader,
+          getResumeUrlResult: getResumeUrl()
+        });
+        
         // Don't show banner on game pages to avoid distraction
         const gamePages = ['/riddle/', '/waiting/', '/adventure-complete/', '/start/', '/join/'];
         const isOnGamePage = gamePages.some(page => pathname.includes(page));
         
         if (isOnGamePage) {
+          console.log('🚫 RESUME BANNER: Hiding banner on game page:', pathname);
           updateVisibility(false);
           setLoading(false);
           return;
@@ -38,6 +49,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
         // Check if banner was manually dismissed
         const dismissed = sessionStorage.getItem('resume_banner_hidden');
         if (dismissed) {
+          console.log('🚫 RESUME BANNER: Banner manually dismissed');
           updateVisibility(false);
           setLoading(false);
           return;
@@ -45,8 +57,17 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
 
         // Use the hook's hasActiveGroup logic
         if (hasActiveGroup) {
+          console.log('✅ RESUME BANNER: Showing banner - has active group', {
+            hasActiveGroup,
+            activeSession: !!activeSession,
+            resumeUrl: getResumeUrl()
+          });
           updateVisibility(true);
         } else {
+          console.log('❌ RESUME BANNER: Hiding banner - no active group', {
+            hasActiveGroup,
+            activeSession: !!activeSession
+          });
           updateVisibility(false);
         }
         
@@ -69,7 +90,12 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   }
 
   const href = getResumeUrl(); // Use the SAME getResumeUrl logic as main page!
-  if (!href) return null;
+  console.log('🔍 RESUME BANNER: Banner href calculated:', href);
+  
+  if (!href) {
+    console.log('🚫 RESUME BANNER: No href, hiding banner');
+    return null;
+  }
 
   const dismiss = () => {
     sessionStorage.setItem('resume_banner_hidden', '1');
@@ -116,6 +142,9 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
             <Link
               href={href}
               className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+              onClick={() => {
+                console.log('🔍 RESUME BANNER: Button clicked! Navigating to:', href);
+              }}
             >
               <span>🚀</span>
               {getButtonText()}

@@ -2,6 +2,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs"; // Stripe needs Node runtime
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -27,6 +28,27 @@ export async function GET(req: Request) {
     
     if (!groupId || !userId || !location || !mode) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
+    }
+
+    // ✅ Store session ID in database for the group leader
+    try {
+      const supabase = await createClient();
+      const { error: updateError } = await supabase
+        .from('group_members')
+        .update({ session_id: sessionId })
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .eq('is_leader', true);
+
+      if (updateError) {
+        console.error('❌ START-GAME: Failed to store session ID in database:', updateError);
+        // Don't fail the request, just log the error
+      } else {
+        console.log('✅ START-GAME: Stored session ID in database for leader:', userId);
+      }
+    } catch (dbError) {
+      console.error('❌ START-GAME: Database error storing session ID:', dbError);
+      // Don't fail the request, just log the error
     }
 
     // ✅ Set cookies in a Route Handler (await required in Next.js 15)

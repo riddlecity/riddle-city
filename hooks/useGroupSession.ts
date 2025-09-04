@@ -14,9 +14,12 @@ interface GroupSession {
   paid: boolean
   teamName: string
   isLeader: boolean
+  sessionId?: string | null // Add sessionId to the interface
 }
 
 export function useGroupSession(autoRedirect: boolean = false) {
+  console.log('🔍 USE GROUP SESSION: Hook called with autoRedirect:', autoRedirect);
+  
   const [activeSession, setActiveSession] = useState<GroupSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -122,8 +125,19 @@ export function useGroupSession(autoRedirect: boolean = false) {
             active: Boolean(groupData.active),
             paid: Boolean(groupData.paid),
             teamName: teamName || String(groupData.team_name || 'Your Team'),
-            isLeader: Boolean(data.isLeader) // Capture leadership status from API
+            isLeader: Boolean(data.isLeader), // Capture leadership status from API
+            sessionId: data.sessionId || null // Store sessionId from database
           }
+          
+          console.log('🔍 USE GROUP SESSION: Created session object:', {
+            groupId: session.groupId,
+            isLeader: session.isLeader,
+            isLeader_source: data.isLeader,
+            gameStarted: session.gameStarted,
+            paid: session.paid,
+            sessionId: session.sessionId,
+            has_sessionId: !!session.sessionId
+          });
           
           setActiveSession(session)
 
@@ -158,7 +172,8 @@ export function useGroupSession(autoRedirect: boolean = false) {
               active: false,
               paid: Boolean(groupData.paid),
               teamName: teamName || String(groupData.team_name || 'Your Team'),
-              isLeader: Boolean(data.isLeader) // Capture leadership status from API
+              isLeader: Boolean(data.isLeader), // Capture leadership status from API
+              sessionId: data.sessionId || null // Store sessionId from database
             }
             
             setActiveSession(session)
@@ -206,7 +221,8 @@ export function useGroupSession(autoRedirect: boolean = false) {
       gameStarted: session.gameStarted,
       currentRiddleId: session.currentRiddleId,
       paid: session.paid,
-      trackId: session.trackId
+      trackId: session.trackId,
+      isLeader: session.isLeader
     })
     
     // If not paid, go to locations page  
@@ -217,6 +233,7 @@ export function useGroupSession(autoRedirect: boolean = false) {
     
     // If game is finished, go to completion page
     if (session.finished) {
+      console.log('🔍 USE GROUP SESSION: Game finished, going to completion page')
       return `/adventure-complete/${session.groupId}`
     }
     
@@ -239,20 +256,26 @@ export function useGroupSession(autoRedirect: boolean = false) {
       // User is the group leader - try to construct start page URL
       console.log('🔍 USE GROUP SESSION: User is leader, constructing start page URL')
       
-      // Try to get sessionId from session cookie
-      const sessionCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('riddlecity-session='))
-        ?.split('=')[1]
+      // Use sessionId from the database (stored in session object)
+      let sessionId = session.sessionId
+      console.log('🔍 USE GROUP SESSION: SessionId from database:', sessionId)
       
-      let sessionId = null
-      if (sessionCookie) {
-        try {
-          // Use atob instead of Buffer for browser compatibility
-          const decoded = JSON.parse(atob(sessionCookie))
-          sessionId = decoded.sessionId
-        } catch (e) {
-          console.warn('🔍 USE GROUP SESSION: Could not decode session cookie')
+      // If no sessionId in database, try to get from cookie as fallback
+      if (!sessionId) {
+        console.log('🔍 USE GROUP SESSION: No sessionId in database, trying cookie fallback')
+        const sessionCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('riddlecity-session='))
+          ?.split('=')[1]
+        
+        if (sessionCookie) {
+          try {
+            const decoded = JSON.parse(atob(sessionCookie))
+            sessionId = decoded.sessionId
+            console.log('🔍 USE GROUP SESSION: Found sessionId in cookie fallback:', sessionId)
+          } catch (e) {
+            console.warn('🔍 USE GROUP SESSION: Could not decode session cookie:', e)
+          }
         }
       }
       
@@ -263,7 +286,7 @@ export function useGroupSession(autoRedirect: boolean = false) {
           const mode = parts[0] // "date" or "pub"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
           const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
-          console.log('🔍 USE GROUP SESSION: Constructed start page URL for leader:', startPageUrl)
+          console.log('🔍 USE GROUP SESSION: Constructed start page URL for leader (with query params):', startPageUrl)
           return startPageUrl
         }
       }
@@ -278,12 +301,23 @@ export function useGroupSession(autoRedirect: boolean = false) {
           // If we have sessionId, use the full start URL (this is the preferred path for leaders)
           if (sessionId) {
             const fullStartUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
-            console.log('🔍 USE GROUP SESSION: Using full start URL for leader (with sessionId):', fullStartUrl)
+            console.log('🔍 USE GROUP SESSION: Using full start URL for leader (with sessionId and query params):', fullStartUrl)
             return fullStartUrl
           } else {
-            // If no sessionId available, direct leader to waiting page with start capability
-            console.log('🔍 USE GROUP SESSION: No sessionId for leader, directing to waiting page with start button')
-            return `/waiting/${session.groupId}`
+            // ENHANCED FALLBACK: Multiple options for leaders when sessionId isn't available
+            console.log('🔍 USE GROUP SESSION: No sessionId for leader, trying fallback options')
+            
+            // Option 1: Try basic location/mode page (might have "Start Adventure" button)
+            const basicModeUrl = `/${location}/${mode}`
+            console.log('🔍 USE GROUP SESSION: Fallback Option 1 - Basic mode URL:', basicModeUrl)
+            
+            // Option 2: Use groupId as sessionId fallback (might work if route accepts groupId)
+            const groupIdFallbackUrl = `/${location}/${mode}/start/${session.groupId}`
+            console.log('🔍 USE GROUP SESSION: Fallback Option 2 - GroupId as sessionId:', groupIdFallbackUrl)
+            
+            // For now, let's try the basic mode page as primary fallback
+            // This should show the "Start Adventure" button for paid leaders
+            return basicModeUrl
           }
         }
       }

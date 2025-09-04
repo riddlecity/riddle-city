@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check if user is a member of this group (enhanced with is_leader)
+    // Check if user is a member of this group (enhanced with is_leader and session_id)
     const { data: membership, error: memberError } = await supabase
       .from('group_members')
-      .select('user_id, is_leader')
+      .select('user_id, is_leader, session_id')
       .eq('group_id', groupId)
       .eq('user_id', userId)
       .single();
@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
         trackId: group.track_id,
         isPaid: Boolean(group.paid),
         isLeader: Boolean(membership.is_leader),
+        sessionId: membership.session_id,
         teamName: group.team_name,
         reason: 'Group has finished the adventure'
       });
@@ -103,6 +104,7 @@ export async function GET(request: NextRequest) {
         trackId: group.track_id,
         isPaid: Boolean(group.paid),
         isLeader: Boolean(membership.is_leader),
+        sessionId: membership.session_id,
         teamName: group.team_name,
         reason: 'Group session has expired'
       });
@@ -120,6 +122,7 @@ export async function GET(request: NextRequest) {
         trackId: group.track_id,
         isPaid: Boolean(group.paid),
         isLeader: Boolean(membership.is_leader),
+        sessionId: membership.session_id,
         teamName: group.team_name,
         reason: 'Group session expired (48-hour limit)'
       });
@@ -151,6 +154,7 @@ export async function GET(request: NextRequest) {
           trackId: group.track_id,
           isPaid: Boolean(group.paid),
           isLeader: Boolean(membership.is_leader),
+          sessionId: membership.session_id,
           teamName: group.team_name,
           reason: 'Group session expired (15 minutes after completion)'
         });
@@ -171,6 +175,14 @@ export async function GET(request: NextRequest) {
       trackId: group.track_id
     });
 
+    console.log('🔍 CHECK ACTIVE GAME: Leadership details:', {
+      membership_is_leader: membership.is_leader,
+      membership_is_leader_type: typeof membership.is_leader,
+      boolean_conversion: Boolean(membership.is_leader),
+      session_id: membership.session_id,
+      has_session_id: !!membership.session_id
+    });
+
     return NextResponse.json({
       isActive,
       isFinished: group.finished,
@@ -180,6 +192,7 @@ export async function GET(request: NextRequest) {
       trackId: group.track_id,
       isPaid: Boolean(group.paid), // Ensure boolean
       isLeader: Boolean(membership.is_leader), // Ensure boolean
+      sessionId: membership.session_id, // Include the actual Stripe session ID
       teamName: group.team_name || 'Your Team' // Ensure we always have a team name
     });
 
