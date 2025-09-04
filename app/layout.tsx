@@ -40,12 +40,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Additional favicon meta tags for better mobile support */}
+        {/* Standard favicon links for desktop browsers */}
+        <link rel="icon" type="image/x-icon" href="/favicon-custom.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-custom.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-custom.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon-custom.png" />
+        
+        {/* Mobile browser theme colors */}
+        <meta name="theme-color" content="#dc2626" />
+        <meta name="msapplication-navbutton-color" content="#dc2626" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Riddle City" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#dc2626" />
         <link rel="mask-icon" href="/favicon-custom.png" color="#dc2626" />
       </head>
       <body
