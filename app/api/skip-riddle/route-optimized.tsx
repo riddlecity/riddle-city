@@ -62,64 +62,48 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Check if user is leader and get group info
-    const { data: member, error: memberError } = await supabase
-      .from("group_members")
-      .select("is_leader")
-      .eq("group_id", groupId)
-      .eq("user_id", userId)
+    // OPTIMIZATION: Single query to get group + member info + current riddle + next riddle
+    const { data: groupData, error: groupError } = await supabase
+      .from("groups")
+      .select(`
+        current_riddle_id,
+        riddles_skipped,
+        track_id,
+        group_members!inner(is_leader),
+        current_riddle:riddles!current_riddle_id(next_riddle_id),
+        next_riddle:riddles!current_riddle_id(
+          next_riddle:riddles!next_riddle_id(next_riddle_id)
+        )
+      `)
+      .eq("id", groupId)
+      .eq("group_members.user_id", userId)
       .single();
 
-    if (memberError) {
-      console.error("Failed to get member info:", memberError);
-      return NextResponse.json({ error: "User not found in group" }, { status: 404 });
+    if (groupError || !groupData) {
+      console.error("Failed to get group data:", groupError);
+      return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
     // Check authorization - leaders can always skip, non-leaders only during emergency
-    if (!member.is_leader && !isEmergencySkip) {
+    const isLeader = groupData.group_members?.is_leader;
+    if (!isLeader && !isEmergencySkip) {
       console.error("User is not leader and not emergency skip");
       return NextResponse.json({ error: "Only group leaders can skip riddles" }, { status: 403 });
     }
 
-    // Get current group riddle
-    const { data: group, error: groupError } = await supabase
-      .from("groups")
-      .select("current_riddle_id, riddles_skipped, track_id")
-      .eq("id", groupId)
-      .single();
-
-    if (groupError || !group) {
-      console.error("Failed to get group:", groupError);
-      return NextResponse.json({ error: "Group not found" }, { status: 404 });
-    }
-
-    // Get next riddle
-    const { data: currentRiddle, error: riddleError } = await supabase
-      .from("riddles")
-      .select("next_riddle_id")
-      .eq("id", group.current_riddle_id)
-      .single();
-
-    if (riddleError || !currentRiddle?.next_riddle_id) {
-      console.error("No next riddle found:", riddleError);
+    const nextRiddleId = groupData.current_riddle?.next_riddle_id;
+    if (!nextRiddleId) {
+      console.error("No next riddle found");
       return NextResponse.json({ error: "No next riddle available" }, { status: 400 });
     }
 
-    const nextRiddleId = currentRiddle.next_riddle_id;
-
     // Check if this is the final riddle
-    const { data: nextRiddle } = await supabase
-      .from("riddles")
-      .select("next_riddle_id")
-      .eq("id", nextRiddleId)
-      .single();
-    
-    const isLastRiddle = !nextRiddle?.next_riddle_id;
+    const isLastRiddle = !groupData.next_riddle?.next_riddle?.next_riddle_id;
 
     // Prepare update data
     const updates: GroupUpdate = {
       current_riddle_id: nextRiddleId,
-      riddles_skipped: (group.riddles_skipped || 0) + 1
+      riddles_skipped: (groupData.riddles_skipped || 0) + 1
     };
 
     if (isLastRiddle) {

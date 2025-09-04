@@ -23,21 +23,29 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
 
   // Fetch location hours and determine warning status
   useEffect(() => {
+    let isMounted = true;
+    
     async function checkLocationHours() {
       if (!riddleId || !trackId) return;
       
       try {
-        const response = await fetch(`/api/riddles/${riddleId}/location?trackId=${trackId}`);
-        if (!response.ok) {
-          setLoading(false);
+        // Use AbortController for cleanup
+        const controller = new AbortController();
+        
+        const response = await fetch(`/api/riddles/${riddleId}/location?trackId=${trackId}`, {
+          signal: controller.signal
+        });
+        
+        if (!response.ok || !isMounted) {
+          if (isMounted) setLoading(false);
           return;
         }
 
         const data = await response.json();
         const { opening_hours } = data;
 
-        if (!opening_hours?.parsed_hours) {
-          setLoading(false);
+        if (!opening_hours?.parsed_hours || !isMounted) {
+          if (isMounted) setLoading(false);
           return;
         }
 
@@ -49,63 +57,73 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
 
         if (!todayHours) {
           // Location is closed today
-          setWarning({
-            type: 'closed',
-            message: 'Closed today',
-            severity: 'high'
-          });
-          setLoading(false);
-          return;
-        }
-
-        // Check if currently open and how much time until close
-        const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
-        const [openHour, openMinute] = todayHours.open.split(':').map(Number);
-        const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
-        const openMinutes = openHour * 60 + openMinute;
-        const closeMinutes = closeHour * 60 + closeMinute;
-
-        const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
-
-        if (!isOpen) {
-          if (currentMinutes < openMinutes) {
-            // Location hasn't opened yet today
+          if (isMounted) {
             setWarning({
               type: 'closed',
-              message: 'Not open yet',
-              severity: 'high'
-            });
-          } else {
-            // Location is closed for the day
-            setWarning({
-              type: 'closed',
-              message: 'Closed for today',
+              message: 'Closed today',
               severity: 'high'
             });
           }
         } else {
-          // Location is open - check if closing soon
-          const minutesUntilClose = closeMinutes - currentMinutes;
-          const hoursUntilClose = minutesUntilClose / 60;
+          // Check if currently open and how much time until close
+          const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
+          const [openHour, openMinute] = todayHours.open.split(':').map(Number);
+          const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
+          const openMinutes = openHour * 60 + openMinute;
+          const closeMinutes = closeHour * 60 + closeMinute;
 
-          if (hoursUntilClose <= 2) {
-            setWarning({
-              type: 'closing_soon',
-              message: 'Closing soon',
-              severity: hoursUntilClose < 1 ? 'high' : 'medium',
-              hoursUntilClose
-            });
+          const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+
+          if (!isOpen) {
+            if (currentMinutes < openMinutes) {
+              // Location hasn't opened yet today
+              if (isMounted) {
+                setWarning({
+                  type: 'closed',
+                  message: 'Not open yet',
+                  severity: 'high'
+                });
+              }
+            } else {
+              // Location is closed for the day
+              if (isMounted) {
+                setWarning({
+                  type: 'closed',
+                  message: 'Closed for today',
+                  severity: 'high'
+                });
+              }
+            }
+          } else {
+            // Location is open - check if closing soon
+            const minutesUntilClose = closeMinutes - currentMinutes;
+            const hoursUntilClose = minutesUntilClose / 60;
+
+            if (hoursUntilClose <= 2 && isMounted) {
+              setWarning({
+                type: 'closing_soon',
+                message: 'Closing soon',
+                severity: hoursUntilClose < 1 ? 'high' : 'medium',
+                hoursUntilClose
+              });
+            }
           }
         }
 
       } catch (error) {
-        console.error('Error checking location hours:', error);
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error checking location hours:', error);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     checkLocationHours();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [riddleId, trackId]);
 
   // Check if anyone can skip based on location status
@@ -138,14 +156,18 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     
     setIsSkipping(true);
     try {
+      const isEmergency = canAnyoneSkip();
       const response = await fetch('/api/skip-riddle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId }),
+        body: JSON.stringify({ 
+          groupId,
+          isEmergencySkip: isEmergency
+        }),
       });
 
       if (response.ok) {
-        console.log('Skip successful, waiting for real-time update...');
+        console.log(`Skip successful: ${isEmergency ? 'Emergency' : 'Normal'} skip`);
       } else {
         console.error('Skip failed');
         setIsSkipping(false);
