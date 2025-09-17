@@ -255,7 +255,7 @@ function parseGoogleMapsHTML(html: string, locationName: string): any {
             const timeMatch = match.hours.match(/(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*[–-]\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
             if (timeMatch) {
               let openTime = timeMatch[1].trim();
-              let closeTime = timeMatch[2].trim();
+              const closeTime = timeMatch[2].trim();
               
               // Handle cases where only the closing time has AM/PM
               // If opening time has no AM/PM but closing time does, infer the opening time's period
