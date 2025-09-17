@@ -92,9 +92,14 @@ function needsDailyRefresh(lastUpdated: string): boolean {
   return lastUpdate.toDateString() !== now.toDateString();
 }
 
-// Load cache from file
+// Load cache from file (disabled in production)
 async function loadCache(): Promise<Cache> {
   try {
+    // Skip file system reads in production (Vercel doesn't support persistent files)
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+      console.log('🔍 Skipping cache load in production environment');
+      return {};
+    }
     const cacheData = await fs.readFile(CACHE_FILE, 'utf-8');
     return JSON.parse(cacheData);
   } catch (error) {
@@ -103,9 +108,14 @@ async function loadCache(): Promise<Cache> {
   }
 }
 
-// Save cache to file
+// Save cache to file (disabled in production due to read-only filesystem)
 async function saveCache(cache: Cache): Promise<void> {
   try {
+    // Skip file system writes in production (Vercel doesn't support persistent writes)
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+      console.log('🔍 Skipping cache save in production environment');
+      return;
+    }
     await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
   } catch (error) {
     console.error('Error saving cache:', error);
@@ -122,14 +132,17 @@ export async function getCachedOpeningHours(
     const cache = await loadCache();
     const cacheEntry = cache[googlePlaceUrl];
 
-    // If we have fresh data (same month/year) and not forcing refresh, use it
-    if (!forceRefresh && cacheEntry && cacheEntry.opening_hours && !needsDailyRefresh(cacheEntry.last_updated)) {
+    // In production, always fetch fresh data since cache doesn't persist
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+    
+    // If we have fresh data (same month/year) and not forcing refresh and not in production, use it
+    if (!forceRefresh && !isProduction && cacheEntry && cacheEntry.opening_hours && !needsDailyRefresh(cacheEntry.last_updated)) {
       console.log('🔍 Using cached opening hours for:', locationName);
       return cacheEntry.opening_hours;
     }
 
     // Otherwise, fetch fresh data from Google API
-    console.log('🔍 Fetching fresh opening hours for:', locationName);
+    console.log('🔍 Fetching fresh opening hours for:', locationName, isProduction ? '(production mode)' : '');
     const freshHours = await fetchLocationHours(googlePlaceUrl, locationName);
     
     if (freshHours) {
