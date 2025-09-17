@@ -83,14 +83,13 @@ function parseOpeningHours(googleHours: any): {
   return {};
 }
 
-// Check if opening hours data needs refresh (different month/year)
-function needsMonthlyRefresh(lastUpdated: string): boolean {
+// Check if opening hours data needs refresh (daily refresh for web scraping)
+function needsDailyRefresh(lastUpdated: string): boolean {
   const lastUpdate = new Date(lastUpdated);
   const now = new Date();
   
-  // Check if it's a different month or year
-  return lastUpdate.getFullYear() !== now.getFullYear() || 
-         lastUpdate.getMonth() !== now.getMonth();
+  // Check if it's a different day (more frequent updates since scraping is free)
+  return lastUpdate.toDateString() !== now.toDateString();
 }
 
 // Load cache from file
@@ -124,7 +123,7 @@ export async function getCachedOpeningHours(
     const cacheEntry = cache[googlePlaceUrl];
 
     // If we have fresh data (same month/year) and not forcing refresh, use it
-    if (!forceRefresh && cacheEntry && cacheEntry.opening_hours && !needsMonthlyRefresh(cacheEntry.last_updated)) {
+    if (!forceRefresh && cacheEntry && cacheEntry.opening_hours && !needsDailyRefresh(cacheEntry.last_updated)) {
       console.log('🔍 Using cached opening hours for:', locationName);
       return cacheEntry.opening_hours;
     }
