@@ -126,16 +126,16 @@ async function saveCache(cache: Cache): Promise<void> {
 function getProductionFallbackHours(googlePlaceUrl: string, locationName: string): any {
   // Based on our successful local testing results
   const fallbackData: { [key: string]: any } = {
-    // Riddle 1 - https://maps.app.goo.gl/NvpzkEAzq6JCD5o49 (SUPERBOWL)
+    // Riddle 1 - https://maps.app.goo.gl/NvpzkEAzq6JCD5o49 (SUPERBOWL) - open till 11pm weekdays, midnight Fri/Sat
     'https://maps.app.goo.gl/NvpzkEAzq6JCD5o49': {
       parsed_hours: {
         monday: { open: '09:00', close: '23:00' },    // 11pm
         tuesday: { open: '09:00', close: '23:00' },   // 11pm
         wednesday: { open: '09:00', close: '23:00' }, // 11pm
         thursday: { open: '09:00', close: '23:00' },  // 11pm
-        friday: { open: '09:00', close: '00:00' },    // midnight
-        saturday: { open: '09:00', close: '00:00' },  // midnight
-        sunday: { open: '09:00', close: '22:00' }     // 10pm
+        friday: { open: '09:00', close: '23:59' },    // midnight (23:59 to avoid 00:00 parsing issues)
+        saturday: { open: '09:00', close: '23:59' },  // midnight (23:59 to avoid 00:00 parsing issues)
+        sunday: { open: '09:00', close: '23:00' }     // 11pm
       },
       weekday_text: [
         'Monday: 9:00 AM – 11:00 PM',
@@ -144,7 +144,7 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Thursday: 9:00 AM – 11:00 PM',
         'Friday: 9:00 AM – 12:00 AM',
         'Saturday: 9:00 AM – 12:00 AM',
-        'Sunday: 9:00 AM – 10:00 PM'
+        'Sunday: 9:00 AM – 11:00 PM'
       ]
     },
     // Riddle 2 - https://maps.app.goo.gl/f94mvjKVE9NgMG32A (LIBRARY)
