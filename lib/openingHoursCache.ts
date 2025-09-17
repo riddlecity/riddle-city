@@ -189,49 +189,7 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Sunday: 9:00 AM – 10:00 PM'
       ]
     },
-    // Riddle 4 - Library - Saturday 9:30am-4pm, Sunday closed
-    'https://maps.app.goo.gl/STUzTxCVT6iYSwUk7': {
-      parsed_hours: {
-        monday: { open: '09:30', close: '17:00' },
-        tuesday: { open: '09:30', close: '17:00' },
-        wednesday: { open: '09:30', close: '17:00' },
-        thursday: { open: '09:30', close: '17:00' },
-        friday: { open: '09:30', close: '17:00' },
-        saturday: { open: '09:30', close: '16:00' },
-        sunday: null // CLOSED
-      },
-      weekday_text: [
-        'Monday: 9:30 AM – 5:00 PM',
-        'Tuesday: 9:30 AM – 5:00 PM', 
-        'Wednesday: 9:30 AM – 5:00 PM',
-        'Thursday: 9:30 AM – 5:00 PM',
-        'Friday: 9:30 AM – 5:00 PM',
-        'Saturday: 9:30 AM – 4:00 PM',
-        'Sunday: Closed'
-      ]
-    },
-    // Riddle 5 - https://maps.app.goo.gl/77Xiczt1k2RNPLfF9
-    'https://maps.app.goo.gl/77Xiczt1k2RNPLfF9': {
-      parsed_hours: {
-        monday: { open: '08:00', close: '17:00' },
-        tuesday: { open: '08:00', close: '17:00' },
-        wednesday: { open: '08:00', close: '17:00' },
-        thursday: { open: '08:00', close: '17:00' },
-        friday: { open: '08:00', close: '17:00' },
-        saturday: { open: '09:00', close: '16:00' },
-        sunday: { open: '10:00', close: '15:00' }
-      },
-      weekday_text: [
-        'Monday: 8:00 AM – 5:00 PM',
-        'Tuesday: 8:00 AM – 5:00 PM',
-        'Wednesday: 8:00 AM – 5:00 PM',
-        'Thursday: 8:00 AM – 5:00 PM',
-        'Friday: 8:00 AM – 5:00 PM',
-        'Saturday: 9:00 AM – 4:00 PM',
-        'Sunday: 10:00 AM – 3:00 PM'
-      ]
-    },
-    // Riddle 6 - 200 Degrees - Sunday 8:30am-4:30pm
+    // Riddle 4 - https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6 (200 DEGREES) - Sunday 8:30am-4:30pm
     'https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6': {
       parsed_hours: {
         monday: { open: '07:00', close: '17:00' },
@@ -252,7 +210,28 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Sunday: 8:30 AM – 4:30 PM'
       ]
     },
-    // Extra riddle - https://maps.app.goo.gl/2ckBtY19XnQWj6ea7
+    // Riddle 5 - https://maps.app.goo.gl/77Xiczt1k2RNPLfF9 (RED ROBOT)
+    'https://maps.app.goo.gl/77Xiczt1k2RNPLfF9': {
+      parsed_hours: {
+        monday: { open: '08:00', close: '17:00' },
+        tuesday: { open: '08:00', close: '17:00' },
+        wednesday: { open: '08:00', close: '17:00' },
+        thursday: { open: '08:00', close: '17:00' },
+        friday: { open: '08:00', close: '17:00' },
+        saturday: { open: '09:00', close: '16:00' },
+        sunday: { open: '10:00', close: '15:00' }
+      },
+      weekday_text: [
+        'Monday: 8:00 AM – 5:00 PM',
+        'Tuesday: 8:00 AM – 5:00 PM',
+        'Wednesday: 8:00 AM – 5:00 PM',
+        'Thursday: 8:00 AM – 5:00 PM',
+        'Friday: 8:00 AM – 5:00 PM',
+        'Saturday: 9:00 AM – 4:00 PM',
+        'Sunday: 10:00 AM – 3:00 PM'
+      ]
+    },
+    // Riddle 6 - https://maps.app.goo.gl/2ckBtY19XnQWj6ea7 (SPIRAL CITY)
     'https://maps.app.goo.gl/2ckBtY19XnQWj6ea7': {
       parsed_hours: {
         monday: { open: '09:00', close: '17:00' },
@@ -271,27 +250,6 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Friday: 9:00 AM – 5:00 PM',
         'Saturday: 10:00 AM – 4:00 PM',
         'Sunday: 11:00 AM – 3:00 PM'
-      ]
-    },
-    // Superbowl - Friday/Saturday 9am-12am (midnight) - REMOVED from above as not matching URLs
-    'https://maps.app.goo.gl/LpgHSDGRfxeGJYJZ9': {
-      parsed_hours: {
-        monday: { open: '09:00', close: '22:00' },
-        tuesday: { open: '09:00', close: '22:00' },
-        wednesday: { open: '09:00', close: '22:00' },
-        thursday: { open: '09:00', close: '22:00' },
-        friday: { open: '09:00', close: '00:00' }, // midnight
-        saturday: { open: '09:00', close: '00:00' }, // midnight
-        sunday: { open: '09:00', close: '21:00' }
-      },
-      weekday_text: [
-        'Monday: 9:00 AM – 10:00 PM',
-        'Tuesday: 9:00 AM – 10:00 PM',
-        'Wednesday: 9:00 AM – 10:00 PM',
-        'Thursday: 9:00 AM – 10:00 PM', 
-        'Friday: 9:00 AM – 12:00 AM',
-        'Saturday: 9:00 AM – 12:00 AM',
-        'Sunday: 9:00 AM – 9:00 PM'
       ]
     }
   };
