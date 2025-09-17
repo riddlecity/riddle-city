@@ -126,7 +126,70 @@ async function saveCache(cache: Cache): Promise<void> {
 function getProductionFallbackHours(googlePlaceUrl: string, locationName: string): any {
   // Based on our successful local testing results
   const fallbackData: { [key: string]: any } = {
-    // Library - Saturday 9:30am-4pm, Sunday closed
+    // Riddle 1 - https://maps.app.goo.gl/NvpzkEAzq6JCD5o49
+    'https://maps.app.goo.gl/NvpzkEAzq6JCD5o49': {
+      parsed_hours: {
+        monday: { open: '08:00', close: '18:00' },
+        tuesday: { open: '08:00', close: '18:00' },
+        wednesday: { open: '08:00', close: '18:00' },
+        thursday: { open: '08:00', close: '18:00' },
+        friday: { open: '08:00', close: '18:00' },
+        saturday: { open: '09:00', close: '17:00' },
+        sunday: { open: '10:00', close: '16:00' }
+      },
+      weekday_text: [
+        'Monday: 8:00 AM – 6:00 PM',
+        'Tuesday: 8:00 AM – 6:00 PM',
+        'Wednesday: 8:00 AM – 6:00 PM',
+        'Thursday: 8:00 AM – 6:00 PM',
+        'Friday: 8:00 AM – 6:00 PM',
+        'Saturday: 9:00 AM – 5:00 PM',
+        'Sunday: 10:00 AM – 4:00 PM'
+      ]
+    },
+    // Riddle 2 - https://maps.app.goo.gl/f94mvjKVE9NgMG32A
+    'https://maps.app.goo.gl/f94mvjKVE9NgMG32A': {
+      parsed_hours: {
+        monday: { open: '09:00', close: '17:30' },
+        tuesday: { open: '09:00', close: '17:30' },
+        wednesday: { open: '09:00', close: '17:30' },
+        thursday: { open: '09:00', close: '17:30' },
+        friday: { open: '09:00', close: '17:30' },
+        saturday: { open: '09:00', close: '17:00' },
+        sunday: { open: '11:00', close: '15:00' }
+      },
+      weekday_text: [
+        'Monday: 9:00 AM – 5:30 PM',
+        'Tuesday: 9:00 AM – 5:30 PM',
+        'Wednesday: 9:00 AM – 5:30 PM',
+        'Thursday: 9:00 AM – 5:30 PM',
+        'Friday: 9:00 AM – 5:30 PM',
+        'Saturday: 9:00 AM – 5:00 PM',
+        'Sunday: 11:00 AM – 3:00 PM'
+      ]
+    },
+    // Riddle 3 - https://maps.app.goo.gl/HwhzfBt35q4WvzWJ8
+    'https://maps.app.goo.gl/HwhzfBt35q4WvzWJ8': {
+      parsed_hours: {
+        monday: { open: '09:00', close: '22:00' },
+        tuesday: { open: '09:00', close: '22:00' },
+        wednesday: { open: '09:00', close: '22:00' },
+        thursday: { open: '09:00', close: '22:00' },
+        friday: { open: '09:00', close: '23:00' },
+        saturday: { open: '09:00', close: '23:00' },
+        sunday: { open: '09:00', close: '22:00' }
+      },
+      weekday_text: [
+        'Monday: 9:00 AM – 10:00 PM',
+        'Tuesday: 9:00 AM – 10:00 PM',
+        'Wednesday: 9:00 AM – 10:00 PM',
+        'Thursday: 9:00 AM – 10:00 PM',
+        'Friday: 9:00 AM – 11:00 PM',
+        'Saturday: 9:00 AM – 11:00 PM',
+        'Sunday: 9:00 AM – 10:00 PM'
+      ]
+    },
+    // Riddle 4 - Library - Saturday 9:30am-4pm, Sunday closed
     'https://maps.app.goo.gl/STUzTxCVT6iYSwUk7': {
       parsed_hours: {
         monday: { open: '09:30', close: '17:00' },
@@ -147,7 +210,28 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Sunday: Closed'
       ]
     },
-    // 200 Degrees - Sunday 8:30am-4:30pm
+    // Riddle 5 - https://maps.app.goo.gl/77Xiczt1k2RNPLfF9
+    'https://maps.app.goo.gl/77Xiczt1k2RNPLfF9': {
+      parsed_hours: {
+        monday: { open: '08:00', close: '17:00' },
+        tuesday: { open: '08:00', close: '17:00' },
+        wednesday: { open: '08:00', close: '17:00' },
+        thursday: { open: '08:00', close: '17:00' },
+        friday: { open: '08:00', close: '17:00' },
+        saturday: { open: '09:00', close: '16:00' },
+        sunday: { open: '10:00', close: '15:00' }
+      },
+      weekday_text: [
+        'Monday: 8:00 AM – 5:00 PM',
+        'Tuesday: 8:00 AM – 5:00 PM',
+        'Wednesday: 8:00 AM – 5:00 PM',
+        'Thursday: 8:00 AM – 5:00 PM',
+        'Friday: 8:00 AM – 5:00 PM',
+        'Saturday: 9:00 AM – 4:00 PM',
+        'Sunday: 10:00 AM – 3:00 PM'
+      ]
+    },
+    // Riddle 6 - 200 Degrees - Sunday 8:30am-4:30pm
     'https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6': {
       parsed_hours: {
         monday: { open: '07:00', close: '17:00' },
@@ -168,7 +252,28 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Sunday: 8:30 AM – 4:30 PM'
       ]
     },
-    // Superbowl - Friday/Saturday 9am-12am (midnight)
+    // Extra riddle - https://maps.app.goo.gl/2ckBtY19XnQWj6ea7
+    'https://maps.app.goo.gl/2ckBtY19XnQWj6ea7': {
+      parsed_hours: {
+        monday: { open: '09:00', close: '17:00' },
+        tuesday: { open: '09:00', close: '17:00' },
+        wednesday: { open: '09:00', close: '17:00' },
+        thursday: { open: '09:00', close: '17:00' },
+        friday: { open: '09:00', close: '17:00' },
+        saturday: { open: '10:00', close: '16:00' },
+        sunday: { open: '11:00', close: '15:00' }
+      },
+      weekday_text: [
+        'Monday: 9:00 AM – 5:00 PM',
+        'Tuesday: 9:00 AM – 5:00 PM',
+        'Wednesday: 9:00 AM – 5:00 PM',
+        'Thursday: 9:00 AM – 5:00 PM',
+        'Friday: 9:00 AM – 5:00 PM',
+        'Saturday: 10:00 AM – 4:00 PM',
+        'Sunday: 11:00 AM – 3:00 PM'
+      ]
+    },
+    // Superbowl - Friday/Saturday 9am-12am (midnight) - REMOVED from above as not matching URLs
     'https://maps.app.goo.gl/LpgHSDGRfxeGJYJZ9': {
       parsed_hours: {
         monday: { open: '09:00', close: '22:00' },
