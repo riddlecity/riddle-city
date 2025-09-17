@@ -199,6 +199,7 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
 
   // Default fallback for unknown locations - assume typical business hours
   console.log('🔍 Using default fallback hours for unknown location:', locationName);
+  console.log('🔍 To add accurate hours for this location, update the fallbackData object in openingHoursCache.ts');
   return {
     parsed_hours: {
       monday: { open: '09:00', close: '17:00' },
@@ -210,13 +211,13 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
       sunday: { open: '10:00', close: '16:00' }
     },
     weekday_text: [
-      'Monday: 9:00 AM – 5:00 PM',
-      'Tuesday: 9:00 AM – 5:00 PM',
-      'Wednesday: 9:00 AM – 5:00 PM',
-      'Thursday: 9:00 AM – 5:00 PM',
-      'Friday: 9:00 AM – 5:00 PM',
-      'Saturday: 9:00 AM – 5:00 PM',
-      'Sunday: 10:00 AM – 4:00 PM'
+      'Monday: 9:00 AM – 5:00 PM (DEFAULT - UPDATE NEEDED)',
+      'Tuesday: 9:00 AM – 5:00 PM (DEFAULT - UPDATE NEEDED)',
+      'Wednesday: 9:00 AM – 5:00 PM (DEFAULT - UPDATE NEEDED)',
+      'Thursday: 9:00 AM – 5:00 PM (DEFAULT - UPDATE NEEDED)',
+      'Friday: 9:00 AM – 5:00 PM (DEFAULT - UPDATE NEEDED)',
+      'Saturday: 9:00 AM – 5:00 PM (DEFAULT - UPDATE NEEDED)',
+      'Sunday: 10:00 AM – 4:00 PM (DEFAULT - UPDATE NEEDED)'
     ]
   };
 }
@@ -263,7 +264,7 @@ export async function getCachedOpeningHours(
       
       // In production, if web scraping fails, provide fallback data based on known good hours
       if (isProduction) {
-        console.log('🔍 Using fallback data for production environment');
+        console.log('🔍 Web scraping failed in production, using fallback data for:', locationName);
         return getProductionFallbackHours(googlePlaceUrl, locationName);
       }
       
