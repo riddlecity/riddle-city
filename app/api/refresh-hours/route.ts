@@ -5,6 +5,7 @@ import { getCachedOpeningHours } from '../../../lib/openingHoursCache';
 export async function POST(request: NextRequest) {
   try {
     console.log('🔄 Starting daily opening hours refresh with web scraping...');
+    console.log('🔄 Environment:', process.env.NODE_ENV, 'Vercel:', !!process.env.VERCEL);
     
     // Optional: Add authentication here to prevent unauthorized refreshes
     let adminKey;

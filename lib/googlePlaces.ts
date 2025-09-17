@@ -94,28 +94,59 @@ async function scrapeGoogleMapsHours(googlePlaceUrl: string, locationName: strin
     if (googlePlaceUrl.includes('maps.app.goo.gl')) {
       console.log('🔍 Following redirect to full Google Maps URL...');
       
-      // Follow the redirect to get the full Google Maps URL
-      const resolveResponse = await fetch(googlePlaceUrl, {
+      // Enhanced fetch settings for production environment
+      const fetchOptions = {
         method: 'HEAD',
-        redirect: 'follow'
-      });
+        redirect: 'follow' as RequestRedirect,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+        },
+        // Production timeout handling
+        signal: AbortSignal.timeout(15000) // 15 second timeout
+      };
+      
+      // Follow the redirect to get the full Google Maps URL
+      const resolveResponse = await fetch(googlePlaceUrl, fetchOptions);
+      
+      if (!resolveResponse.ok) {
+        throw new Error(`Failed to resolve redirect: ${resolveResponse.status} ${resolveResponse.statusText}`);
+      }
       
       const fullUrl = resolveResponse.url;
       console.log('🔍 Resolved to full URL:', fullUrl);
       
-      // Fetch the Google Maps page HTML
+      // Fetch the Google Maps page HTML with enhanced headers
       const pageResponse = await fetch(fullUrl, {
+        method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        signal: AbortSignal.timeout(20000) // 20 second timeout for full page
       });
       
       if (!pageResponse.ok) {
-        throw new Error(`Failed to fetch page: ${pageResponse.status}`);
+        throw new Error(`Failed to fetch page: ${pageResponse.status} ${pageResponse.statusText}`);
       }
       
       const html = await pageResponse.text();
-      console.log('🔍 Successfully fetched Google Maps page HTML');
+      console.log('🔍 Successfully fetched Google Maps page HTML, size:', html.length, 'characters');
       
       // Extract opening hours from the HTML
       return parseGoogleMapsHTML(html, locationName);
@@ -124,6 +155,14 @@ async function scrapeGoogleMapsHours(googlePlaceUrl: string, locationName: strin
     return null;
   } catch (error) {
     console.error('🔍 Error scraping Google Maps for', locationName, ':', error);
+    
+    // Log specific error details for production debugging
+    if (error instanceof Error) {
+      console.error('🔍 Error name:', error.name);
+      console.error('🔍 Error message:', error.message);
+      console.error('🔍 Error stack:', error.stack);
+    }
+    
     return null;
   }
 }
