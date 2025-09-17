@@ -311,6 +311,16 @@ export async function getCachedOpeningHours(
     if (freshHours) {
       const parsedHours = parseOpeningHours(freshHours);
       
+      // Check if we got valid parsed_hours data (production fallback logic)
+      const hasParsedHours = parsedHours && parsedHours.parsed_hours && 
+        Object.keys(parsedHours.parsed_hours).length > 0 &&
+        Object.values(parsedHours.parsed_hours).some(day => day !== null);
+      
+      if (!hasParsedHours && isProduction) {
+        console.log('🔍 Web scraping returned incomplete data in production, using fallback for:', locationName);
+        return getProductionFallbackHours(googlePlaceUrl, locationName);
+      }
+      
       // Update the cache with fresh opening hours
       cache[googlePlaceUrl] = {
         opening_hours: parsedHours,
