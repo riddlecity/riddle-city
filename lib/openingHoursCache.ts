@@ -92,18 +92,29 @@ function needsDailyRefresh(lastUpdated: string): boolean {
   return lastUpdate.toDateString() !== now.toDateString();
 }
 
-// Load cache from file (disabled in production)
+// Load cache from file (read committed cache in production)
 async function loadCache(): Promise<Cache> {
   try {
-    // Skip file system reads in production (Vercel doesn't support persistent files)
+    // In production, read the committed cache file
     if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-      console.log('🔍 Skipping cache load in production environment');
-      return {};
+      console.log('🔍 Loading committed cache file in production...');
+      try {
+        const cacheData = await fs.readFile(CACHE_FILE, 'utf-8');
+        const cache = JSON.parse(cacheData);
+        console.log('✅ Successfully loaded production cache with', Object.keys(cache).length, 'locations');
+        return cache;
+      } catch (error) {
+        console.log('⚠️ Failed to load production cache file, using empty cache:', error);
+        return {};
+      }
     }
+    
+    // In development, load normally
     const cacheData = await fs.readFile(CACHE_FILE, 'utf-8');
     return JSON.parse(cacheData);
   } catch (error) {
     // Cache file doesn't exist or is invalid, return empty cache
+    console.log('📁 No cache file found, starting with empty cache');
     return {};
   }
 }
@@ -294,37 +305,36 @@ export async function getCachedOpeningHours(
   try {
     const cache = await loadCache();
     const cacheEntry = cache[googlePlaceUrl];
-
-    // In production, always fetch fresh data since cache doesn't persist
     const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+
+    // In production, prioritize the committed cache file (updated by GitHub Actions)
+    if (isProduction) {
+      if (cacheEntry && cacheEntry.opening_hours) {
+        console.log('🔍 Using committed cache data for:', locationName);
+        return cacheEntry.opening_hours;
+      } else {
+        console.log('⚠️ No committed cache data found, using fallback for:', locationName);
+        return getProductionFallbackHours(googlePlaceUrl, locationName);
+      }
+    }
     
-    // If we have fresh data (same month/year) and not forcing refresh and not in production, use it
-    if (!forceRefresh && !isProduction && cacheEntry && cacheEntry.opening_hours && !needsDailyRefresh(cacheEntry.last_updated)) {
+    // Development mode: Use cache if fresh and not forcing refresh
+    if (!forceRefresh && cacheEntry && cacheEntry.opening_hours && !needsDailyRefresh(cacheEntry.last_updated)) {
       console.log('🔍 Using cached opening hours for:', locationName);
       return cacheEntry.opening_hours;
     }
 
-    // Otherwise, fetch fresh data from Google API
-    console.log('🔍 Fetching fresh opening hours for:', locationName, isProduction ? '(production mode)' : '');
+    // Development mode: Fetch fresh data via web scraping
+    console.log('🔍 Fetching fresh opening hours for:', locationName);
     const freshHours = await fetchLocationHours(googlePlaceUrl, locationName);
     
     if (freshHours) {
       const parsedHours = parseOpeningHours(freshHours);
       
-      // Check if we got valid parsed_hours data (production fallback logic)
-      const hasParsedHours = parsedHours && parsedHours.parsed_hours && 
-        Object.keys(parsedHours.parsed_hours).length > 0 &&
-        Object.values(parsedHours.parsed_hours).some(day => day !== null);
-      
-      if (!hasParsedHours && isProduction) {
-        console.log('🔍 Web scraping returned incomplete data in production, using fallback for:', locationName);
-        return getProductionFallbackHours(googlePlaceUrl, locationName);
-      }
-      
       // Update the cache with fresh opening hours
       cache[googlePlaceUrl] = {
         opening_hours: parsedHours,
-        current_opening_hours: null, // No longer needed
+        current_opening_hours: null,
         last_updated: new Date().toISOString(),
         location_name: locationName
       };
@@ -335,17 +345,21 @@ export async function getCachedOpeningHours(
     } else {
       console.log('🔍 Failed to fetch opening hours for:', locationName);
       
-      // In production, if web scraping fails, provide fallback data based on known good hours
-      if (isProduction) {
-        console.log('🔍 Web scraping failed in production, using fallback data for:', locationName);
+      // Fallback to cache if available, otherwise use production fallback
+      if (cacheEntry && cacheEntry.opening_hours) {
+        console.log('🔍 Using stale cache data as fallback for:', locationName);
+        return cacheEntry.opening_hours;
+      } else {
+        console.log('🔍 Using production fallback for:', locationName);
         return getProductionFallbackHours(googlePlaceUrl, locationName);
       }
-      
-      return null;
     }
+
   } catch (error) {
-    console.error('Error in getCachedOpeningHours:', error);
-    return null;
+    console.error('🔍 Error in getCachedOpeningHours for', locationName, ':', error);
+    
+    // Always try to load fallback data on error
+    return getProductionFallbackHours(googlePlaceUrl, locationName);
   }
 }
 

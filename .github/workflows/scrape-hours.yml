@@ -1,0 +1,70 @@
+name: Daily Opening Hours Scraping
+
+on:
+  # Run daily at 6 AM UK time (5 AM UTC in summer, 6 AM UTC in winter)
+  schedule:
+    - cron: '0 5 * * *'  # 5 AM UTC (covers both BST and GMT)
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run scraping even if cache is recent'
+        required: false
+        default: 'false'
+
+env:
+  NODE_ENV: production
+
+jobs:
+  scrape-opening-hours:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run opening hours scraping
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        FORCE_RUN: ${{ github.event.inputs.force_run }}
+      run: node scripts/scrape-opening-hours.js
+    
+    - name: Commit updated cache
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Check if opening-hours-cache.json has changes
+        if git diff --exit-code opening-hours-cache.json; then
+          echo "No changes to opening hours cache"
+        else
+          echo "Opening hours cache updated, committing changes"
+          git add opening-hours-cache.json
+          git commit -m "Automated opening hours update - $(date '+%Y-%m-%d %H:%M UTC')"
+          git push
+        fi
+    
+    - name: Create summary
+      run: |
+        echo "## Daily Opening Hours Scraping Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **Date**: $(date '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: Completed successfully" >> $GITHUB_STEP_SUMMARY
+        
+        # Count locations in cache
+        if [ -f opening-hours-cache.json ]; then
+          count=$(node -e "console.log(Object.keys(JSON.parse(require('fs').readFileSync('opening-hours-cache.json', 'utf8'))).length)")
+          echo "- **Locations cached**: $count" >> $GITHUB_STEP_SUMMARY
+        fi

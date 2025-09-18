@@ -1,150 +1,279 @@
 {
   "https://maps.app.goo.gl/HwhzfBt35q4WvzWJ8": {
     "opening_hours": {
-      "parsed_hours": {
-        "tuesday": {
-          "open": "09:00",
-          "close": "22:00"
-        },
-        "wednesday": {
-          "open": "09:00",
-          "close": "22:00"
-        },
-        "thursday": {
-          "open": "09:00",
-          "close": "22:00"
-        },
-        "friday": {
-          "open": "09:00",
-          "close": "23:00"
-        },
-        "saturday": {
-          "open": "09:00",
-          "close": "23:00"
-        },
-        "sunday": {
-          "open": "09:00",
-          "close": "22:00"
-        },
-        "monday": {
-          "open": "09:00",
-          "close": "22:00"
-        }
-      }
-    },
-    "last_updated": "2025-09-03T21:41:58.425Z",
-    "location_name": "Falco_lounge",
-    "last_refreshed": "2025-09-16T20:16:44.027Z",
-    "open_now": false
-  },
-  "https://maps.app.goo.gl/2ckBtY19XnQWj6ea7": {
-    "opening_hours": {
-      "open_now": false,
+      "open_now": true,
       "periods": [
         {
-          "close": {
-            "day": 0,
-            "time": "2100"
-          },
           "open": {
             "day": 0,
-            "time": "1200"
+            "time": "0900"
+          },
+          "close": {
+            "day": 0,
+            "time": "2200"
           }
         },
         {
+          "open": {
+            "day": 1,
+            "time": "0900"
+          },
+          "close": {
+            "day": 1,
+            "time": "2200"
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "time": "0900"
+          },
           "close": {
             "day": 2,
-            "time": "2230"
-          },
-          "open": {
-            "day": 2,
-            "time": "1200"
+            "time": "2200"
           }
         },
         {
-          "close": {
-            "day": 3,
-            "time": "2330"
-          },
           "open": {
             "day": 3,
-            "time": "1200"
+            "time": "0900"
+          },
+          "close": {
+            "day": 3,
+            "time": "2200"
           }
         },
         {
-          "close": {
-            "day": 4,
-            "time": "2330"
-          },
           "open": {
             "day": 4,
-            "time": "1200"
+            "time": "0900"
+          },
+          "close": {
+            "day": 4,
+            "time": "2300"
           }
         },
         {
-          "close": {
-            "day": 5,
-            "time": "2330"
-          },
           "open": {
             "day": 5,
-            "time": "1100"
+            "time": "0900"
+          },
+          "close": {
+            "day": 5,
+            "time": "2300"
           }
         },
         {
-          "close": {
-            "day": 0,
-            "time": "0030"
-          },
           "open": {
             "day": 6,
-            "time": "1100"
+            "time": "0900"
+          },
+          "close": {
+            "day": 6,
+            "time": "2200"
           }
         }
       ],
       "weekday_text": [
-        "Monday: Closed",
-        "Tuesday: 12:00 – 10:30 PM",
-        "Wednesday: 12:00 – 11:30 PM",
-        "Thursday: 12:00 – 11:30 PM",
-        "Friday: 11:00 AM – 11:30 PM",
-        "Saturday: 11:00 AM – 12:30 AM",
-        "Sunday: 12:00 – 9:00 PM"
+        "Monday\\\",[\\\"9 am–10 pm",
+        "Tuesday\\\",[\\\"9 am–10 pm",
+        "Wednesday\\\",[\\\"9 am–10 pm",
+        "Thursday\\\",[\\\"9 am–10 pm",
+        "Friday\\\",[\\\"9 am–11 pm",
+        "Saturday\\\",[\\\"9 am–11 pm",
+        "Sunday\\\",[\\\"9 am–10 pm"
       ],
       "parsed_hours": {
-        "sunday": {
-          "open": "12:00",
-          "close": "21:00"
+        "monday": {
+          "open": "09:00",
+          "close": "22:00"
         },
-        "monday": null,
         "tuesday": {
-          "open": "12:00",
-          "close": "22:30"
+          "open": "09:00",
+          "close": "22:00"
         },
         "wednesday": {
-          "open": "12:00",
-          "close": "23:30"
+          "open": "09:00",
+          "close": "22:00"
         },
         "thursday": {
-          "open": "12:00",
+          "open": "09:00",
+          "close": "22:00"
+        },
+        "friday": {
+          "open": "09:00",
+          "close": "23:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "23:00"
+        },
+        "sunday": {
+          "open": "09:00",
+          "close": "22:00"
+        }
+      }
+    },
+    "last_updated": "2025-09-18T11:30:40.567Z",
+    "location_name": "Falco Lounge"
+  },
+  "https://maps.app.goo.gl/2ckBtY19XnQWj6ea7": {
+    "opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "open": {
+            "day": 0,
+            "time": "2230"
+          },
+          "close": {
+            "day": 0,
+            "time": "2330"
+          }
+        },
+        {
+          "open": {
+            "day": 1,
+            "time": "2330"
+          },
+          "close": {
+            "day": 1,
+            "time": "2330"
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "time": "2330"
+          },
+          "close": {
+            "day": 2,
+            "time": "1100"
+          }
+        },
+        {
+          "open": {
+            "day": 3,
+            "time": "1100"
+          },
+          "close": {
+            "day": 3,
+            "time": "2330"
+          }
+        },
+        {
+          "open": {
+            "day": 4,
+            "time": "1100"
+          },
+          "close": {
+            "day": 4,
+            "time": "0030"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Tuesday\\\",[\\\"12–10:30 pm\\\"],null,null,\\\"2025-09-23\\\",1,[[12,0,22,30]],0],[\\\"Wednesday\\\",[\\\"12–11:30 pm",
+        "Wednesday\\\",[\\\"12–11:30 pm\\\"],null,null,\\\"2025-09-24\\\",1,[[12,0,23,30]],0]],null,null,[[\\\"Thursday\\\",[\\\"12–11:30 pm",
+        "Thursday\\\",[\\\"12–11:30 pm\\\"],null,null,\\\"2025-09-18\\\",1,[[12,0,23,30]],0],[\\\"Friday\\\",[\\\"11 am",
+        "Friday\\\",[\\\"11 am–11:30 pm",
+        "Saturday\\\",[\\\"11 am–12:30 am",
+        "Sunday\\\",[\\\"12–9 pm\\\"],null,null,\\\"2025-09-21\\\",1,[[12,0,21,0]],0],[\\\"Monday\\\",[\\\"Closed"
+      ],
+      "parsed_hours": {
+        "monday": {
+          "open": "22:30",
+          "close": "23:30"
+        },
+        "tuesday": {
+          "open": "23:30",
+          "close": "23:30"
+        },
+        "wednesday": {
+          "open": "23:30",
+          "close": "11:00"
+        },
+        "thursday": {
+          "open": "11:00",
           "close": "23:30"
         },
         "friday": {
           "open": "11:00",
-          "close": "23:30"
-        },
-        "saturday": {
-          "open": "11:00",
           "close": "00:30"
-        }
+        },
+        "saturday": null
       }
     },
-    "last_updated": "2025-09-03T21:41:58.427Z",
-    "location_name": "Spiral_city"
+    "last_updated": "2025-09-18T11:31:03.897Z",
+    "location_name": "Spiral City"
   },
   "https://maps.app.goo.gl/77Xiczt1k2RNPLfF9": {
     "opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "open": {
+            "day": 0,
+            "time": "1000"
+          },
+          "close": {
+            "day": 0,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 1,
+            "time": "1000"
+          },
+          "close": {
+            "day": 1,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "time": "1000"
+          },
+          "close": {
+            "day": 2,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 3,
+            "time": "1000"
+          },
+          "close": {
+            "day": 3,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 4,
+            "time": "1000"
+          },
+          "close": {
+            "day": 4,
+            "time": "1700"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Tuesday\\\",[\\\"10 am–5 pm",
+        "Wednesday\\\",[\\\"10 am–5 pm",
+        "Thursday\\\",[\\\"10 am–5 pm",
+        "Friday\\\",[\\\"10 am–5 pm",
+        "Saturday\\\",[\\\"10 am–5 pm"
+      ],
       "parsed_hours": {
+        "monday": {
+          "open": "10:00",
+          "close": "17:00"
+        },
         "tuesday": {
           "open": "10:00",
           "close": "17:00"
@@ -160,21 +289,101 @@
         "friday": {
           "open": "10:00",
           "close": "17:00"
-        },
-        "saturday": {
-          "open": "10:00",
-          "close": "17:00"
         }
       }
     },
-    "last_updated": "2025-09-03T21:41:58.429Z",
-    "location_name": "redrobot",
-    "last_refreshed": "2025-09-16T20:16:49.377Z",
-    "open_now": false
+    "last_updated": "2025-09-18T11:30:56.202Z",
+    "location_name": "Red Robot"
   },
   "https://maps.app.goo.gl/NvpzkEAzq6JCD5o49": {
     "opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "open": {
+            "day": 0,
+            "time": "0900"
+          },
+          "close": {
+            "day": 0,
+            "time": "2300"
+          }
+        },
+        {
+          "open": {
+            "day": 1,
+            "time": "0900"
+          },
+          "close": {
+            "day": 1,
+            "time": "2300"
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "time": "0900"
+          },
+          "close": {
+            "day": 2,
+            "time": "2300"
+          }
+        },
+        {
+          "open": {
+            "day": 3,
+            "time": "0900"
+          },
+          "close": {
+            "day": 3,
+            "time": "2300"
+          }
+        },
+        {
+          "open": {
+            "day": 4,
+            "time": "0900"
+          },
+          "close": {
+            "day": 4,
+            "time": "0000"
+          }
+        },
+        {
+          "open": {
+            "day": 5,
+            "time": "0900"
+          },
+          "close": {
+            "day": 5,
+            "time": "0000"
+          }
+        },
+        {
+          "open": {
+            "day": 6,
+            "time": "0900"
+          },
+          "close": {
+            "day": 6,
+            "time": "2300"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Monday\\\",[\\\"9 am–11 pm",
+        "Tuesday\\\",[\\\"9 am–11 pm",
+        "Wednesday\\\",[\\\"9 am–11 pm",
+        "Thursday\\\",[\\\"9 am–11 pm",
+        "Friday\\\",[\\\"9 am–12 am",
+        "Saturday\\\",[\\\"9 am–12 am",
+        "Sunday\\\",[\\\"9 am–11 pm"
+      ],
       "parsed_hours": {
+        "monday": {
+          "open": "09:00",
+          "close": "23:00"
+        },
         "tuesday": {
           "open": "09:00",
           "close": "23:00"
@@ -187,24 +396,112 @@
           "open": "09:00",
           "close": "23:00"
         },
-        "sunday": {
+        "friday": {
           "open": "09:00",
-          "close": "23:00"
+          "close": "00:00"
         },
-        "monday": {
+        "saturday": {
+          "open": "09:00",
+          "close": "00:00"
+        },
+        "sunday": {
           "open": "09:00",
           "close": "23:00"
         }
       }
     },
-    "last_updated": "2025-09-03T21:41:58.430Z",
-    "location_name": "Superbowl",
-    "last_refreshed": "2025-09-16T20:16:51.956Z",
-    "open_now": false
+    "last_updated": "2025-09-18T11:30:30.906Z",
+    "location_name": "Superbowl"
   },
   "https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6": {
     "opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "open": {
+            "day": 0,
+            "time": "0700"
+          },
+          "close": {
+            "day": 0,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 1,
+            "time": "0700"
+          },
+          "close": {
+            "day": 1,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "time": "0700"
+          },
+          "close": {
+            "day": 2,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 3,
+            "time": "0700"
+          },
+          "close": {
+            "day": 3,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 4,
+            "time": "0700"
+          },
+          "close": {
+            "day": 4,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 5,
+            "time": "0700"
+          },
+          "close": {
+            "day": 5,
+            "time": "1800"
+          }
+        },
+        {
+          "open": {
+            "day": 6,
+            "time": "0830"
+          },
+          "close": {
+            "day": 6,
+            "time": "1630"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Monday\\\",[\\\"7 am–5 pm",
+        "Tuesday\\\",[\\\"7 am–5 pm",
+        "Wednesday\\\",[\\\"7 am–5 pm",
+        "Thursday\\\",[\\\"7 am–5 pm",
+        "Friday\\\",[\\\"7 am–5 pm",
+        "Saturday\\\",[\\\"7 am–6 pm",
+        "Sunday\\\",[\\\"8:30 am–4:30 pm"
+      ],
       "parsed_hours": {
+        "monday": {
+          "open": "07:00",
+          "close": "17:00"
+        },
         "tuesday": {
           "open": "07:00",
           "close": "17:00"
@@ -225,21 +522,104 @@
           "open": "07:00",
           "close": "18:00"
         },
-        "monday": {
-          "open": "07:00",
-          "close": "17:00"
+        "sunday": {
+          "open": "08:30",
+          "close": "16:30"
         }
       }
     },
-    "current_opening_hours": null,
-    "last_updated": "2025-09-04T17:20:45.357Z",
-    "location_name": "200degrees",
-    "last_refreshed": "2025-09-16T20:16:54.601Z",
-    "open_now": false
+    "last_updated": "2025-09-18T11:30:49.138Z",
+    "location_name": "200 Degrees"
   },
   "https://maps.app.goo.gl/f94mvjKVE9NgMG32A": {
     "opening_hours": {
+      "open_now": true,
+      "periods": [
+        {
+          "open": {
+            "day": 0,
+            "time": "0900"
+          },
+          "close": {
+            "day": 0,
+            "time": "1900"
+          }
+        },
+        {
+          "open": {
+            "day": 1,
+            "time": "0900"
+          },
+          "close": {
+            "day": 1,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "time": "0900"
+          },
+          "close": {
+            "day": 2,
+            "time": "1900"
+          }
+        },
+        {
+          "open": {
+            "day": 3,
+            "time": "0900"
+          },
+          "close": {
+            "day": 3,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 4,
+            "time": "0900"
+          },
+          "close": {
+            "day": 4,
+            "time": "1700"
+          }
+        },
+        {
+          "open": {
+            "day": 5,
+            "time": "0930"
+          },
+          "close": {
+            "day": 5,
+            "time": "1600"
+          }
+        },
+        {
+          "open": {
+            "day": 6,
+            "time": "0900"
+          },
+          "close": {
+            "day": 6,
+            "time": "2200"
+          }
+        }
+      ],
+      "weekday_text": [
+        "Monday\\\",[\\\"9 am–7 pm",
+        "Tuesday\\\",[\\\"9 am–5 pm",
+        "Wednesday\\\",[\\\"9 am–7 pm",
+        "Thursday\\\",[\\\"9 am–5 pm",
+        "Friday\\\",[\\\"9 am–5 pm",
+        "Saturday\\\",[\\\"9:30 am–4 pm",
+        "Sunday\\\",7,[2025,9,21],[[\\\"9 am–10 pm"
+      ],
       "parsed_hours": {
+        "monday": {
+          "open": "09:00",
+          "close": "19:00"
+        },
         "tuesday": {
           "open": "09:00",
           "close": "17:00"
@@ -256,13 +636,9 @@
           "open": "09:00",
           "close": "17:00"
         },
-        "monday": {
-          "open": "09:00",
-          "close": "19:00"
-        },
         "saturday": {
-          "open": "09:00",
-          "close": "23:00"
+          "open": "09:30",
+          "close": "16:00"
         },
         "sunday": {
           "open": "09:00",
@@ -270,10 +646,7 @@
         }
       }
     },
-    "current_opening_hours": null,
-    "last_updated": "2025-09-04T17:22:27.132Z",
-    "location_name": "library",
-    "last_refreshed": "2025-09-16T20:16:57.346Z",
-    "open_now": false
+    "last_updated": "2025-09-18T11:30:33.935Z",
+    "location_name": "Central Library"
   }
 }

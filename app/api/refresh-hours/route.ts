@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../lib/supabase/server';
 import { getCachedOpeningHours } from '../../../lib/openingHoursCache';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 Starting daily opening hours refresh with web scraping...');
+    console.log('🔄 Starting daily opening hours refresh...');
     console.log('🔄 Environment:', process.env.NODE_ENV, 'Vercel:', !!process.env.VERCEL);
     
     // Optional: Add authentication here to prevent unauthorized refreshes
@@ -22,6 +24,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // In production (Vercel), web scraping is handled by GitHub Actions
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+    
+    if (isProduction) {
+      console.log('🔄 Production environment detected - web scraping is handled by GitHub Actions');
+      
+      // Check if we have the committed cache file
+      try {
+        await fs.access(path.join(process.cwd(), 'opening-hours-cache.json'));
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Production environment: Opening hours are refreshed daily by GitHub Actions at 6 AM UK time',
+          method: 'GitHub Actions workflow',
+          cache_status: 'Available',
+          next_update: 'Daily at 6 AM UK time',
+          note: 'Web scraping is disabled in Vercel production environment to avoid 500 errors'
+        });
+      } catch {
+        return NextResponse.json({
+          success: false,
+          message: 'Production environment: GitHub Actions handles refresh, but cache file not found',
+          method: 'GitHub Actions workflow',
+          cache_status: 'Missing',
+          recommendation: 'Check GitHub Actions workflow logs'
+        }, { status: 503 });
+      }
+    }
+
+    // Development environment: continue with web scraping
     const supabase = await createClient();
     
     // Get all unique Google Place URLs from the database
@@ -41,7 +73,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'No locations to refresh', count: 0 });
     }
 
-    console.log(`🔍 Found ${locations.length} locations to refresh`);
+    console.log(`🔍 Found ${locations.length} locations to refresh in development`);
     
     // Get unique URLs to avoid duplicates
     const uniqueUrls = [...new Map(
@@ -136,10 +168,23 @@ export async function POST(request: NextRequest) {
 
 // Support GET for testing and status
 export async function GET() {
-  return NextResponse.json({ 
-    message: 'Daily opening hours refresh endpoint (web scraping)', 
-    method: 'POST',
-    auth: 'Required: adminKey in body or x-admin-key header',
-    features: ['Web scraping (free)', 'Daily refresh', 'Batch processing', 'Error handling']
-  });
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+  
+  if (isProduction) {
+    return NextResponse.json({ 
+      message: 'Production: Opening hours refresh via GitHub Actions', 
+      method: 'GitHub Actions workflow (daily at 6 AM UK time)',
+      auth: 'Not required in production',
+      features: ['Automated daily refresh', 'Committed cache file', 'No Vercel limitations'],
+      web_scraping: 'Disabled in production (handled by GitHub Actions)',
+      manual_refresh: 'Not available in production - use GitHub Actions workflow_dispatch'
+    });
+  } else {
+    return NextResponse.json({ 
+      message: 'Development: Opening hours refresh endpoint (web scraping)', 
+      method: 'POST',
+      auth: 'Required: adminKey in body or x-admin-key header',
+      features: ['Web scraping (free)', 'Manual refresh', 'Batch processing', 'Error handling']
+    });
+  }
 }
