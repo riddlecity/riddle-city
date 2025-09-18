@@ -8,36 +8,87 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+// Import Supabase client for dynamic location fetching
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
 // Simple implementation of needed functions without full Next.js dependencies
 const CACHE_FILE = path.join(process.cwd(), 'opening-hours-cache.json');
 
-// Riddle locations mapping (matches the fallback data structure)
-const LOCATIONS = [
-  {
-    name: 'Superbowl',
-    url: 'https://maps.app.goo.gl/NvpzkEAzq6JCD5o49'
-  },
-  {
-    name: 'Central Library',
-    url: 'https://maps.app.goo.gl/f94mvjKVE9NgMG32A'
-  },
-  {
-    name: 'Falco Lounge',
-    url: 'https://maps.app.goo.gl/HwhzfBt35q4WvzWJ8'
-  },
-  {
-    name: '200 Degrees',
-    url: 'https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6'
-  },
-  {
-    name: 'Red Robot',
-    url: 'https://maps.app.goo.gl/77Xiczt1k2RNPLfF9'
-  },
-  {
-    name: 'Spiral City',
-    url: 'https://maps.app.goo.gl/2ckBtY19XnQWj6ea7'
+// Fetch riddle locations dynamically from database
+async function fetchRiddleLocations() {
+  try {
+    console.log('📍 Fetching riddle locations from database...');
+    
+    const { data: locations, error } = await supabase
+      .from('riddle_locations')
+      .select('google_place_url, location_name')
+      .not('google_place_url', 'is', null)
+      .not('google_place_url', 'eq', '');
+
+    if (error) {
+      console.error('❌ Error fetching locations from database:', error);
+      // Fallback to hardcoded locations if database fails
+      return getHardcodedLocations();
+    }
+
+    if (!locations || locations.length === 0) {
+      console.log('ℹ️ No locations found in database, using hardcoded fallback');
+      return getHardcodedLocations();
+    }
+
+    // Get unique URLs to avoid duplicates
+    const uniqueLocations = [...new Map(
+      locations.map((loc) => [loc.google_place_url, {
+        name: loc.location_name,
+        url: loc.google_place_url
+      }])
+    ).values()];
+
+    console.log(`✅ Found ${uniqueLocations.length} locations from database`);
+    return uniqueLocations;
+
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    console.log('🔄 Using hardcoded locations as fallback');
+    return getHardcodedLocations();
   }
-];
+}
+
+// Fallback hardcoded locations (for reliability)
+function getHardcodedLocations() {
+  return [
+    {
+      name: 'Superbowl',
+      url: 'https://maps.app.goo.gl/NvpzkEAzq6JCD5o49'
+    },
+    {
+      name: 'Central Library',
+      url: 'https://maps.app.goo.gl/f94mvjKVE9NgMG32A'
+    },
+    {
+      name: 'Falco Lounge',
+      url: 'https://maps.app.goo.gl/HwhzfBt35q4WvzWJ8'
+    },
+    {
+      name: '200 Degrees',
+      url: 'https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6'
+    },
+    {
+      name: 'Red Robot',
+      url: 'https://maps.app.goo.gl/77Xiczt1k2RNPLfF9'
+    },
+    {
+      name: 'Spiral City',
+      url: 'https://maps.app.goo.gl/2ckBtY19XnQWj6ea7'
+    }
+  ];
+}
 
 // Web scraping function optimized for GitHub Actions environment
 async function scrapeGoogleMapsHours(googlePlaceUrl, locationName) {
@@ -244,14 +295,18 @@ async function main() {
   console.log('🚀 Starting opening hours scraping...');
   console.log('🕐 Time:', new Date().toISOString());
   
+  // Fetch locations dynamically from database
+  const locations = await fetchRiddleLocations();
+  console.log(`📍 Found ${locations.length} locations to process`);
+  
   const cache = await loadCache();
   let updatedCount = 0;
   let errorCount = 0;
   
   // Process each location with delays to be respectful
-  for (const location of LOCATIONS) {
+  for (const location of locations) {
     try {
-  console.log(`\n📍 Processing ${location.name}...`);
+      console.log(`\n📍 Processing ${location.name}...`);
       
       // Check if we need to update this location (daily refresh)
       const existing = cache[location.url];
@@ -303,7 +358,7 @@ async function main() {
   }
   
   // Exit with error code if all locations failed
-  if (errorCount === LOCATIONS.length) {
+  if (errorCount === locations.length) {
     console.error('❌ All locations failed to scrape!');
     process.exit(1);
   }
