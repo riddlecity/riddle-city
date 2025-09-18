@@ -231,23 +231,23 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Sunday: 10:00 AM – 3:00 PM'
       ]
     },
-    // Riddle 6 - https://maps.app.goo.gl/2ckBtY19XnQWj6ea7 (SPIRAL CITY)
+    // Riddle 6 - https://maps.app.goo.gl/2ckBtY19XnQWj6ea7 (SPIRAL CITY) - ACTUAL SCRAPED HOURS
     'https://maps.app.goo.gl/2ckBtY19XnQWj6ea7': {
       parsed_hours: {
-        monday: { open: '09:00', close: '17:00' },
-        tuesday: { open: '09:00', close: '17:00' },
-        wednesday: { open: '09:00', close: '17:00' },
-        thursday: { open: '12:00', close: '17:00' },  // Opens at noon Thursday
-        friday: { open: '09:00', close: '17:00' },
-        saturday: { open: '10:00', close: '16:00' },
-        sunday: { open: '11:00', close: '15:00' }
+        monday: null,  // CLOSED Monday
+        tuesday: { open: '12:00', close: '22:30' },   // 12pm-10:30pm
+        wednesday: { open: '12:00', close: '23:30' }, // 12pm-11:30pm  
+        thursday: { open: '12:00', close: '23:30' },  // 12pm-11:30pm
+        friday: { open: '11:00', close: '23:30' },    // 11am-11:30pm
+        saturday: { open: '11:00', close: '00:30' },  // 11am-12:30am (next day)
+        sunday: { open: '12:00', close: '21:00' }     // 12pm-9pm
       },
       weekday_text: [
-        'Monday: 9:00 AM – 5:00 PM',
-        'Tuesday: 9:00 AM – 5:00 PM',
-        'Wednesday: 9:00 AM – 5:00 PM',
-        'Thursday: 12:00 PM – 5:00 PM',  // Updated to show noon opening
-        'Friday: 9:00 AM – 5:00 PM',
+        'Monday: Closed',
+        'Tuesday: 12:00 PM – 10:30 PM',
+        'Wednesday: 12:00 PM – 11:30 PM',
+        'Thursday: 12:00 PM – 11:30 PM',
+        'Friday: 11:00 AM – 11:30 PM',
         'Saturday: 10:00 AM – 4:00 PM',
         'Sunday: 11:00 AM – 3:00 PM'
       ]
