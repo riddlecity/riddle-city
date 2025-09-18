@@ -75,13 +75,13 @@
         }
       ],
       "weekday_text": [
-        "Monday\\\",[\\\"9 am–10 pm",
-        "Tuesday\\\",[\\\"9 am–10 pm",
-        "Wednesday\\\",[\\\"9 am–10 pm",
-        "Thursday\\\",[\\\"9 am–10 pm",
-        "Friday\\\",[\\\"9 am–11 pm",
-        "Saturday\\\",[\\\"9 am–11 pm",
-        "Sunday\\\",[\\\"9 am–10 pm"
+        "Monday\\\",[\\\"9 AM–10 PM",
+        "Tuesday\\\",[\\\"9 AM–10 PM",
+        "Wednesday\\\",[\\\"9 AM–10 PM",
+        "Thursday\\\",[\\\"9 AM–10 PM",
+        "Friday\\\",[\\\"9 AM–11 PM",
+        "Saturday\\\",[\\\"9 AM–11 PM",
+        "Sunday\\\",[\\\"9 AM–10 PM"
       ],
       "parsed_hours": {
         "monday": {
@@ -114,7 +114,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T11:30:40.567Z",
+    "last_updated": "2025-09-18T12:45:22.620Z",
     "location_name": "Falco Lounge"
   },
   "https://maps.app.goo.gl/2ckBtY19XnQWj6ea7": {
@@ -173,12 +173,12 @@
         }
       ],
       "weekday_text": [
-        "Tuesday\\\",[\\\"12–10:30 pm\\\"],null,null,\\\"2025-09-23\\\",1,[[12,0,22,30]],0],[\\\"Wednesday\\\",[\\\"12–11:30 pm",
-        "Wednesday\\\",[\\\"12–11:30 pm\\\"],null,null,\\\"2025-09-24\\\",1,[[12,0,23,30]],0]],null,null,[[\\\"Thursday\\\",[\\\"12–11:30 pm",
-        "Thursday\\\",[\\\"12–11:30 pm\\\"],null,null,\\\"2025-09-18\\\",1,[[12,0,23,30]],0],[\\\"Friday\\\",[\\\"11 am",
-        "Friday\\\",[\\\"11 am–11:30 pm",
-        "Saturday\\\",[\\\"11 am–12:30 am",
-        "Sunday\\\",[\\\"12–9 pm\\\"],null,null,\\\"2025-09-21\\\",1,[[12,0,21,0]],0],[\\\"Monday\\\",[\\\"Closed"
+        "Tuesday\\\",[\\\"12–10:30 PM\\\"],null,null,\\\"2025-09-23\\\",1,[[12,0,22,30]],0],[\\\"Wednesday\\\",[\\\"12–11:30 PM",
+        "Wednesday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-09-24\\\",1,[[12,0,23,30]],0]],null,null,[[\\\"Thursday\\\",[\\\"12–11:30 PM",
+        "Thursday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-09-18\\\",1,[[12,0,23,30]],0],[\\\"Friday\\\",[\\\"11 AM",
+        "Friday\\\",[\\\"11 AM–11:30 PM",
+        "Saturday\\\",[\\\"11 AM–12:30 AM",
+        "Sunday\\\",[\\\"12–9 PM\\\"],null,null,\\\"2025-09-21\\\",1,[[12,0,21,0]],0],[\\\"Monday\\\",[\\\"Closed"
       ],
       "parsed_hours": {
         "monday": {
@@ -204,7 +204,7 @@
         "saturday": null
       }
     },
-    "last_updated": "2025-09-18T11:31:03.897Z",
+    "last_updated": "2025-09-18T12:45:35.835Z",
     "location_name": "Spiral City"
   },
   "https://maps.app.goo.gl/77Xiczt1k2RNPLfF9": {
@@ -263,11 +263,11 @@
         }
       ],
       "weekday_text": [
-        "Tuesday\\\",[\\\"10 am–5 pm",
-        "Wednesday\\\",[\\\"10 am–5 pm",
-        "Thursday\\\",[\\\"10 am–5 pm",
-        "Friday\\\",[\\\"10 am–5 pm",
-        "Saturday\\\",[\\\"10 am–5 pm"
+        "Tuesday\\\",[\\\"10 AM–5 PM",
+        "Wednesday\\\",[\\\"10 AM–5 PM",
+        "Thursday\\\",[\\\"10 AM–5 PM",
+        "Friday\\\",[\\\"10 AM–5 PM",
+        "Saturday\\\",[\\\"10 AM–5 PM"
       ],
       "parsed_hours": {
         "monday": {
@@ -292,7 +292,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T11:30:56.202Z",
+    "last_updated": "2025-09-18T12:45:31.255Z",
     "location_name": "Red Robot"
   },
   "https://maps.app.goo.gl/NvpzkEAzq6JCD5o49": {
@@ -371,13 +371,13 @@
         }
       ],
       "weekday_text": [
-        "Monday\\\",[\\\"9 am–11 pm",
-        "Tuesday\\\",[\\\"9 am–11 pm",
-        "Wednesday\\\",[\\\"9 am–11 pm",
-        "Thursday\\\",[\\\"9 am–11 pm",
-        "Friday\\\",[\\\"9 am–12 am",
-        "Saturday\\\",[\\\"9 am–12 am",
-        "Sunday\\\",[\\\"9 am–11 pm"
+        "Monday\\\",[\\\"9 AM–11 PM",
+        "Tuesday\\\",[\\\"9 AM–11 PM",
+        "Wednesday\\\",[\\\"9 AM–11 PM",
+        "Thursday\\\",[\\\"9 AM–11 PM",
+        "Friday\\\",[\\\"9 AM–12 AM",
+        "Saturday\\\",[\\\"9 AM–12 AM",
+        "Sunday\\\",[\\\"9 AM–11 PM"
       ],
       "parsed_hours": {
         "monday": {
@@ -410,7 +410,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T11:30:30.906Z",
+    "last_updated": "2025-09-18T12:45:14.656Z",
     "location_name": "Superbowl"
   },
   "https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6": {
@@ -489,13 +489,13 @@
         }
       ],
       "weekday_text": [
-        "Monday\\\",[\\\"7 am–5 pm",
-        "Tuesday\\\",[\\\"7 am–5 pm",
-        "Wednesday\\\",[\\\"7 am–5 pm",
-        "Thursday\\\",[\\\"7 am–5 pm",
-        "Friday\\\",[\\\"7 am–5 pm",
-        "Saturday\\\",[\\\"7 am–6 pm",
-        "Sunday\\\",[\\\"8:30 am–4:30 pm"
+        "Monday\\\",[\\\"7 AM–5 PM",
+        "Tuesday\\\",[\\\"7 AM–5 PM",
+        "Wednesday\\\",[\\\"7 AM–5 PM",
+        "Thursday\\\",[\\\"7 AM–5 PM",
+        "Friday\\\",[\\\"7 AM–5 PM",
+        "Saturday\\\",[\\\"7 AM–6 PM",
+        "Sunday\\\",[\\\"8:30 AM–4:30 PM"
       ],
       "parsed_hours": {
         "monday": {
@@ -528,7 +528,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T11:30:49.138Z",
+    "last_updated": "2025-09-18T12:45:27.667Z",
     "location_name": "200 Degrees"
   },
   "https://maps.app.goo.gl/f94mvjKVE9NgMG32A": {
@@ -607,13 +607,13 @@
         }
       ],
       "weekday_text": [
-        "Monday\\\",[\\\"9 am–7 pm",
-        "Tuesday\\\",[\\\"9 am–5 pm",
-        "Wednesday\\\",[\\\"9 am–7 pm",
-        "Thursday\\\",[\\\"9 am–5 pm",
-        "Friday\\\",[\\\"9 am–5 pm",
-        "Saturday\\\",[\\\"9:30 am–4 pm",
-        "Sunday\\\",7,[2025,9,21],[[\\\"9 am–10 pm"
+        "Monday\\\",[\\\"9 AM–7 PM",
+        "Tuesday\\\",[\\\"9 AM–5 PM",
+        "Wednesday\\\",[\\\"9 AM–7 PM",
+        "Thursday\\\",[\\\"9 AM–5 PM",
+        "Friday\\\",[\\\"9 AM–5 PM",
+        "Saturday\\\",[\\\"9:30 AM–4 PM",
+        "Sunday\\\",7,[2025,9,21],[[\\\"9 AM–10 PM"
       ],
       "parsed_hours": {
         "monday": {
@@ -646,7 +646,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T11:30:33.935Z",
+    "last_updated": "2025-09-18T12:45:17.185Z",
     "location_name": "Central Library"
   }
 }
