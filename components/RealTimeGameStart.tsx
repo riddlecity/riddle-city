@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Group } from '@/types/group';
 
 interface RealTimeGameStartProps {
   groupId: string;
@@ -30,7 +31,7 @@ export default function RealTimeGameStart({ groupId }: RealTimeGameStartProps) {
         .from('groups')
         .select('current_riddle_id, finished, game_started, paid, active')
         .eq('id', groupId)
-        .single();
+        .single() as { data: Pick<Group, 'current_riddle_id' | 'finished' | 'game_started' | 'paid' | 'active'> | null, error: any };
 
       if (error || !group) {
         console.log('🔄 GAME START SYNC: Could not fetch group data', error);

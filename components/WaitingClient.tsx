@@ -81,7 +81,7 @@ export default function WaitingClient({
             group_members ( user_id )
           `)
           .eq("id", groupId)
-          .single();
+          .single() as { data: DatabaseGroup | null, error: any };
 
         if (error) {
           console.warn("Error fetching group:", error);

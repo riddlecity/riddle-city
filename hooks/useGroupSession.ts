@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Group } from '@/types/group'
 
 interface GroupSession {
   groupId: string
@@ -104,11 +105,18 @@ export function useGroupSession(autoRedirect: boolean = false) {
             .from('groups')
             .select('team_name, track_id, current_riddle_id, game_started, finished, active, paid')
             .eq('id', data.groupId)
-            .single()
+            .single() as { data: Pick<Group, 'team_name' | 'track_id' | 'current_riddle_id' | 'game_started' | 'finished' | 'active' | 'paid'> | null, error: any }
 
           if (groupError) {
             console.error('🔍 USE GROUP SESSION: Error fetching group details:', groupError)
             setError('Failed to fetch game details')
+            setLoading(false)
+            return
+          }
+
+          if (!groupData) {
+            console.error('🔍 USE GROUP SESSION: No group data found')
+            setError('Group not found')
             setLoading(false)
             return
           }
@@ -159,7 +167,7 @@ export function useGroupSession(autoRedirect: boolean = false) {
             .from('groups')
             .select('team_name, track_id, current_riddle_id, game_started, finished, active, paid')
             .eq('id', data.groupId)
-            .single()
+            .single() as { data: Pick<Group, 'team_name' | 'track_id' | 'current_riddle_id' | 'game_started' | 'finished' | 'active' | 'paid'> | null, error: any }
 
           if (!groupError && groupData) {
             const session: GroupSession = {

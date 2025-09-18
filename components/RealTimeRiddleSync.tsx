@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Group } from '@/types/group';
 
 interface RealTimeRiddleSyncProps {
   groupId: string;
@@ -27,7 +28,7 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
         .from('groups')
         .select('current_riddle_id, finished, completed_at')
         .eq('id', groupId)
-        .single();
+        .single() as { data: Pick<Group, 'current_riddle_id' | 'finished'> & { completed_at?: string } | null, error: any };
 
       if (error || !group) {
         console.log('🔄 BACKUP SYNC: Could not fetch group data', error);
