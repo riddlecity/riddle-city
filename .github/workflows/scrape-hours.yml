@@ -11,7 +11,8 @@ on:
       force_run:
         description: 'Force run scraping even if cache is recent'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
 
 env:
   NODE_ENV: production
