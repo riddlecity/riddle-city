@@ -237,7 +237,7 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         monday: { open: '09:00', close: '17:00' },
         tuesday: { open: '09:00', close: '17:00' },
         wednesday: { open: '09:00', close: '17:00' },
-        thursday: { open: '09:00', close: '17:00' },
+        thursday: { open: '12:00', close: '17:00' },  // Opens at noon Thursday
         friday: { open: '09:00', close: '17:00' },
         saturday: { open: '10:00', close: '16:00' },
         sunday: { open: '11:00', close: '15:00' }
@@ -246,7 +246,7 @@ function getProductionFallbackHours(googlePlaceUrl: string, locationName: string
         'Monday: 9:00 AM – 5:00 PM',
         'Tuesday: 9:00 AM – 5:00 PM',
         'Wednesday: 9:00 AM – 5:00 PM',
-        'Thursday: 9:00 AM – 5:00 PM',
+        'Thursday: 12:00 PM – 5:00 PM',  // Updated to show noon opening
         'Friday: 9:00 AM – 5:00 PM',
         'Saturday: 10:00 AM – 4:00 PM',
         'Sunday: 11:00 AM – 3:00 PM'
