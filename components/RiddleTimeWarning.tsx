@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getUKTime } from '../lib/timeWarnings';
 
 interface TimeWarningProps {
   riddleId: string;
@@ -66,7 +67,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
         }
 
         // Calculate time warning for this specific location
-        const ukTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/London' }));
+        const ukTime = getUKTime();
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const currentDay = dayNames[ukTime.getDay()];
         const todayHours = opening_hours.parsed_hours[currentDay];
