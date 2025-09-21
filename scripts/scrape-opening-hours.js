@@ -326,6 +326,29 @@ async function main() {
       const hours = await scrapeGoogleMapsHours(location.url, location.name);
       
       if (hours) {
+        // MANUAL OVERRIDE: Central Library is closed on Sundays (Google Maps has wrong data)
+        if (location.name === 'Central Library') {
+          console.log(`🔧 Applying manual override for ${location.name} - removing Sunday hours`);
+          
+          // Remove Sunday from periods array
+          if (hours.periods) {
+            hours.periods = hours.periods.filter(period => period.open.day !== 0);
+          }
+          
+          // Update parsed_hours to show Sunday as closed
+          if (hours.parsed_hours) {
+            hours.parsed_hours.sunday = null;
+          }
+          
+          // Force open_now to false if it's Sunday
+          const ukTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/London"}));
+          if (ukTime.getDay() === 0) { // Sunday
+            hours.open_now = false;
+          }
+          
+          console.log(`✅ Manual override applied - Central Library closed on Sundays`);
+        }
+        
         cache[location.url] = {
           opening_hours: hours,
           last_updated: new Date().toISOString(),

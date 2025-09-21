@@ -23,13 +23,31 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   const [warning, setWarning] = useState<LocationWarning | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Extract riddle number from riddleId (e.g., "barnsley_r1" -> "1")
-  const getRiddleNumber = (riddleId: string): string => {
-    const match = riddleId.match(/r(\d+)$/);
-    return match ? match[1] : riddleId;
-  };
+  // Get actual riddle position from database order_index
+  const [riddleNumber, setRiddleNumber] = useState<string>(riddleId);
 
-  const riddleNumber = getRiddleNumber(riddleId);
+  // Fetch actual riddle position based on order_index
+  useEffect(() => {
+    async function getRiddlePosition() {
+      try {
+        const response = await fetch(`/api/locations/${trackId}/hours`);
+        if (response.ok) {
+          const data = await response.json();
+          const riddles = data.locations || [];
+          
+          // Find this riddle's position in the ordered list
+          const riddleIndex = riddles.findIndex((r: any) => r.id === riddleId);
+          if (riddleIndex !== -1) {
+            setRiddleNumber(String(riddleIndex + 1)); // Convert to 1-based position
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch riddle position:', error);
+      }
+    }
+    
+    getRiddlePosition();
+  }, [riddleId, trackId]);
 
   useEffect(() => {
     async function checkLocationHours() {

@@ -95,8 +95,6 @@ export function isLocationOpen(hours: OpeningHours | CachedOpeningHours, ukTime:
     }
     
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
-    
-    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
   }
   
   return false;
