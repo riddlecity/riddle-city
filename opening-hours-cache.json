@@ -114,7 +114,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T12:49:46.077Z",
+    "last_updated": "2025-09-21T05:14:19.480Z",
     "location_name": "Falco Lounge"
   },
   "https://maps.app.goo.gl/2ckBtY19XnQWj6ea7": {
@@ -174,8 +174,8 @@
       ],
       "weekday_text": [
         "Tuesday\\\",[\\\"12–10:30 PM\\\"],null,null,\\\"2025-09-23\\\",1,[[12,0,22,30]],0],[\\\"Wednesday\\\",[\\\"12–11:30 PM",
-        "Wednesday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-09-24\\\",1,[[12,0,23,30]],0]],null,null,[[\\\"Thursday\\\",[\\\"12–11:30 PM",
-        "Thursday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-09-18\\\",1,[[12,0,23,30]],0],[\\\"Friday\\\",[\\\"11 AM",
+        "Wednesday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-09-24\\\",1,[[12,0,23,30]],0],[\\\"Thursday\\\",[\\\"12–11:30 PM",
+        "Thursday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-09-25\\\",1,[[12,0,23,30]],0],[\\\"Friday\\\",[\\\"11 AM",
         "Friday\\\",[\\\"11 AM–11:30 PM",
         "Saturday\\\",[\\\"11 AM–12:30 AM",
         "Sunday\\\",[\\\"12–9 PM\\\"],null,null,\\\"2025-09-21\\\",1,[[12,0,21,0]],0],[\\\"Monday\\\",[\\\"Closed"
@@ -204,7 +204,7 @@
         "saturday": null
       }
     },
-    "last_updated": "2025-09-18T12:49:57.411Z",
+    "last_updated": "2025-09-21T05:14:28.907Z",
     "location_name": "Spiral City"
   },
   "https://maps.app.goo.gl/77Xiczt1k2RNPLfF9": {
@@ -292,7 +292,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T12:49:54.107Z",
+    "last_updated": "2025-09-21T05:14:26.321Z",
     "location_name": "Red Robot"
   },
   "https://maps.app.goo.gl/NvpzkEAzq6JCD5o49": {
@@ -410,7 +410,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T12:49:36.215Z",
+    "last_updated": "2025-09-21T05:14:09.550Z",
     "location_name": "Superbowl"
   },
   "https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6": {
@@ -528,7 +528,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T12:49:50.721Z",
+    "last_updated": "2025-09-21T05:14:23.101Z",
     "location_name": "200 Degrees"
   },
   "https://maps.app.goo.gl/f94mvjKVE9NgMG32A": {
@@ -646,7 +646,7 @@
         }
       }
     },
-    "last_updated": "2025-09-18T12:49:41.586Z",
+    "last_updated": "2025-09-21T05:14:14.401Z",
     "location_name": "Central Library"
   }
 }
