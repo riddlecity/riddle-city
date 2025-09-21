@@ -64,7 +64,12 @@ export function isLocationOpen(hours: OpeningHours | CachedOpeningHours, ukTime:
     const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
     
     const openMinutes = openHour * 60 + openMinute;
-    const closeMinutes = closeHour * 60 + closeMinute;
+    let closeMinutes = closeHour * 60 + closeMinute;
+    
+    // Handle midnight closures (00:00, 00:30, etc.) - they close the next day
+    if (closeHour === 0 || (closeHour === 0 && closeMinute > 0)) {
+      closeMinutes += 24 * 60; // Add 24 hours
+    }
     
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
   }
@@ -82,7 +87,14 @@ export function isLocationOpen(hours: OpeningHours | CachedOpeningHours, ukTime:
     const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
     
     const openMinutes = openHour * 60 + openMinute;
-    const closeMinutes = closeHour * 60 + closeMinute;
+    let closeMinutes = closeHour * 60 + closeMinute;
+    
+    // Handle midnight closures (00:00, 00:30, etc.) - they close the next day
+    if (closeHour === 0 || (closeHour === 0 && closeMinute > 0)) {
+      closeMinutes += 24 * 60; // Add 24 hours
+    }
+    
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
     
     return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
   }
@@ -102,7 +114,12 @@ export function hoursUntilClose(hours: OpeningHours | CachedOpeningHours, ukTime
     
     const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
     const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
-    const closeMinutes = closeHour * 60 + closeMinute;
+    let closeMinutes = closeHour * 60 + closeMinute;
+    
+    // Handle midnight closures (00:00, 00:30, etc.) - they close the next day
+    if (closeHour === 0 || (closeHour === 0 && closeMinute > 0)) {
+      closeMinutes += 24 * 60; // Add 24 hours
+    }
     
     const minutesUntilClose = closeMinutes - currentMinutes;
     return minutesUntilClose > 0 ? minutesUntilClose / 60 : 0;
@@ -118,7 +135,12 @@ export function hoursUntilClose(hours: OpeningHours | CachedOpeningHours, ukTime
     
     const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
     const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
-    const closeMinutes = closeHour * 60 + closeMinute;
+    let closeMinutes = closeHour * 60 + closeMinute;
+    
+    // Handle midnight closures (00:00, 00:30, etc.) - they close the next day
+    if (closeHour === 0 || (closeHour === 0 && closeMinute > 0)) {
+      closeMinutes += 24 * 60; // Add 24 hours
+    }
     
     const minutesUntilClose = closeMinutes - currentMinutes;
     return minutesUntilClose > 0 ? minutesUntilClose / 60 : 0;

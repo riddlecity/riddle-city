@@ -23,6 +23,14 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   const [warning, setWarning] = useState<LocationWarning | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Extract riddle number from riddleId (e.g., "barnsley_r1" -> "1")
+  const getRiddleNumber = (riddleId: string): string => {
+    const match = riddleId.match(/r(\d+)$/);
+    return match ? match[1] : riddleId;
+  };
+
+  const riddleNumber = getRiddleNumber(riddleId);
+
   useEffect(() => {
     async function checkLocationHours() {
       try {
@@ -76,7 +84,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
           // Location is closed today (e.g., Monday for some places)
           setWarning({
             type: 'closed',
-            message: `⚠️ Riddle ${riddleId} is closed today. You can still find the location, but looks like you'll have to skip this one.`,
+            message: `⚠️ Riddle ${riddleNumber} is closed today. You can still find the location, but looks like you'll have to skip this one.`,
             severity: 'high'
           });
           setLoading(false);
@@ -101,7 +109,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
             if (hoursUntilOpen < 1) {
               setWarning({
                 type: 'closed',
-                message: `⏰ Riddle ${riddleId} opens in ${Math.round(minutesUntilOpen)} minutes (at ${todayHours.open})`,
+                message: `⏰ Riddle ${riddleNumber} opens in ${Math.round(minutesUntilOpen)} minutes (at ${todayHours.open})`,
                 severity: 'medium',
                 opensAt: todayHours.open
               });
@@ -109,7 +117,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
               const formattedHours = Math.ceil(hoursUntilOpen * 2) / 2; // Round up to nearest 0.5
               setWarning({
                 type: 'closed',
-                message: `⚠️ Riddle ${riddleId} opens in ${formattedHours}h (at ${todayHours.open}). You may have to wait to access, or you can always skip.`,
+                message: `⚠️ Riddle ${riddleNumber} opens in ${formattedHours}h (at ${todayHours.open}). You may have to wait to access, or you can always skip.`,
                 severity: 'high',
                 opensAt: todayHours.open
               });
@@ -118,7 +126,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
             // Location was open earlier but has now closed
             setWarning({
               type: 'closed',
-              message: `⚠️ Riddle ${riddleId} has now closed (closed at ${todayHours.close}). You can still find the location, but looks like you'll have to skip this one.`,
+              message: `⚠️ Riddle ${riddleNumber} has now closed (closed at ${todayHours.close}). You can still find the location, but looks like you'll have to skip this one.`,
               severity: 'high'
             });
           }
@@ -133,11 +141,11 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
             
             if (hoursUntilClose < 1) {
               const minutesLeft = Math.round(minutesUntilClose);
-              message = `🚨 Hurry! Riddle ${riddleId} closes in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} (at ${todayHours.close})`;
+              message = `🚨 Hurry! Riddle ${riddleNumber} closes in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} (at ${todayHours.close})`;
               severity = 'high';
             } else {
               const roundedHours = Math.ceil(hoursUntilClose * 2) / 2;
-              message = `⏰ Riddle ${riddleId} closes in ${roundedHours} hour${roundedHours !== 1 ? 's' : ''} (at ${todayHours.close})`;
+              message = `⏰ Riddle ${riddleNumber} closes in ${roundedHours} hour${roundedHours !== 1 ? 's' : ''} (at ${todayHours.close})`;
             }
 
             setWarning({
