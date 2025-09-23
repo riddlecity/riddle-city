@@ -533,7 +533,7 @@
   },
   "https://maps.app.goo.gl/f94mvjKVE9NgMG32A": {
     "opening_hours": {
-      "open_now": false,
+      "open_now": true,
       "periods": [
         {
           "open": {
@@ -603,7 +603,7 @@
         "Thursday\\\",[\\\"9 AM–5 PM",
         "Friday\\\",[\\\"9 AM–5 PM",
         "Saturday\\\",[\\\"9:30 AM–4 PM",
-        "Sunday\\\",7,[2025,9,21],[[\\\"9 AM–10 PM"
+        "Sunday\\\",7,[2025,9,28],[[\\\"9 AM–10 PM"
       ],
       "parsed_hours": {
         "monday": {
@@ -633,7 +633,7 @@
         "sunday": null
       }
     },
-    "last_updated": "2025-09-21T19:15:29.852Z",
+    "last_updated": "2025-09-23T05:14:33.021Z",
     "location_name": "Central Library"
   }
 }
