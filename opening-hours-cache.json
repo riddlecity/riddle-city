@@ -114,7 +114,7 @@
         }
       }
     },
-    "last_updated": "2025-09-29T05:15:51.840Z",
+    "last_updated": "2025-10-01T05:15:30.493Z",
     "location_name": "Falco Lounge"
   },
   "https://maps.app.goo.gl/2ckBtY19XnQWj6ea7": {
@@ -173,12 +173,12 @@
         }
       ],
       "weekday_text": [
-        "Tuesday\\\",[\\\"12–10:30 PM\\\"],null,null,\\\"2025-09-30\\\",1,[[12,0,22,30]],0],[\\\"Wednesday\\\",[\\\"12–11:30 PM",
+        "Tuesday\\\",[\\\"12–10:30 PM\\\"],null,null,\\\"2025-10-07\\\",1,[[12,0,22,30]],0]],null,null,[[\\\"Wednesday\\\",[\\\"12–11:30 PM",
         "Wednesday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-10-01\\\",1,[[12,0,23,30]],0],[\\\"Thursday\\\",[\\\"12–11:30 PM",
         "Thursday\\\",[\\\"12–11:30 PM\\\"],null,null,\\\"2025-10-02\\\",1,[[12,0,23,30]],0],[\\\"Friday\\\",[\\\"11 AM",
         "Friday\\\",[\\\"11 AM–11:30 PM",
         "Saturday\\\",[\\\"11 AM–12:30 AM",
-        "Sunday\\\",[\\\"12–9 PM\\\"],null,null,\\\"2025-10-05\\\",1,[[12,0,21,0]],0]],null,null,[[\\\"Monday\\\",[\\\"Closed"
+        "Sunday\\\",[\\\"12–9 PM\\\"],null,null,\\\"2025-10-05\\\",1,[[12,0,21,0]],0],[\\\"Monday\\\",[\\\"Closed"
       ],
       "parsed_hours": {
         "monday": {
@@ -204,7 +204,7 @@
         "saturday": null
       }
     },
-    "last_updated": "2025-09-29T05:16:03.952Z",
+    "last_updated": "2025-10-01T05:15:40.336Z",
     "location_name": "Spiral City"
   },
   "https://maps.app.goo.gl/77Xiczt1k2RNPLfF9": {
@@ -292,7 +292,7 @@
         }
       }
     },
-    "last_updated": "2025-09-29T05:16:00.307Z",
+    "last_updated": "2025-10-01T05:15:36.524Z",
     "location_name": "Red Robot"
   },
   "https://maps.app.goo.gl/NvpzkEAzq6JCD5o49": {
@@ -410,7 +410,7 @@
         }
       }
     },
-    "last_updated": "2025-09-29T05:15:42.794Z",
+    "last_updated": "2025-10-01T05:15:22.446Z",
     "location_name": "Superbowl"
   },
   "https://maps.app.goo.gl/tAHPcM7uvTzod6ZV6": {
@@ -528,7 +528,7 @@
         }
       }
     },
-    "last_updated": "2025-09-29T05:15:55.968Z",
+    "last_updated": "2025-10-01T05:15:33.298Z",
     "location_name": "200 Degrees"
   },
   "https://maps.app.goo.gl/f94mvjKVE9NgMG32A": {
@@ -633,7 +633,7 @@
         "sunday": null
       }
     },
-    "last_updated": "2025-09-29T05:15:47.655Z",
+    "last_updated": "2025-10-01T05:15:25.376Z",
     "location_name": "Central Library"
   }
 }
