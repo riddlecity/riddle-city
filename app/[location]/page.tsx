@@ -5,7 +5,8 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLocationHours } from "../../hooks/useLocationHours";
-import { getOverallTimeWarning } from "../../lib/timeWarnings";
+// TODO: Re-implement with new database system
+// import { getOverallTimeWarning } from "../../lib/timeWarnings";
 import TimeWarningModal from "../../components/TimeWarningModal";
 
 interface Props {
@@ -123,7 +124,8 @@ export default function LocationPage({ params }: Props) {
         }));
 
       if (locationsWithHours.length > 0) {
-        const timeWarning = getOverallTimeWarning(locationsWithHours);
+        // TODO: Re-implement with new database system
+        const timeWarning = { shouldWarn: false }; // getOverallTimeWarning(locationsWithHours);
         
         if (timeWarning.shouldWarn) {
           setSelectedMode(mode);
@@ -342,14 +344,23 @@ export default function LocationPage({ params }: Props) {
             setSelectedMode(null);
           }}
           warning={(() => {
-            const locationsToCheck = selectedMode === 'date' ? dateLocations : pubLocations;
-            const locationsWithHours = locationsToCheck
-              .filter(loc => loc.opening_hours)
-              .map(loc => ({
-                name: loc.name,
-                hours: loc.opening_hours!
-              }));
-            return getOverallTimeWarning(locationsWithHours);
+            // TODO: Re-implement with new database system
+            // const locationsToCheck = selectedMode === 'date' ? dateLocations : pubLocations;
+            // const locationsWithHours = locationsToCheck
+            //   .filter(loc => loc.opening_hours)
+            //   .map(loc => ({
+            //     name: loc.name,
+            //     hours: loc.opening_hours!
+            //   }));
+            return {
+              shouldWarn: false,
+              message: "Time warnings temporarily disabled",
+              severity: "low" as const,
+              closedCount: 0,
+              closingSoonCount: 0,
+              closingSoonDetails: [],
+              closedDetails: []
+            }; // getOverallTimeWarning(locationsWithHours);
           })()}
         />
       )}

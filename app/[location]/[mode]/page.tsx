@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocationHours } from "../../../hooks/useLocationHours";
-import { getOverallTimeWarning } from "../../../lib/timeWarnings";
+// TODO: Re-implement with new database system
+// import { getOverallTimeWarning } from "../../../lib/timeWarnings";
 import TimeWarningModal from "../../../components/TimeWarningModal";
 
 export default function PreferencesPage() {
@@ -246,7 +247,8 @@ export default function PreferencesPage() {
       console.log('🔍 Locations with hours:', locationsWithHours);
 
       if (locationsWithHours.length > 0) {
-        const timeWarning = getOverallTimeWarning(locationsWithHours);
+        // TODO: Re-implement with new database system
+        const timeWarning = { shouldWarn: false }; // getOverallTimeWarning(locationsWithHours);
         console.log('🔍 Time warning result:', timeWarning);
         
         if (timeWarning.shouldWarn) {
@@ -629,13 +631,22 @@ export default function PreferencesPage() {
             proceedWithPayment();
           }}
           warning={(() => {
-            const locationsWithHours = locations
-              .filter(loc => loc.opening_hours)
-              .map(loc => ({
-                name: loc.name,
-                hours: loc.opening_hours!
-              }));
-            return getOverallTimeWarning(locationsWithHours);
+            // TODO: Re-implement with new database system
+            // const locationsWithHours = locations
+            //   .filter(loc => loc.opening_hours)
+            //   .map(loc => ({
+            //     name: loc.name,
+            //     hours: loc.opening_hours!
+            //   }));
+            return {
+              shouldWarn: false,
+              message: "Time warnings temporarily disabled",
+              severity: "low" as const,
+              closedCount: 0,
+              closingSoonCount: 0,
+              closingSoonDetails: [],
+              closedDetails: []
+            }; // getOverallTimeWarning(locationsWithHours);
           })()}
         />
       )}

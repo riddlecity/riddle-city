@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getUKTime } from '../lib/timeWarnings';
 
 interface TimeWarningProps {
   riddleId: string;
@@ -10,7 +9,7 @@ interface TimeWarningProps {
 }
 
 interface LocationWarning {
-  type: 'closed' | 'closing_soon' | 'open';
+  type: 'closed' | 'closing_soon' | 'open' | 'bank_holiday';
   message: string;
   severity: 'high' | 'medium' | 'low';
   closingTime?: string;
@@ -22,11 +21,9 @@ interface LocationWarning {
 export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProps) {
   const [warning, setWarning] = useState<LocationWarning | null>(null);
   const [loading, setLoading] = useState(true);
+  const [_riddleNumber, setRiddleNumber] = useState<string>(riddleId);
 
   // Get actual riddle position from database order_index
-  const [riddleNumber, setRiddleNumber] = useState<string>(riddleId);
-
-  // Fetch actual riddle position based on order_index
   useEffect(() => {
     async function getRiddlePosition() {
       try {
@@ -49,134 +46,30 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
     getRiddlePosition();
   }, [riddleId, trackId]);
 
+  // Check location hours and get warnings
   useEffect(() => {
     async function checkLocationHours() {
       try {
-        // Get the riddle's location data
-        const riddleResponse = await fetch(`/api/riddles/${riddleId}/location`);
-        if (!riddleResponse.ok) {
-          console.log('No location data found for riddle');
-          setLoading(false);
+        // Use new database-based time warnings system
+        const response = await fetch(`/api/riddles/${riddleId}/time-warning`);
+        if (!response.ok) {
+          console.log('No time warning data available');
           return;
         }
 
-        const { google_place_url, location_name } = await riddleResponse.json();
+        const timeWarning = await response.json();
         
-        if (!google_place_url) {
-          console.log('No Google Place URL for this riddle');
-          setLoading(false);
-          return;
-        }
-
-        // Get cached opening hours for this specific location
-        const hoursResponse = await fetch('/api/cached-hours', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            google_place_url,
-            location_name
-          })
-        });
-
-        if (!hoursResponse.ok) {
-          console.error('Failed to get opening hours');
-          setLoading(false);
-          return;
-        }
-
-        const { opening_hours } = await hoursResponse.json();
-        
-        if (!opening_hours || !opening_hours.parsed_hours) {
-          console.log('No parsed hours available');
-          setLoading(false);
-          return;
-        }
-
-        // Calculate time warning for this specific location
-        const ukTime = getUKTime();
-        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const currentDay = dayNames[ukTime.getDay()];
-        const todayHours = opening_hours.parsed_hours[currentDay];
-
-        if (!todayHours) {
-          // Location is closed today (e.g., Monday for some places)
+        if (timeWarning && timeWarning.type) {
           setWarning({
-            type: 'closed',
-            message: `⚠️ Riddle ${riddleNumber} is closed today. You can still find the location, but looks like you'll have to skip this one.`,
-            severity: 'high'
+            type: timeWarning.type,
+            message: timeWarning.message,
+            severity: timeWarning.severity,
+            closingTime: timeWarning.closingTime,
+            hoursUntilClose: timeWarning.hoursUntilClose,
+            hoursUntilOpen: timeWarning.hoursUntilOpen,
+            opensAt: timeWarning.opensAt
           });
-          setLoading(false);
-          return;
         }
-
-        // Check if currently open and how much time until close
-        const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
-        const [openHour, openMinute] = todayHours.open.split(':').map(Number);
-        const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
-        const openMinutes = openHour * 60 + openMinute;
-        const closeMinutes = closeHour * 60 + closeMinute;
-
-        const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
-
-        if (!isOpen) {
-          if (currentMinutes < openMinutes) {
-            // Location hasn't opened yet today
-            const minutesUntilOpen = openMinutes - currentMinutes;
-            const hoursUntilOpen = minutesUntilOpen / 60;
-            
-            if (hoursUntilOpen < 1) {
-              setWarning({
-                type: 'closed',
-                message: `⏰ Riddle ${riddleNumber} opens in ${Math.round(minutesUntilOpen)} minutes (at ${todayHours.open})`,
-                severity: 'medium',
-                opensAt: todayHours.open
-              });
-            } else {
-              const formattedHours = Math.ceil(hoursUntilOpen * 2) / 2; // Round up to nearest 0.5
-              setWarning({
-                type: 'closed',
-                message: `⚠️ Riddle ${riddleNumber} opens in ${formattedHours}h (at ${todayHours.open}). You may have to wait to access, or you can always skip.`,
-                severity: 'high',
-                opensAt: todayHours.open
-              });
-            }
-          } else {
-            // Location was open earlier but has now closed
-            setWarning({
-              type: 'closed',
-              message: `⚠️ Riddle ${riddleNumber} has now closed (closed at ${todayHours.close}). You can still find the location, but looks like you'll have to skip this one.`,
-              severity: 'high'
-            });
-          }
-        } else {
-          // Location is open - check if closing soon
-          const minutesUntilClose = closeMinutes - currentMinutes;
-          const hoursUntilClose = minutesUntilClose / 60;
-
-          if (hoursUntilClose <= 2) {
-            let message = '';
-            let severity: 'high' | 'medium' = 'medium';
-            
-            if (hoursUntilClose < 1) {
-              const minutesLeft = Math.round(minutesUntilClose);
-              message = `🚨 Hurry! Riddle ${riddleNumber} closes in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''} (at ${todayHours.close})`;
-              severity = 'high';
-            } else {
-              const roundedHours = Math.ceil(hoursUntilClose * 2) / 2;
-              message = `⏰ Riddle ${riddleNumber} closes in ${roundedHours} hour${roundedHours !== 1 ? 's' : ''} (at ${todayHours.close})`;
-            }
-
-            setWarning({
-              type: 'closing_soon',
-              message,
-              severity,
-              closingTime: todayHours.close,
-              hoursUntilClose
-            });
-          }
-          // If open with plenty of time, no warning needed
-        }
-
       } catch (error) {
         console.error('Error checking location hours:', error);
       } finally {
@@ -189,7 +82,7 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
     // Refresh every 5 minutes to keep warnings current
     const interval = setInterval(checkLocationHours, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [riddleId, trackId]);
+  }, [riddleId]);
 
   if (loading || !warning) {
     return null;
@@ -198,23 +91,59 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   const getWarningStyles = () => {
     switch (warning.severity) {
       case 'high':
-        return 'bg-red-900/80 border-red-500 text-red-100';
+        return 'bg-red-600 border-red-500';
       case 'medium':
-        return 'bg-red-900/80 border-red-500 text-red-100';
+        return 'bg-orange-600 border-orange-500';
+      case 'low':
+        return 'bg-blue-600 border-blue-500';
       default:
-        return 'bg-yellow-900/80 border-yellow-500 text-yellow-100';
+        return 'bg-gray-600 border-gray-500';
+    }
+  };
+
+  const getWarningIcon = () => {
+    switch (warning.type) {
+      case 'closed':
+        return '🔒';
+      case 'closing_soon':
+        return '⏰';
+      case 'open':
+        return '✅';
+      case 'bank_holiday':
+        return '🏦';
+      default:
+        return '⚠️';
     }
   };
 
   return (
-    <div className="w-full px-4 pb-2 z-10">
-      <div className={`rounded-lg border backdrop-blur-sm p-3 text-sm text-center ${getWarningStyles()}`}>
-        <div className="font-medium">{warning.message}</div>
-        {warning.type === 'closing_soon' && (
-          <div className="text-xs mt-1 opacity-75">
-            Complete this riddle before the location closes to ensure access.
-          </div>
-        )}
+    <div className={`p-4 rounded-lg border-2 ${getWarningStyles()} text-white mb-4`}>
+      <div className="flex items-center space-x-2">
+        <span className="text-xl">{getWarningIcon()}</span>
+        <div className="flex-1">
+          <p className="font-medium">{warning.message}</p>
+          
+          {warning.type === 'closing_soon' && warning.hoursUntilClose && (
+            <p className="text-sm opacity-90 mt-1">
+              {warning.hoursUntilClose < 1 
+                ? `Closes in ${Math.round(warning.hoursUntilClose * 60)} minutes`
+                : `Closes in ${Math.round(warning.hoursUntilClose)} hours`
+              }
+            </p>
+          )}
+          
+          {warning.type === 'closed' && warning.opensAt && (
+            <p className="text-sm opacity-90 mt-1">
+              Opens at {warning.opensAt}
+            </p>
+          )}
+          
+          {warning.type === 'bank_holiday' && (
+            <p className="text-sm opacity-90 mt-1">
+              Check location directly for today's hours
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
