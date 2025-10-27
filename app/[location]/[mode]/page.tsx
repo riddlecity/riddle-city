@@ -25,6 +25,16 @@ export default function PreferencesPage() {
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
+  const [timeWarningData, setTimeWarningData] = useState<{
+    shouldWarn: boolean;
+    closedCount: number;
+    closingSoonCount: number;
+    isBankHoliday: boolean;
+    message: string;
+    severity: 'high' | 'medium' | 'low';
+    closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
+    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
+  } | null>(null);
   
   // Load location hours for time warnings
   const { locations, loading: locationsLoading } = useLocationHours(trackId);
@@ -236,27 +246,24 @@ export default function PreferencesPage() {
     });
 
     // Check time warnings before proceeding
-    if (!locationsLoading && locations.length > 0) {
-      const locationsWithHours = locations
-        .filter(loc => loc.opening_hours)
-        .map(loc => ({
-          name: loc.name,
-          hours: loc.opening_hours!
-        }));
-
-      console.log('🔍 Locations with hours:', locationsWithHours);
-
-      if (locationsWithHours.length > 0) {
-        // TODO: Re-implement with new database system
-        const timeWarning = { shouldWarn: false }; // getOverallTimeWarning(locationsWithHours);
+    try {
+      const trackId = `${mode}_${location.toLowerCase()}`;
+      const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
+      
+      if (response.ok) {
+        const timeWarning = await response.json();
         console.log('🔍 Time warning result:', timeWarning);
         
         if (timeWarning.shouldWarn) {
           console.log('🔍 Showing time warning modal');
+          setTimeWarningData(timeWarning);
           setShowTimeWarning(true);
           return; // Stop here and show warning modal
         }
       }
+    } catch (error) {
+      console.error('Error checking time warnings:', error);
+      // Continue anyway if API fails
     }
 
     // Proceed with normal payment flow
@@ -622,7 +629,7 @@ export default function PreferencesPage() {
       </div>
 
       {/* Time Warning Modal */}
-      {showTimeWarning && !locationsLoading && locations.length > 0 && (
+      {showTimeWarning && timeWarningData && (
         <TimeWarningModal
           isOpen={showTimeWarning}
           onClose={() => setShowTimeWarning(false)}
@@ -630,24 +637,7 @@ export default function PreferencesPage() {
             setShowTimeWarning(false);
             proceedWithPayment();
           }}
-          warning={(() => {
-            // TODO: Re-implement with new database system
-            // const locationsWithHours = locations
-            //   .filter(loc => loc.opening_hours)
-            //   .map(loc => ({
-            //     name: loc.name,
-            //     hours: loc.opening_hours!
-            //   }));
-            return {
-              shouldWarn: false,
-              message: "Time warnings temporarily disabled",
-              severity: "low" as const,
-              closedCount: 0,
-              closingSoonCount: 0,
-              closingSoonDetails: [],
-              closedDetails: []
-            }; // getOverallTimeWarning(locationsWithHours);
-          })()}
+          warning={timeWarningData}
         />
       )}
     </main>

@@ -137,7 +137,7 @@ function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: s
 }
 
 // Main function to check location hours and generate warnings
-export async function checkLocationHours(riddleId: string, locationName?: string): Promise<TimeWarning | null> {
+export async function checkLocationHours(riddleId: string): Promise<TimeWarning | null> {
   try {
     // Get opening hours and location name from database
     const supabase = await createClient();
@@ -152,13 +152,14 @@ export async function checkLocationHours(riddleId: string, locationName?: string
     }
 
     const hours = riddleData.opening_hours as DatabaseOpeningHours;
-    const actualLocationName = locationName || riddleData.location_id || 'this location';
+    // Don't use location name in warnings - use generic "this location" to avoid spoiling the riddle
+    const actualLocationName = 'this location';
 
     // Check for bank holiday first
     if (isTodayBankHoliday()) {
       return {
         type: 'bank_holiday',
-        message: `🏦 Bank holiday hours may vary for ${actualLocationName}`,
+        message: `🏦 Bank holiday hours may vary - check opening times before visiting`,
         severity: 'medium',
         location: actualLocationName
       };
@@ -179,7 +180,7 @@ export async function checkLocationHours(riddleId: string, locationName?: string
         const minutes = Math.round(hoursLeft * 60);
         return {
           type: 'closing_soon',
-          message: `⏰ ${actualLocationName} closes in ${minutes} minutes`,
+          message: `⏰ This location closes in ${minutes} minutes`,
           severity: 'high',
           location: actualLocationName,
           hoursUntilClose: hoursLeft
@@ -188,7 +189,7 @@ export async function checkLocationHours(riddleId: string, locationName?: string
         // Closing in 2 hours
         return {
           type: 'closing_soon',
-          message: `⏰ ${actualLocationName} closes in ${Math.round(hoursLeft)} hours`,
+          message: `⏰ This location closes in ${Math.round(hoursLeft)} hours`,
           severity: 'medium',
           location: actualLocationName,
           hoursUntilClose: hoursLeft
@@ -198,7 +199,7 @@ export async function checkLocationHours(riddleId: string, locationName?: string
       // Open and not closing soon
       return {
         type: 'open',
-        message: `✅ ${actualLocationName} is currently open`,
+        message: `✅ This location is currently open`,
         severity: 'low',
         location: actualLocationName
       };
@@ -209,7 +210,7 @@ export async function checkLocationHours(riddleId: string, locationName?: string
       if (nextOpening) {
         return {
           type: 'closed',
-          message: `❌ ${actualLocationName} is currently closed. Opens ${nextOpening.day} at ${nextOpening.time}`,
+          message: `❌ This location is currently closed. Opens ${nextOpening.day} at ${nextOpening.time}`,
           severity: 'high',
           location: actualLocationName,
           opensAt: nextOpening.time
@@ -217,7 +218,7 @@ export async function checkLocationHours(riddleId: string, locationName?: string
       } else {
         return {
           type: 'closed',
-          message: `❌ ${actualLocationName} is currently closed`,
+          message: `❌ This location is currently closed`,
           severity: 'high',
           location: actualLocationName
         };
@@ -226,5 +227,136 @@ export async function checkLocationHours(riddleId: string, locationName?: string
   } catch (error) {
     console.error('Error checking location hours:', error);
     return null;
+  }
+}
+
+// Check multiple riddles and return overall warning status for payment page
+export async function checkMultipleLocationHours(trackId: string): Promise<{
+  shouldWarn: boolean;
+  closedCount: number;
+  closingSoonCount: number;
+  isBankHoliday: boolean;
+  message: string;
+  severity: 'high' | 'medium' | 'low';
+  closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
+  closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
+}> {
+  try {
+    // Check if it's a bank holiday first
+    const bankHoliday = isTodayBankHoliday();
+    
+    const supabase = await createClient();
+    
+    // Get all riddles for this track with opening hours
+    const { data: riddles, error } = await supabase
+      .from('riddles')
+      .select('id, location_id, opening_hours, order_index')
+      .eq('track_id', trackId)
+      .order('order_index');
+
+    if (error || !riddles) {
+      return {
+        shouldWarn: bankHoliday,
+        closedCount: 0,
+        closingSoonCount: 0,
+        isBankHoliday: bankHoliday,
+        message: bankHoliday ? '🏦 It\'s a UK bank holiday - opening times may vary' : '',
+        severity: bankHoliday ? 'medium' : 'low',
+        closingSoonDetails: [],
+        closedDetails: []
+      };
+    }
+
+    const warnings = [];
+    const closingSoonDetails = [];
+    const closedDetails = [];
+
+    // Check each riddle location
+    for (const riddle of riddles) {
+      if (!riddle.opening_hours) continue;
+      
+      const warning = await checkLocationHours(riddle.id);
+      if (warning && (warning.type === 'closed' || warning.type === 'closing_soon')) {
+        warnings.push({
+          ...warning,
+          riddleNumber: `${riddle.order_index || 'Unknown'}`
+        });
+
+        if (warning.type === 'closing_soon') {
+          closingSoonDetails.push({
+            riddleNumber: `${riddle.order_index || 'Unknown'}`,
+            closingTime: warning.closingTime || 'Unknown',
+            hoursLeft: warning.hoursUntilClose
+          });
+        } else if (warning.type === 'closed') {
+          closedDetails.push({
+            riddleNumber: `${riddle.order_index || 'Unknown'}`,
+            opensAt: warning.opensAt,
+            hoursUntilOpen: warning.hoursUntilOpen
+          });
+        }
+      }
+    }
+
+    const closedCount = warnings.filter(w => w.type === 'closed').length;
+    const closingSoonCount = warnings.filter(w => w.type === 'closing_soon').length;
+    
+    // Return warning if there are issues OR if it's a bank holiday
+    if (closedCount > 0 || closingSoonCount > 0 || bankHoliday) {
+      let message = '';
+      let severity: 'high' | 'medium' | 'low' = 'low';
+      
+      if (bankHoliday && (closedCount > 0 || closingSoonCount > 0)) {
+        message = `🏦 Bank holiday + ${closedCount + closingSoonCount} location${closedCount + closingSoonCount > 1 ? 's' : ''} may be affected`;
+        severity = 'high';
+      } else if (closedCount > 0 && closingSoonCount > 0) {
+        message = `${closedCount} location${closedCount > 1 ? 's' : ''} currently closed and ${closingSoonCount} closing soon`;
+        severity = 'high';
+      } else if (closedCount > 0) {
+        message = `${closedCount} location${closedCount > 1 ? 's are' : ' is'} currently closed`;
+        severity = 'high';
+      } else if (closingSoonCount > 0) {
+        message = `${closingSoonCount} location${closingSoonCount > 1 ? 's are' : ' is'} closing soon`;
+        severity = 'medium';
+      } else if (bankHoliday) {
+        message = '🏦 It\'s a UK bank holiday - opening times may vary';
+        severity = 'medium';
+      }
+
+      return {
+        shouldWarn: true,
+        closedCount,
+        closingSoonCount,
+        isBankHoliday: bankHoliday,
+        message,
+        severity,
+        closingSoonDetails,
+        closedDetails
+      };
+    }
+
+    return {
+      shouldWarn: false,
+      closedCount: 0,
+      closingSoonCount: 0,
+      isBankHoliday: false,
+      message: '',
+      severity: 'low',
+      closingSoonDetails: [],
+      closedDetails: []
+    };
+
+  } catch (error) {
+    console.error('Error checking multiple location hours:', error);
+    return {
+      shouldWarn: false,
+      closedCount: 0,
+      closingSoonCount: 0,
+      isBankHoliday: false,
+      message: '',
+      severity: 'low',
+      closingSoonDetails: [],
+      closedDetails: []
+    };
   }
 }

@@ -103,9 +103,8 @@ export default function LocationPage({ params }: Props) {
     fetchLabels();
   }, [locationSlug]);
 
-  const handleModeSelect = (mode: string) => {
+  const handleModeSelect = async (mode: string) => {
     // Determine which locations to check based on mode
-    const locationsToCheck = mode === 'date' ? dateLocations : pubLocations;
     const isLoading = mode === 'date' ? dateLoading : pubLoading;
 
     // PREVENT PROCEEDING IF STILL LOADING DATA (unless timeout occurred)
@@ -114,24 +113,23 @@ export default function LocationPage({ params }: Props) {
     }
 
     // Check time warnings before proceeding (skip if timeout occurred)
-    if (locationsToCheck.length > 0 && !loadTimeout) {
-      const locationsWithHours = locationsToCheck
-        .filter(loc => loc.opening_hours)
-        .map(loc => ({
-          name: loc.name,
-          hours: loc.opening_hours!,
-          riddle_order: loc.order
-        }));
-
-      if (locationsWithHours.length > 0) {
-        // TODO: Re-implement with new database system
-        const timeWarning = { shouldWarn: false }; // getOverallTimeWarning(locationsWithHours);
+    if (!loadTimeout) {
+      try {
+        const trackId = mode === 'date' ? dateTrackId : pubTrackId;
+        const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
         
-        if (timeWarning.shouldWarn) {
-          setSelectedMode(mode);
-          setShowTimeWarning(true);
-          return; // Stop here and show warning modal
+        if (response.ok) {
+          const timeWarning = await response.json();
+          
+          if (timeWarning.shouldWarn) {
+            setSelectedMode(mode);
+            setShowTimeWarning(true);
+            return; // Stop here and show warning modal
+          }
         }
+      } catch (error) {
+        console.error('Error checking time warnings:', error);
+        // Continue anyway if API fails
       }
     }
 

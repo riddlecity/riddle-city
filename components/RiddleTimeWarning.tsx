@@ -84,20 +84,20 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
     return () => clearInterval(interval);
   }, [riddleId]);
 
-  if (loading || !warning) {
-    return null;
+  if (loading || !warning || warning.type === 'open') {
+    return null; // Don't show anything if loading, no warning, or location is open
   }
 
   const getWarningStyles = () => {
     switch (warning.severity) {
       case 'high':
-        return 'bg-red-600 border-red-500';
+        return 'bg-gradient-to-r from-red-900/95 to-red-950/95 border-red-500/50 backdrop-blur-sm';
       case 'medium':
-        return 'bg-orange-600 border-orange-500';
+        return 'bg-gradient-to-r from-yellow-900/95 to-orange-950/95 border-yellow-500/50 backdrop-blur-sm';
       case 'low':
-        return 'bg-blue-600 border-blue-500';
+        return 'bg-gradient-to-r from-blue-900/95 to-blue-950/95 border-blue-500/50 backdrop-blur-sm';
       default:
-        return 'bg-gray-600 border-gray-500';
+        return 'bg-gradient-to-r from-gray-900/95 to-gray-950/95 border-gray-500/50 backdrop-blur-sm';
     }
   };
 
@@ -117,32 +117,34 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   };
 
   return (
-    <div className={`p-4 rounded-lg border-2 ${getWarningStyles()} text-white mb-4`}>
-      <div className="flex items-center space-x-2">
-        <span className="text-xl">{getWarningIcon()}</span>
-        <div className="flex-1">
-          <p className="font-medium">{warning.message}</p>
-          
-          {warning.type === 'closing_soon' && warning.hoursUntilClose && (
-            <p className="text-sm opacity-90 mt-1">
-              {warning.hoursUntilClose < 1 
-                ? `Closes in ${Math.round(warning.hoursUntilClose * 60)} minutes`
-                : `Closes in ${Math.round(warning.hoursUntilClose)} hours`
-              }
-            </p>
-          )}
-          
-          {warning.type === 'closed' && warning.opensAt && (
-            <p className="text-sm opacity-90 mt-1">
-              Opens at {warning.opensAt}
-            </p>
-          )}
-          
-          {warning.type === 'bank_holiday' && (
-            <p className="text-sm opacity-90 mt-1">
-              Check location directly for today's hours
-            </p>
-          )}
+    <div className="w-full px-4 z-10 mb-4">
+      <div className={`p-4 rounded-xl border-2 ${getWarningStyles()} text-white shadow-lg`}>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl flex-shrink-0">{getWarningIcon()}</span>
+          <div className="flex-1">
+            <p className="font-semibold text-white leading-tight">{warning.message}</p>
+            
+            {warning.type === 'closing_soon' && warning.hoursUntilClose && (
+              <p className="text-sm text-white/80 mt-1">
+                {warning.hoursUntilClose < 1 
+                  ? `Closes in ${Math.round(warning.hoursUntilClose * 60)} minutes`
+                  : `Closes in ${Math.round(warning.hoursUntilClose)} hours`
+                }
+              </p>
+            )}
+            
+            {warning.type === 'closed' && warning.opensAt && (
+              <p className="text-sm text-white/80 mt-1">
+                Opens at {warning.opensAt}
+              </p>
+            )}
+            
+            {warning.type === 'bank_holiday' && (
+              <p className="text-sm text-white/80 mt-1">
+                Opening hours may differ today
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
