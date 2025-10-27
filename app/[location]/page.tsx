@@ -356,6 +356,7 @@ export default function LocationPage({ params }: Props) {
               severity: "low" as const,
               closedCount: 0,
               closingSoonCount: 0,
+              isBankHoliday: false,
               closingSoonDetails: [],
               closedDetails: []
             }; // getOverallTimeWarning(locationsWithHours);
