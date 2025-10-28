@@ -4,8 +4,10 @@
 // Fixed UK bank holidays (these don't change year to year)
 const fixedHolidays = [
   { month: 1, day: 1, name: "New Year's Day" },
+  { month: 12, day: 24, name: "Christmas Eve" },
   { month: 12, day: 25, name: "Christmas Day" },
-  { month: 12, day: 26, name: "Boxing Day" }
+  { month: 12, day: 26, name: "Boxing Day" },
+  { month: 12, day: 31, name: "New Year's Eve" }
 ];
 
 // Function to get Easter Sunday for a given year (simplified algorithm)

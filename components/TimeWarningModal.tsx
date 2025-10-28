@@ -81,7 +81,7 @@ export default function TimeWarningModal({
               <div className="flex-1">
                 <p className="text-white font-semibold mb-1">UK Bank Holiday</p>
                 <p className="text-white/80 text-sm leading-relaxed">
-                  Some locations may have different opening hours today. We recommend checking directly with venues before visiting.
+                  Opening hours may differ significantly today. Some locations may be closed or have reduced hours.
                 </p>
               </div>
             </div>

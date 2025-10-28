@@ -14,6 +14,7 @@ export interface TimeWarning {
   hoursUntilOpen?: number;
   opensAt?: string;
   closedToday?: boolean; // True if closed for the entire day
+  isBankHoliday?: boolean; // True if today is a UK bank holiday
 }
 
 // Database opening hours format
@@ -179,15 +180,8 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
     // Don't use location name in warnings - use generic "this location" to avoid spoiling the riddle
     const actualLocationName = 'this location';
 
-    // Check for bank holiday first
-    if (isTodayBankHoliday()) {
-      return {
-        type: 'bank_holiday',
-        message: `🏦 Bank holiday hours may vary - check opening times before visiting`,
-        severity: 'medium',
-        location: actualLocationName
-      };
-    }
+    // Check for bank holiday
+    const isBankHoliday = isTodayBankHoliday();
 
     if (!hours) {
       return null; // No hours data available
@@ -207,7 +201,8 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
           message: `⏰ This location closes in ${minutes} minutes`,
           severity: 'high',
           location: actualLocationName,
-          hoursUntilClose: hoursLeft
+          hoursUntilClose: hoursLeft,
+          isBankHoliday
         };
       } else if (hoursLeft !== null && hoursLeft <= 2) {
         // Closing in 2 hours
@@ -216,7 +211,8 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
           message: `⏰ This location closes in ${Math.round(hoursLeft)} hours`,
           severity: 'medium',
           location: actualLocationName,
-          hoursUntilClose: hoursLeft
+          hoursUntilClose: hoursLeft,
+          isBankHoliday
         };
       }
 
@@ -225,7 +221,8 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
         type: 'open',
         message: `✅ This location is currently open`,
         severity: 'low',
-        location: actualLocationName
+        location: actualLocationName,
+        isBankHoliday
       };
     } else {
       // Location is closed
@@ -241,7 +238,8 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
           location: actualLocationName,
           opensAt: nextOpening.time,
           hoursUntilOpen: nextOpening.hoursUntilOpen,
-          closedToday: nextOpening.closedToday
+          closedToday: nextOpening.closedToday,
+          isBankHoliday
         };
       } else {
         return {
@@ -249,7 +247,8 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
           message: `❌ This location is currently closed`,
           severity: 'high',
           location: actualLocationName,
-          closedToday: true
+          closedToday: true,
+          isBankHoliday
         };
       }
     }
