@@ -38,9 +38,9 @@ export default function Home() {
         <Image
           src="/riddle-city-logo.png"
           alt="Riddle City Logo"
-          width={80}
-          height={80}
-          className="mb-6 drop-shadow-lg animate-pulse"
+          width={200}
+          height={200}
+          className="mb-6 drop-shadow-lg animate-pulse w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] object-contain"
           priority
         />
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>

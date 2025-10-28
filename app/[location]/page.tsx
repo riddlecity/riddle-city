@@ -29,6 +29,16 @@ export default function LocationPage({ params }: Props) {
   const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [timeWarningData, setTimeWarningData] = useState<{
+    shouldWarn: boolean;
+    closedCount: number;
+    closingSoonCount: number;
+    isBankHoliday: boolean;
+    message: string;
+    severity: 'high' | 'medium' | 'low';
+    closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
+    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
+  } | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
 
   // DEBUG: Log when component mounts
@@ -123,6 +133,7 @@ export default function LocationPage({ params }: Props) {
           
           if (timeWarning.shouldWarn) {
             setSelectedMode(mode);
+            setTimeWarningData(timeWarning);
             setShowTimeWarning(true);
             return; // Stop here and show warning modal
           }
@@ -329,7 +340,7 @@ export default function LocationPage({ params }: Props) {
       </div>
 
       {/* Time Warning Modal */}
-      {showTimeWarning && selectedMode && (
+      {showTimeWarning && selectedMode && timeWarningData && (
         <TimeWarningModal
           isOpen={showTimeWarning}
           onClose={() => {
@@ -341,26 +352,7 @@ export default function LocationPage({ params }: Props) {
             router.push(`/${resolvedParams.location}/${selectedMode}`);
             setSelectedMode(null);
           }}
-          warning={(() => {
-            // TODO: Re-implement with new database system
-            // const locationsToCheck = selectedMode === 'date' ? dateLocations : pubLocations;
-            // const locationsWithHours = locationsToCheck
-            //   .filter(loc => loc.opening_hours)
-            //   .map(loc => ({
-            //     name: loc.name,
-            //     hours: loc.opening_hours!
-            //   }));
-            return {
-              shouldWarn: false,
-              message: "Time warnings temporarily disabled",
-              severity: "low" as const,
-              closedCount: 0,
-              closingSoonCount: 0,
-              isBankHoliday: false,
-              closingSoonDetails: [],
-              closedDetails: []
-            }; // getOverallTimeWarning(locationsWithHours);
-          })()}
+          warning={timeWarningData}
         />
       )}
     </main>
