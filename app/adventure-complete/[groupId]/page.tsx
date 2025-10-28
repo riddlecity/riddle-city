@@ -167,6 +167,16 @@ export default async function AdventureCompletePage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(20); // Get more entries for better leaderboard
 
+  // Get number of riddles in this track to calculate minimum time
+  const { data: trackRiddles } = await supabase
+    .from("riddles")
+    .select("id")
+    .eq("track_id", group.track_id);
+  
+  const riddleCount = trackRiddles?.length || 8; // Default to 8 if we can't get count
+  const MIN_TIME_PER_RIDDLE = 5 * 60 * 1000; // 5 minutes per riddle in milliseconds
+  const minimumLegitTime = riddleCount * MIN_TIME_PER_RIDDLE;
+
   // Calculate times for leaderboard (NO penalty)
   const leaderboard =
     leaderboardData
@@ -185,6 +195,7 @@ export default async function AdventureCompletePage({ params }: Props) {
           skips: entry.riddles_skipped || 0,
           members: entry.group_members?.length || 0,
           isCurrentTeam: entry.team_name === group.team_name,
+          isSuspicious: total < minimumLegitTime, // Flag suspiciously fast times
         };
       })
       .filter((entry) => entry !== null) // Remove null entries
@@ -197,14 +208,21 @@ export default async function AdventureCompletePage({ params }: Props) {
         return a!.skips - b!.skips;
       }) || [];
 
-  // Split into main leaderboard (0-2 skips) and casual (3+ skips)
-  const mainLeaderboard = leaderboard.filter(entry => entry.skips < 3);
-  const casualLeaderboard = leaderboard.filter(entry => entry.skips >= 3);
+  // Split into categories
+  const legitimateEntries = leaderboard.filter(entry => !entry.isSuspicious);
+  const halfRiddles = Math.ceil(riddleCount / 2);
+  const mainLeaderboard = legitimateEntries.filter(entry => entry.skips <= 2); // Elite: 0-2 skips
+  const casualLeaderboard = legitimateEntries.filter(entry => entry.skips > 2 && entry.skips <= halfRiddles); // Casual: 3 to half
+  const noviceLeaderboard = legitimateEntries.filter(entry => entry.skips > halfRiddles); // Novice: more than half
 
-  // Find current team's position
+  // Check if current team is suspicious
+  const isCurrentTeamSuspicious = totalTimeMs < minimumLegitTime;
+
+  // Find current team's position (only if not suspicious)
   const currentTeamSkips = group.riddles_skipped || 0;
-  const isCurrentTeamCasual = currentTeamSkips >= 3;
-  const relevantLeaderboard = isCurrentTeamCasual ? casualLeaderboard : mainLeaderboard;
+  const isCurrentTeamNovice = currentTeamSkips > halfRiddles;
+  const isCurrentTeamCasual = currentTeamSkips > 2 && currentTeamSkips <= halfRiddles;
+  const relevantLeaderboard = isCurrentTeamSuspicious ? [] : (isCurrentTeamNovice ? noviceLeaderboard : isCurrentTeamCasual ? casualLeaderboard : mainLeaderboard);
   const currentTeamIndex = relevantLeaderboard.findIndex(entry => entry.isCurrentTeam);
   const currentTeamPosition = currentTeamIndex >= 0 ? currentTeamIndex + 1 : null;
 
@@ -315,12 +333,30 @@ export default async function AdventureCompletePage({ params }: Props) {
             </div>
           </div>
 
+          {/* Suspicious Time Warning - if current team completed too fast */}
+          {isCurrentTeamSuspicious && (
+            <div className="bg-red-900/40 backdrop-blur-sm border border-red-500/30 rounded-xl p-4 md:p-5 mb-4">
+              <div className="text-center">
+                <div className="text-3xl md:text-4xl mb-2">⚠️</div>
+                <h3 className="text-lg md:text-xl font-bold text-red-200 mb-2">
+                  Completion Time Not Listed
+                </h3>
+                <p className="text-sm md:text-base text-red-100/80">
+                  Your time of <span className="font-mono font-bold">{formattedTime}</span> is below the minimum expected time of {Math.floor(minimumLegitTime / (60 * 1000))} minutes for {riddleCount} riddles.
+                </p>
+                <p className="text-xs md:text-sm text-red-100/60 mt-2">
+                  Times under {MIN_TIME_PER_RIDDLE / (60 * 1000)} minutes per riddle are not displayed on the leaderboard.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Leaderboard - With inline "See Full Leaderboard" button */}
-          {(mainLeaderboard.length > 0 || casualLeaderboard.length > 0) && (
+          {!isCurrentTeamSuspicious && (mainLeaderboard.length > 0 || casualLeaderboard.length > 0 || noviceLeaderboard.length > 0) && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
                 <h3 className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
-                  {isCurrentTeamCasual ? '🎮' : '🏆'} {isCurrentTeamCasual ? 'Casual Completions' : `${adventureType} Leaderboard`} - {cityName}
+                  {isCurrentTeamNovice ? '🌟' : isCurrentTeamCasual ? '🎮' : '🏆'} {isCurrentTeamNovice ? 'Novice Completions' : isCurrentTeamCasual ? 'Casual Completions' : `${adventureType} Elite Leaderboard`} - {cityName}
                 </h3>
                 <Link
                   href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
@@ -329,9 +365,14 @@ export default async function AdventureCompletePage({ params }: Props) {
                   See Full Leaderboard
                 </Link>
               </div>
+              {isCurrentTeamNovice && noviceLeaderboard.length > 0 && (
+                <p className="text-xs md:text-sm text-white/60 mb-3 text-center md:text-left">
+                  Teams with {halfRiddles + 1}+ skips • You completed the adventure! 🌟
+                </p>
+              )}
               {isCurrentTeamCasual && casualLeaderboard.length > 0 && (
                 <p className="text-xs md:text-sm text-white/60 mb-3 text-center md:text-left">
-                  Teams with 3+ skips • Still impressive! 🎉
+                  Teams with 3-{halfRiddles} skips • Great job! 🎉
                 </p>
               )}
               <div className="space-y-2">

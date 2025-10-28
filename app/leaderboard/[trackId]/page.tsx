@@ -59,6 +59,16 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
     }
   }
 
+  // Get number of riddles in this track to calculate minimum time
+  const { data: trackRiddlesData } = await supabase
+    .from("riddles")
+    .select("id")
+    .eq("track_id", trackId);
+  
+  const riddleCount = trackRiddlesData?.length || 8; // Default to 8 if we can't get count
+  const MIN_TIME_PER_RIDDLE = 5 * 60 * 1000; // 5 minutes per riddle in milliseconds
+  const minimumLegitTime = riddleCount * MIN_TIME_PER_RIDDLE;
+
   // Process all groups (finished and unfinished)
   const allEntries = leaderboardData?.map(entry => {
     // Use started_at if available (more accurate), otherwise fall back to created_at
@@ -78,7 +88,8 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
         members: entry.group_members?.length || 0,
         completedDate: new Date(entry.completed_at).toLocaleDateString('en-GB'),
         status: 'finished' as const,
-        hasAccurateStartTime: !!entry.started_at // Track if we have accurate timing
+        hasAccurateStartTime: !!entry.started_at, // Track if we have accurate timing
+        isSuspicious: actualTimeMs < minimumLegitTime // Flag suspiciously fast times
       };
     } else {
       return {
@@ -90,13 +101,14 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
         members: entry.group_members?.length || 0,
         completedDate: new Date(entry.created_at).toLocaleDateString('en-GB'),
         status: 'unfinished' as const,
-        hasAccurateStartTime: !!entry.started_at
+        hasAccurateStartTime: !!entry.started_at,
+        isSuspicious: false
       };
     }
   }) || [];
 
   const finishedEntries = allEntries
-    .filter(entry => entry.status === 'finished')
+    .filter(entry => entry.status === 'finished' && !entry.isSuspicious) // Exclude suspicious times
     .sort((a, b) => {
       // First sort by time
       if (a.totalTimeMs !== b.totalTimeMs) {
@@ -110,9 +122,11 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
     .filter(entry => entry.status === 'unfinished')
     .sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime());
 
-  // Split finished entries into main leaderboard (0-2 skips) and casual (3+ skips)
-  const mainLeaderboard = finishedEntries.filter(entry => entry.skips < 3);
-  const casualLeaderboard = finishedEntries.filter(entry => entry.skips >= 3);
+  // Split into main leaderboard (0-2 skips) and casual (3+ skips)
+  const halfRiddles = Math.ceil(riddleCount / 2);
+  const mainLeaderboard = finishedEntries.filter(entry => entry.skips <= 2); // Elite: 0-2 skips
+  const casualLeaderboard = finishedEntries.filter(entry => entry.skips > 2 && entry.skips <= halfRiddles); // Casual: 3 to half
+  const noviceLeaderboard = finishedEntries.filter(entry => entry.skips > halfRiddles); // Novice: more than half
 
   const adventureType = track.mode === 'date' ? 'Date Day Adventure' : 'Adventure';
   const cityName = track.location.charAt(0).toUpperCase() + track.location.slice(1);
@@ -170,11 +184,12 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
           </p>
 
           {/* Stats summary */}
-          {(mainLeaderboard.length > 0 || casualLeaderboard.length > 0 || unfinishedEntries.length > 0) && (
+          {(mainLeaderboard.length > 0 || casualLeaderboard.length > 0 || noviceLeaderboard.length > 0 || unfinishedEntries.length > 0) && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 mb-6">
               <p className="text-white/80 text-sm md:text-base">
-                <span className="text-green-400 font-semibold">{mainLeaderboard.length}</span> completed (0-2 skips) • 
-                <span className="text-blue-400 font-semibold ml-1">{casualLeaderboard.length}</span> casual (3+ skips) • 
+                <span className="text-green-400 font-semibold">{mainLeaderboard.length}</span> elite (0-2 skips) • 
+                <span className="text-blue-400 font-semibold ml-1">{casualLeaderboard.length}</span> casual (3-{halfRiddles} skips) •
+                <span className="text-purple-400 font-semibold ml-1">{noviceLeaderboard.length}</span> novice ({halfRiddles + 1}+ skips) • 
                 <span className="text-yellow-400 font-semibold ml-1">{unfinishedEntries.length}</span> in progress
               </p>
             </div>
@@ -184,7 +199,7 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
           {mainLeaderboard.length > 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-6">
               <h3 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
-                🏆 Main Leaderboard
+                🏆 Elite Leaderboard
               </h3>
               <p className="text-xs md:text-sm text-white/60 mb-4 text-center">
                 Teams with 0-2 skips
@@ -264,14 +279,14 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
             </div>
           )}
 
-          {/* Casual Completions (3+ skips) */}
+          {/* Casual Completions (3 to half of riddles) */}
           {casualLeaderboard.length > 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-blue-500/20 rounded-xl p-4 md:p-6 mb-6">
               <h3 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
                 🎮 Casual Completions
               </h3>
               <p className="text-xs md:text-sm text-white/60 mb-4 text-center">
-                Teams with 3+ skips • Still impressive! 🎉
+                Teams with 3-{halfRiddles} skips • Great job! 🎉
               </p>
               <div className="w-full max-w-3xl mx-auto space-y-2 md:space-y-3">
               {casualLeaderboard.map((entry, index) => {
@@ -309,6 +324,64 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
 
                         {/* Time */}
                         <div className="text-right text-blue-200">
+                          <div className="text-base md:text-lg font-bold font-mono">
+                            {entry.time}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </div>
+          )}
+
+          {/* Novice Completions (more than half skipped) */}
+          {noviceLeaderboard.length > 0 && (
+            <div className="bg-black/40 backdrop-blur-sm border border-purple-500/20 rounded-xl p-4 md:p-6 mb-6">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
+                🌟 Novice Completions
+              </h3>
+              <p className="text-xs md:text-sm text-white/60 mb-4 text-center">
+                Teams with {halfRiddles + 1}+ skips • You completed the adventure! 🌟
+              </p>
+              <div className="w-full max-w-3xl mx-auto space-y-2 md:space-y-3">
+              {noviceLeaderboard.map((entry, index) => {
+                const position = index + 1;
+                
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg transition-all bg-purple-900/20 border border-purple-500/20 hover:bg-purple-900/30"
+                  >
+                    {/* Position */}
+                    <div className="flex-shrink-0 w-8 md:w-10 text-center">
+                      <div className="text-sm md:text-base text-purple-300 font-semibold">
+                        {position}.
+                      </div>
+                    </div>
+
+                    {/* Team Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-left flex-1 min-w-0">
+                          <div className="font-semibold text-sm md:text-base truncate text-white">
+                            {entry.team_name}
+                          </div>
+                          <div className="text-xs md:text-sm text-white/60">
+                            {entry.members} member{entry.members !== 1 ? 's' : ''}
+                            <span className="text-yellow-400 ml-2">
+                              • {entry.skips} skip{entry.skips !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="text-xs text-white/50">
+                            Completed {entry.completedDate}
+                          </div>
+                        </div>
+
+                        {/* Time */}
+                        <div className="text-right text-purple-200">
                           <div className="text-base md:text-lg font-bold font-mono">
                             {entry.time}
                           </div>
@@ -379,7 +452,7 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
           )}
 
           {/* No teams message */}
-          {mainLeaderboard.length === 0 && casualLeaderboard.length === 0 && unfinishedEntries.length === 0 && (
+          {mainLeaderboard.length === 0 && casualLeaderboard.length === 0 && noviceLeaderboard.length === 0 && unfinishedEntries.length === 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-6 md:p-8 text-center">
               <div className="text-4xl mb-4">🎯</div>
               <p className="text-lg text-white/80 mb-2">No teams have started this adventure yet!</p>
