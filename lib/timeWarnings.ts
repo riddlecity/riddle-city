@@ -109,6 +109,10 @@ function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: s
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   let checkDay = ukTime.getDay();
   const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
+  
+  // Check if there are ANY hours for today
+  const todayDayName = dayNames[ukTime.getDay()] as keyof DatabaseOpeningHours;
+  const hasTodayHours = !!hours[todayDayName];
 
   // Check next 7 days
   for (let i = 0; i < 7; i++) {
@@ -137,7 +141,7 @@ function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: s
         return { 
           day: dayLabel, 
           time: formatTime(dayHours.open),
-          closedToday: i > 0 // If opening tomorrow or later, it's closed for today
+          closedToday: !hasTodayHours // Only "closed today" if location has no hours for today at all
         };
       }
     }
