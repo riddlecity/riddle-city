@@ -110,7 +110,10 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
     .filter(entry => entry.status === 'unfinished')
     .sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime());
 
-  const leaderboard = [...finishedEntries, ...unfinishedEntries];
+  // Split finished entries into main leaderboard (0-2 skips) and casual (3+ skips)
+  const mainLeaderboard = finishedEntries.filter(entry => entry.skips < 3);
+  const casualLeaderboard = finishedEntries.filter(entry => entry.skips >= 3);
+
   const adventureType = track.mode === 'date' ? 'Date Day Adventure' : 'Adventure';
   const cityName = track.location.charAt(0).toUpperCase() + track.location.slice(1);
 
@@ -167,55 +170,53 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
           </p>
 
           {/* Stats summary */}
-          {leaderboard.length > 0 && (
+          {(mainLeaderboard.length > 0 || casualLeaderboard.length > 0 || unfinishedEntries.length > 0) && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 mb-6">
               <p className="text-white/80 text-sm md:text-base">
-                <span className="text-green-400 font-semibold">{finishedEntries.length}</span> completed • 
+                <span className="text-green-400 font-semibold">{mainLeaderboard.length}</span> completed (0-2 skips) • 
+                <span className="text-blue-400 font-semibold ml-1">{casualLeaderboard.length}</span> casual (3+ skips) • 
                 <span className="text-yellow-400 font-semibold ml-1">{unfinishedEntries.length}</span> in progress
               </p>
             </div>
           )}
 
-          {/* Leaderboard */}
-          {leaderboard.length > 0 ? (
+          {/* Main Leaderboard (0-2 skips) */}
+          {mainLeaderboard.length > 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-6">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
+                🏆 Main Leaderboard
+              </h3>
+              <p className="text-xs md:text-sm text-white/60 mb-4 text-center">
+                Teams with 0-2 skips
+              </p>
               <div className="w-full max-w-3xl mx-auto space-y-2 md:space-y-3">
-              {leaderboard.map((entry) => {
-                const isFinished = entry.status === 'finished';
-                const position = isFinished ? finishedEntries.findIndex(e => e.id === entry.id) + 1 : null;
+              {mainLeaderboard.map((entry, index) => {
+                const position = index + 1;
                 
                 return (
                   <div
                     key={entry.id}
                     className={`flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg transition-all ${
-                      isFinished 
-                        ? position === 1 
-                          ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-500/20 border border-yellow-500/30' 
-                          : position === 2
-                          ? 'bg-gradient-to-r from-gray-400/20 to-gray-300/20 border border-gray-400/30'
-                          : position === 3
-                          ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/20 border border-orange-500/30'
-                          : 'bg-white/10 border border-white/20 hover:bg-white/15'
-                        : 'bg-gray-800/50 border border-gray-600/30'
+                      position === 1 
+                        ? 'bg-gradient-to-r from-yellow-600/20 to-yellow-500/20 border border-yellow-500/30' 
+                        : position === 2
+                        ? 'bg-gradient-to-r from-gray-400/20 to-gray-300/20 border border-gray-400/30'
+                        : position === 3
+                        ? 'bg-gradient-to-r from-orange-600/20 to-orange-500/20 border border-orange-500/30'
+                        : 'bg-white/10 border border-white/20 hover:bg-white/15'
                     }`}
                   >
                     {/* Position/Trophy */}
                     <div className="flex-shrink-0 w-8 md:w-10 text-center">
-                      {isFinished ? (
-                        position === 1 ? (
-                          <div className="text-xl md:text-2xl">🥇</div>
-                        ) : position === 2 ? (
-                          <div className="text-xl md:text-2xl">🥈</div>
-                        ) : position === 3 ? (
-                          <div className="text-xl md:text-2xl">🥉</div>
-                        ) : (
-                          <div className="text-sm md:text-base text-white/60 font-semibold">
-                            {position}.
-                          </div>
-                        )
+                      {position === 1 ? (
+                        <div className="text-xl md:text-2xl">🥇</div>
+                      ) : position === 2 ? (
+                        <div className="text-xl md:text-2xl">🥈</div>
+                      ) : position === 3 ? (
+                        <div className="text-xl md:text-2xl">🥉</div>
                       ) : (
-                        <div className="text-gray-400 text-xs md:text-sm">
-                          ⏳
+                        <div className="text-sm md:text-base text-white/60 font-semibold">
+                          {position}.
                         </div>
                       )}
                     </div>
@@ -224,13 +225,10 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="text-left flex-1 min-w-0">
-                          <div className={`font-semibold text-sm md:text-base truncate ${
-                            isFinished ? 'text-white' : 'text-gray-300'
-                          }`}>
+                          <div className="font-semibold text-sm md:text-base truncate text-white">
                             {entry.team_name}
-                            {!isFinished && <span className="text-gray-400 text-xs ml-1">(In Progress)</span>}
                           </div>
-                          <div className={`text-xs md:text-sm ${isFinished ? 'text-white/60' : 'text-gray-400'}`}>
+                          <div className="text-xs md:text-sm text-white/60">
                             {entry.members} member{entry.members !== 1 ? 's' : ''}
                             {entry.skips > 0 && (
                               <span className="text-yellow-400 ml-2">
@@ -239,21 +237,19 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
                             )}
                           </div>
                           <div className="text-xs text-white/50">
-                            {isFinished ? `Completed ${entry.completedDate}` : `Started ${entry.completedDate}`}
+                            Completed {entry.completedDate}
                           </div>
                         </div>
 
                         {/* Time */}
                         <div className={`text-right ${
-                          isFinished 
-                            ? position === 1 
-                              ? 'text-yellow-300' 
-                              : position === 2
-                              ? 'text-gray-300'
-                              : position === 3
-                              ? 'text-orange-300'
-                              : 'text-white'
-                            : 'text-gray-400'
+                          position === 1 
+                            ? 'text-yellow-300' 
+                            : position === 2
+                            ? 'text-gray-300'
+                            : position === 3
+                            ? 'text-orange-300'
+                            : 'text-white'
                         }`}>
                           <div className="text-base md:text-lg font-bold font-mono">
                             {entry.time}
@@ -266,7 +262,124 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
               })}
             </div>
             </div>
-          ) : (
+          )}
+
+          {/* Casual Completions (3+ skips) */}
+          {casualLeaderboard.length > 0 && (
+            <div className="bg-black/40 backdrop-blur-sm border border-blue-500/20 rounded-xl p-4 md:p-6 mb-6">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
+                🎮 Casual Completions
+              </h3>
+              <p className="text-xs md:text-sm text-white/60 mb-4 text-center">
+                Teams with 3+ skips • Still impressive! 🎉
+              </p>
+              <div className="w-full max-w-3xl mx-auto space-y-2 md:space-y-3">
+              {casualLeaderboard.map((entry, index) => {
+                const position = index + 1;
+                
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg transition-all bg-blue-900/20 border border-blue-500/20 hover:bg-blue-900/30"
+                  >
+                    {/* Position */}
+                    <div className="flex-shrink-0 w-8 md:w-10 text-center">
+                      <div className="text-sm md:text-base text-blue-300 font-semibold">
+                        {position}.
+                      </div>
+                    </div>
+
+                    {/* Team Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-left flex-1 min-w-0">
+                          <div className="font-semibold text-sm md:text-base truncate text-white">
+                            {entry.team_name}
+                          </div>
+                          <div className="text-xs md:text-sm text-white/60">
+                            {entry.members} member{entry.members !== 1 ? 's' : ''}
+                            <span className="text-yellow-400 ml-2">
+                              • {entry.skips} skip{entry.skips !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="text-xs text-white/50">
+                            Completed {entry.completedDate}
+                          </div>
+                        </div>
+
+                        {/* Time */}
+                        <div className="text-right text-blue-200">
+                          <div className="text-base md:text-lg font-bold font-mono">
+                            {entry.time}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </div>
+          )}
+
+          {/* In Progress */}
+          {unfinishedEntries.length > 0 && (
+            <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-6 mb-6">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-4 text-center">
+                ⏳ In Progress
+              </h3>
+              <div className="w-full max-w-3xl mx-auto space-y-2 md:space-y-3">
+              {unfinishedEntries.map((entry) => {
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg transition-all bg-gray-800/50 border border-gray-600/30"
+                  >
+                    {/* Icon */}
+                    <div className="flex-shrink-0 w-8 md:w-10 text-center">
+                      <div className="text-gray-400 text-xs md:text-sm">
+                        ⏳
+                      </div>
+                    </div>
+
+                    {/* Team Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-left flex-1 min-w-0">
+                          <div className="font-semibold text-sm md:text-base truncate text-gray-300">
+                            {entry.team_name}
+                            <span className="text-gray-400 text-xs ml-1">(In Progress)</span>
+                          </div>
+                          <div className="text-xs md:text-sm text-gray-400">
+                            {entry.members} member{entry.members !== 1 ? 's' : ''}
+                            {entry.skips > 0 && (
+                              <span className="text-yellow-400 ml-2">
+                                • {entry.skips} skip{entry.skips !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-white/50">
+                            Started {entry.completedDate}
+                          </div>
+                        </div>
+
+                        {/* Time */}
+                        <div className="text-right text-gray-400">
+                          <div className="text-base md:text-lg font-bold font-mono">
+                            {entry.time}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            </div>
+          )}
+
+          {/* No teams message */}
+          {mainLeaderboard.length === 0 && casualLeaderboard.length === 0 && unfinishedEntries.length === 0 && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-6 md:p-8 text-center">
               <div className="text-4xl mb-4">🎯</div>
               <p className="text-lg text-white/80 mb-2">No teams have started this adventure yet!</p>

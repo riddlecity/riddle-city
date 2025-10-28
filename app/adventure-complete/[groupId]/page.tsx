@@ -188,7 +188,39 @@ export default async function AdventureCompletePage({ params }: Props) {
         };
       })
       .filter((entry) => entry !== null) // Remove null entries
-      .sort((a, b) => a!.totalTimeMs - b!.totalTimeMs) || [];
+      .sort((a, b) => {
+        // Sort by time first
+        if (a!.totalTimeMs !== b!.totalTimeMs) {
+          return a!.totalTimeMs - b!.totalTimeMs;
+        }
+        // If times are equal, fewer skips wins
+        return a!.skips - b!.skips;
+      }) || [];
+
+  // Split into main leaderboard (0-2 skips) and casual (3+ skips)
+  const mainLeaderboard = leaderboard.filter(entry => entry.skips < 3);
+  const casualLeaderboard = leaderboard.filter(entry => entry.skips >= 3);
+
+  // Find current team's position
+  const currentTeamSkips = group.riddles_skipped || 0;
+  const isCurrentTeamCasual = currentTeamSkips >= 3;
+  const relevantLeaderboard = isCurrentTeamCasual ? casualLeaderboard : mainLeaderboard;
+  const currentTeamIndex = relevantLeaderboard.findIndex(entry => entry.isCurrentTeam);
+  const currentTeamPosition = currentTeamIndex >= 0 ? currentTeamIndex + 1 : null;
+
+  // Determine which teams to show from the relevant leaderboard
+  let displayedTeams = relevantLeaderboard.slice(0, 3); // Always show top 3
+  
+  if (currentTeamPosition && currentTeamPosition > 5) {
+    // Current team is outside top 5, add them after top 3
+    displayedTeams.push(relevantLeaderboard[currentTeamIndex]);
+  } else if (currentTeamPosition && currentTeamPosition > 3) {
+    // Current team is 4th or 5th, show top 5
+    displayedTeams = relevantLeaderboard.slice(0, 5);
+  } else {
+    // Current team is in top 3 or doesn't exist, show top 5
+    displayedTeams = relevantLeaderboard.slice(0, 5);
+  }
 
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col px-3 py-4 md:px-4 md:py-6 relative overflow-hidden">
@@ -284,11 +316,11 @@ export default async function AdventureCompletePage({ params }: Props) {
           </div>
 
           {/* Leaderboard - With inline "See Full Leaderboard" button */}
-          {leaderboard.length > 0 && (
+          {(mainLeaderboard.length > 0 || casualLeaderboard.length > 0) && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
                 <h3 className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
-                  🏆 {adventureType} Leaderboard - {cityName}
+                  {isCurrentTeamCasual ? '🎮' : '🏆'} {isCurrentTeamCasual ? 'Casual Completions' : `${adventureType} Leaderboard`} - {cityName}
                 </h3>
                 <Link
                   href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
@@ -297,56 +329,77 @@ export default async function AdventureCompletePage({ params }: Props) {
                   See Full Leaderboard
                 </Link>
               </div>
+              {isCurrentTeamCasual && casualLeaderboard.length > 0 && (
+                <p className="text-xs md:text-sm text-white/60 mb-3 text-center md:text-left">
+                  Teams with 3+ skips • Still impressive! 🎉
+                </p>
+              )}
               <div className="space-y-2">
-                {leaderboard.slice(0, 5).map((entry, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between p-2 md:p-3 rounded-lg transition-all duration-200 ${
-                      entry.isCurrentTeam
-                        ? "bg-yellow-500/20 border border-yellow-500/30"
-                        : "bg-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 md:gap-3">
+                {displayedTeams.map((entry, displayIndex) => {
+                  // Calculate actual position in the relevant leaderboard
+                  const actualPosition = relevantLeaderboard.findIndex(e => e.team_name === entry.team_name) + 1;
+                  const showSeparator = displayIndex === 3 && currentTeamPosition && currentTeamPosition > 5;
+                  
+                  return (
+                    <div key={actualPosition}>
+                      {showSeparator && (
+                        <div className="text-center text-white/40 text-xs py-1">
+                          ⋮
+                        </div>
+                      )}
                       <div
-                        className={`text-sm md:text-lg font-bold ${
-                          index === 0
-                            ? "text-yellow-400"
-                            : index === 1
-                            ? "text-gray-300"
-                            : index === 2
-                            ? "text-orange-400"
-                            : "text-white/70"
+                        className={`flex items-center justify-between p-2 md:p-3 rounded-lg transition-all duration-200 ${
+                          entry.isCurrentTeam
+                            ? "bg-yellow-500/20 border border-yellow-500/30"
+                            : "bg-white/5 hover:bg-white/10"
                         }`}
                       >
-                        {index + 1}.
-                      </div>
-                      <div>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div
+                            className={`text-sm md:text-lg font-bold min-w-[2rem] ${
+                              actualPosition === 1
+                                ? "text-yellow-400"
+                                : actualPosition === 2
+                                ? "text-gray-300"
+                                : actualPosition === 3
+                                ? "text-orange-400"
+                                : "text-white/70"
+                            }`}
+                          >
+                            {actualPosition}.
+                          </div>
+                          <div>
+                            <div
+                              className={`text-sm md:text-base font-semibold ${
+                                entry.isCurrentTeam
+                                  ? "text-yellow-200"
+                                  : "text-white"
+                              }`}
+                            >
+                              {entry.team_name} {entry.isCurrentTeam && "(You!)"}
+                            </div>
+                            <div className="text-xs text-white/60">
+                              {entry.members} member
+                              {entry.members !== 1 ? "s" : ""}
+                              {entry.skips > 0 && (
+                                <span className="text-yellow-400 ml-2">
+                                  • {entry.skips} skip{entry.skips !== 1 ? "s" : ""}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <div
-                          className={`text-sm md:text-base font-semibold ${
-                            entry.isCurrentTeam
-                              ? "text-yellow-200"
-                              : "text-white"
+                          className={`font-mono font-bold text-sm md:text-base ${
+                            entry.isCurrentTeam ? "text-yellow-200" : "text-white"
                           }`}
                         >
-                          {entry.team_name} {entry.isCurrentTeam && "(You!)"}
-                        </div>
-                        <div className="text-xs text-white/60">
-                          {entry.members} member
-                          {entry.members !== 1 ? "s" : ""} • {entry.skips} skip
-                          {entry.skips !== 1 ? "s" : ""}
+                          {entry.time}
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`font-mono font-bold text-sm md:text-base ${
-                        entry.isCurrentTeam ? "text-yellow-200" : "text-white"
-                      }`}
-                    >
-                      {entry.time}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
