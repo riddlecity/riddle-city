@@ -123,27 +123,6 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
           <span className="text-2xl flex-shrink-0">{getWarningIcon()}</span>
           <div className="flex-1">
             <p className="font-semibold text-white leading-tight">{warning.message}</p>
-            
-            {warning.type === 'closing_soon' && warning.hoursUntilClose && (
-              <p className="text-sm text-white/80 mt-1">
-                {warning.hoursUntilClose < 1 
-                  ? `Closes in ${Math.round(warning.hoursUntilClose * 60)} minutes`
-                  : `Closes in ${Math.round(warning.hoursUntilClose)} hours`
-                }
-              </p>
-            )}
-            
-            {warning.type === 'closed' && warning.opensAt && (
-              <p className="text-sm text-white/80 mt-1">
-                Opens at {warning.opensAt}
-              </p>
-            )}
-            
-            {warning.type === 'bank_holiday' && (
-              <p className="text-sm text-white/80 mt-1">
-                Opening hours may differ today
-              </p>
-            )}
           </div>
         </div>
       </div>
