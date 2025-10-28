@@ -37,13 +37,42 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
       finished,
       paid,
       game_started,
+      active,
       group_members(user_id)
     `)
     .eq("track_id", trackId)
     .eq("paid", true)
     .not("team_name", "is", null)
+    .neq("active", false) // Exclude closed groups
     .order("finished", { ascending: false })
     .limit(50);
+
+  // Auto-close groups that have been inactive for over 24 hours
+  const now = new Date();
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+  
+  if (leaderboardData) {
+    const groupsToClose = leaderboardData.filter(group => {
+      if (group.finished || group.active === false) return false; // Already finished or closed
+      
+      const startTime = new Date(group.started_at || group.created_at);
+      const timeSinceStart = now.getTime() - startTime.getTime();
+      
+      return timeSinceStart > TWENTY_FOUR_HOURS;
+    });
+
+    // Close the inactive groups
+    if (groupsToClose.length > 0) {
+      const groupIdsToClose = groupsToClose.map(g => g.id);
+      await supabase
+        .from("groups")
+        .update({
+          active: false,
+          closed_at: now.toISOString()
+        })
+        .in("id", groupIdsToClose);
+    }
+  }
 
   // Format time function
   function formatTime(milliseconds: number): string {
@@ -118,6 +147,7 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
       return a.skips - b.skips;
     });
     
+  // Filter unfinished entries - only show active ones (not closed)
   const unfinishedEntries = allEntries
     .filter(entry => entry.status === 'unfinished')
     .sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime());
