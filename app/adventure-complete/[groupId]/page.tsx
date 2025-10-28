@@ -342,11 +342,14 @@ export default async function AdventureCompletePage({ params }: Props) {
                   Completion Time Not Listed
                 </h3>
                 <p className="text-sm md:text-base text-red-100/80">
-                  Your time of <span className="font-mono font-bold">{formattedTime}</span> is below the minimum expected time of {Math.floor(minimumLegitTime / (60 * 1000))} minutes for {riddleCount} riddles.
+                  Your completion time is unusually fast and won't appear on the leaderboard.
                 </p>
-                <p className="text-xs md:text-sm text-red-100/60 mt-2">
-                  Times under {MIN_TIME_PER_RIDDLE / (60 * 1000)} minutes per riddle are not displayed on the leaderboard.
-                </p>
+                <Link
+                  href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
+                  className="inline-block mt-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 text-xs md:text-sm"
+                >
+                  See Full Leaderboard
+                </Link>
               </div>
             </div>
           )}
