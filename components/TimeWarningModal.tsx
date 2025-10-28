@@ -109,9 +109,13 @@ export default function TimeWarningModal({
                           <span className="text-white/70 text-xs ml-2">
                             (Closed today)
                           </span>
-                        ) : detail.opensAt && (
+                        ) : detail.opensAt ? (
                           <span className="text-white/70 text-xs ml-2">
-                            (Opens at {detail.opensAt})
+                            (Now closed - Opens at {detail.opensAt})
+                          </span>
+                        ) : (
+                          <span className="text-white/70 text-xs ml-2">
+                            (Now closed)
                           </span>
                         )}
                       </div>
