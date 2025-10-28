@@ -7,9 +7,11 @@ interface TimeWarningModalProps {
     severity: 'high' | 'medium' | 'low';
     closedCount: number;
     closingSoonCount: number;
+    openingSoonCount: number;
     isBankHoliday: boolean;
     closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
-    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
+    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string; closedToday?: boolean }>;
+    openingSoonDetails: Array<{ riddleNumber: string; opensAt: string; hoursUntilOpen?: number }>;
   };
 }
 
@@ -87,7 +89,7 @@ export default function TimeWarningModal({
         )}
 
         {/* Location Status Info */}
-        {(warning.closedCount > 0 || warning.closingSoonCount > 0) && (
+        {(warning.closedCount > 0 || warning.closingSoonCount > 0 || warning.openingSoonCount > 0) && (
           <div className="bg-black/30 backdrop-blur-sm rounded-xl p-4 mb-6 border border-white/10">
             <div className={`text-sm ${styles.textColor} leading-relaxed space-y-3`}>
               <p className="opacity-90">
@@ -103,9 +105,36 @@ export default function TimeWarningModal({
                       <span className="text-red-400">🔒</span>
                       <div className="flex-1">
                         <span className="font-medium">Riddle {detail.riddleNumber}</span>
-                        {detail.opensAt && (
+                        {detail.closedToday ? (
+                          <span className="text-white/70 text-xs ml-2">
+                            (Closed today)
+                          </span>
+                        ) : detail.opensAt && (
                           <span className="text-white/70 text-xs ml-2">
                             (Opens at {detail.opensAt})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Opening Soon Locations Details */}
+              {warning.openingSoonDetails.length > 0 && (
+                <div className="space-y-2">
+                  <p className="font-semibold text-white">Opening Soon:</p>
+                  {warning.openingSoonDetails.map((detail, index) => (
+                    <div key={index} className="flex items-start gap-2 pl-2">
+                      <span className="text-green-400">🔓</span>
+                      <div className="flex-1">
+                        <span className="font-medium">Riddle {detail.riddleNumber}</span>
+                        {detail.hoursUntilOpen !== undefined && (
+                          <span className="text-white/70 text-xs ml-2">
+                            (Opens in {detail.hoursUntilOpen < 1 
+                              ? `${Math.round(detail.hoursUntilOpen * 60)} minutes`
+                              : `${Math.round(detail.hoursUntilOpen)} hour${Math.round(detail.hoursUntilOpen) > 1 ? 's' : ''}`
+                            })
                           </span>
                         )}
                       </div>
@@ -127,7 +156,7 @@ export default function TimeWarningModal({
                           <span className="text-white/70 text-xs ml-2">
                             ({detail.hoursLeft < 1 
                               ? `${Math.round(detail.hoursLeft * 60)} minutes left`
-                              : `${Math.round(detail.hoursLeft)} hours left`
+                              : `${Math.round(detail.hoursLeft)} hour${Math.round(detail.hoursLeft) > 1 ? 's' : ''} left`
                             })
                           </span>
                         )}

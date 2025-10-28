@@ -13,6 +13,7 @@ export interface TimeWarning {
   hoursUntilClose?: number;
   hoursUntilOpen?: number;
   opensAt?: string;
+  closedToday?: boolean; // True if closed for the entire day
 }
 
 // Database opening hours format
@@ -104,9 +105,10 @@ function hoursUntilClose(hours: DatabaseOpeningHours, ukTime: Date): number | nu
 }
 
 // Get next opening time for closed location
-function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: string; time: string } | null {
+function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: string; time: string; hoursUntilOpen?: number; closedToday?: boolean } | null {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   let checkDay = ukTime.getDay();
+  const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
 
   // Check next 7 days
   for (let i = 0; i < 7; i++) {
@@ -116,17 +118,27 @@ function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: s
     if (dayHours) {
       // If it's today, check if we're before opening time
       if (i === 0) {
-        const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
         const [openHour, openMinute] = dayHours.open.split(':').map(Number);
         const openMinutes = openHour * 60 + openMinute;
 
         if (currentMinutes < openMinutes) {
-          return { day: 'today', time: dayHours.open };
+          // Opens later today
+          const hoursUntilOpen = (openMinutes - currentMinutes) / 60;
+          return { 
+            day: 'today', 
+            time: formatTime(dayHours.open),
+            hoursUntilOpen,
+            closedToday: false
+          };
         }
       } else {
         // Future day
-        const dayName = i === 1 ? 'tomorrow' : dayNames[checkDay];
-        return { day: dayName, time: dayHours.open };
+        const dayLabel = i === 1 ? 'tomorrow' : dayNames[checkDay];
+        return { 
+          day: dayLabel, 
+          time: formatTime(dayHours.open),
+          closedToday: i > 0 // If opening tomorrow or later, it's closed for today
+        };
       }
     }
 
@@ -134,6 +146,14 @@ function getNextOpeningTime(hours: DatabaseOpeningHours, ukTime: Date): { day: s
   }
 
   return null;
+}
+
+// Format time from 24h to 12h with AM/PM
+function formatTime(time24: string): string {
+  const [hour, minute] = time24.split(':').map(Number);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${hour12}:${minute.toString().padStart(2, '0')}${period}`;
 }
 
 // Main function to check location hours and generate warnings
@@ -210,17 +230,22 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
       if (nextOpening) {
         return {
           type: 'closed',
-          message: `❌ This location is currently closed. Opens ${nextOpening.day} at ${nextOpening.time}`,
+          message: nextOpening.closedToday 
+            ? `❌ This location is currently closed. Opens ${nextOpening.day} at ${nextOpening.time}`
+            : `❌ This location is currently closed. Opens ${nextOpening.day} at ${nextOpening.time}`,
           severity: 'high',
           location: actualLocationName,
-          opensAt: nextOpening.time
+          opensAt: nextOpening.time,
+          hoursUntilOpen: nextOpening.hoursUntilOpen,
+          closedToday: nextOpening.closedToday
         };
       } else {
         return {
           type: 'closed',
           message: `❌ This location is currently closed`,
           severity: 'high',
-          location: actualLocationName
+          location: actualLocationName,
+          closedToday: true
         };
       }
     }
@@ -235,11 +260,13 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
   shouldWarn: boolean;
   closedCount: number;
   closingSoonCount: number;
+  openingSoonCount: number;
   isBankHoliday: boolean;
   message: string;
   severity: 'high' | 'medium' | 'low';
   closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
-  closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
+  closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string; closedToday?: boolean }>;
+  openingSoonDetails: Array<{ riddleNumber: string; opensAt: string; hoursUntilOpen?: number }>;
 }> {
   try {
     // Check if it's a bank holiday first
@@ -259,17 +286,20 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
         shouldWarn: bankHoliday,
         closedCount: 0,
         closingSoonCount: 0,
+        openingSoonCount: 0,
         isBankHoliday: bankHoliday,
         message: bankHoliday ? '🏦 It\'s a UK bank holiday - opening times may vary' : '',
         severity: bankHoliday ? 'medium' : 'low',
         closingSoonDetails: [],
-        closedDetails: []
+        closedDetails: [],
+        openingSoonDetails: []
       };
     }
 
     const warnings = [];
     const closingSoonDetails = [];
     const closedDetails = [];
+    const openingSoonDetails = [];
 
     // Check each riddle location
     for (const riddle of riddles) {
@@ -289,10 +319,20 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
             hoursLeft: warning.hoursUntilClose
           });
         } else if (warning.type === 'closed') {
+          // Check if opening within 2 hours
+          if (warning.hoursUntilOpen !== undefined && warning.hoursUntilOpen <= 2) {
+            openingSoonDetails.push({
+              riddleNumber: `${riddle.order_index || 'Unknown'}`,
+              opensAt: warning.opensAt || 'Unknown',
+              hoursUntilOpen: warning.hoursUntilOpen
+            });
+          }
+          
           closedDetails.push({
             riddleNumber: `${riddle.order_index || 'Unknown'}`,
             opensAt: warning.opensAt,
-            hoursUntilOpen: warning.hoursUntilOpen
+            hoursUntilOpen: warning.hoursUntilOpen,
+            closedToday: warning.closedToday
           });
         }
       }
@@ -300,9 +340,10 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
 
     const closedCount = warnings.filter(w => w.type === 'closed').length;
     const closingSoonCount = warnings.filter(w => w.type === 'closing_soon').length;
+    const openingSoonCount = openingSoonDetails.length;
     
     // Return warning if there are issues OR if it's a bank holiday
-    if (closedCount > 0 || closingSoonCount > 0 || bankHoliday) {
+    if (closedCount > 0 || closingSoonCount > 0 || openingSoonCount > 0 || bankHoliday) {
       let message = '';
       let severity: 'high' | 'medium' | 'low' = 'low';
       
@@ -318,6 +359,9 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
       } else if (closingSoonCount > 0) {
         message = `${closingSoonCount} location${closingSoonCount > 1 ? 's are' : ' is'} closing soon`;
         severity = 'medium';
+      } else if (openingSoonCount > 0) {
+        message = `${openingSoonCount} location${openingSoonCount > 1 ? 's' : ''} opening soon`;
+        severity = 'medium';
       } else if (bankHoliday) {
         message = '🏦 It\'s a UK bank holiday - opening times may vary';
         severity = 'medium';
@@ -327,11 +371,13 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
         shouldWarn: true,
         closedCount,
         closingSoonCount,
+        openingSoonCount,
         isBankHoliday: bankHoliday,
         message,
         severity,
         closingSoonDetails,
-        closedDetails
+        closedDetails,
+        openingSoonDetails
       };
     }
 
@@ -339,11 +385,13 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
       shouldWarn: false,
       closedCount: 0,
       closingSoonCount: 0,
+      openingSoonCount: 0,
       isBankHoliday: false,
       message: '',
       severity: 'low',
       closingSoonDetails: [],
-      closedDetails: []
+      closedDetails: [],
+      openingSoonDetails: []
     };
 
   } catch (error) {
@@ -352,11 +400,13 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
       shouldWarn: false,
       closedCount: 0,
       closingSoonCount: 0,
+      openingSoonCount: 0,
       isBankHoliday: false,
       message: '',
       severity: 'low',
       closingSoonDetails: [],
-      closedDetails: []
+      closedDetails: [],
+      openingSoonDetails: []
     };
   }
 }

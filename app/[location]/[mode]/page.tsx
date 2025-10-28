@@ -29,11 +29,13 @@ export default function PreferencesPage() {
     shouldWarn: boolean;
     closedCount: number;
     closingSoonCount: number;
+    openingSoonCount: number;
     isBankHoliday: boolean;
     message: string;
     severity: 'high' | 'medium' | 'low';
     closingSoonDetails: Array<{ riddleNumber: string; closingTime: string; hoursLeft?: number }>;
-    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string }>;
+    closedDetails: Array<{ riddleNumber: string; hoursUntilOpen?: number; opensAt?: string; closedToday?: boolean }>;
+    openingSoonDetails: Array<{ riddleNumber: string; opensAt: string; hoursUntilOpen?: number }>;
   } | null>(null);
   
   // Load location hours for time warnings
