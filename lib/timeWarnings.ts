@@ -323,20 +323,24 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
           });
         } else if (warning.type === 'closed') {
           // Check if opening within 2 hours
-          if (warning.hoursUntilOpen !== undefined && warning.hoursUntilOpen <= 2) {
+          const isOpeningSoon = warning.hoursUntilOpen !== undefined && warning.hoursUntilOpen <= 2;
+          
+          if (isOpeningSoon) {
+            // Add to opening soon section only
             openingSoonDetails.push({
               riddleNumber: `${riddle.order_index || 'Unknown'}`,
               opensAt: warning.opensAt || 'Unknown',
               hoursUntilOpen: warning.hoursUntilOpen
             });
+          } else {
+            // Add to closed section only if not opening soon
+            closedDetails.push({
+              riddleNumber: `${riddle.order_index || 'Unknown'}`,
+              opensAt: warning.opensAt,
+              hoursUntilOpen: warning.hoursUntilOpen,
+              closedToday: warning.closedToday
+            });
           }
-          
-          closedDetails.push({
-            riddleNumber: `${riddle.order_index || 'Unknown'}`,
-            opensAt: warning.opensAt,
-            hoursUntilOpen: warning.hoursUntilOpen,
-            closedToday: warning.closedToday
-          });
         }
       }
     }

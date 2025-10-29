@@ -107,7 +107,7 @@ export default function TimeWarningModal({
                         <span className="font-medium">Riddle {detail.riddleNumber}</span>
                         {detail.closedToday ? (
                           <span className="text-white/70 text-xs ml-2">
-                            (Closed today)
+                            (Not open today)
                           </span>
                         ) : detail.opensAt ? (
                           <span className="text-white/70 text-xs ml-2">
