@@ -55,7 +55,7 @@ export default function QRScanner({ onClose }: QRScannerProps) {
     };
 
     const startScanning = () => {
-      // Use BarcodeDetector API if available
+      // Check if BarcodeDetector is available
       if ('BarcodeDetector' in window) {
         const barcodeDetector = new (window as any).BarcodeDetector({
           formats: ['qr_code']
@@ -87,8 +87,8 @@ export default function QRScanner({ onClose }: QRScannerProps) {
           }
         }, 500); // Scan every 500ms
       } else {
-        // Fallback: Manual redirect to camera app
-        setError('QR scanning not supported on this browser. Use your camera app to scan the QR code.');
+        // Show alternative scanning instructions but keep camera open
+        console.log('BarcodeDetector not available, showing manual instructions');
       }
     };
 
@@ -168,7 +168,7 @@ export default function QRScanner({ onClose }: QRScannerProps) {
         />
 
         {/* Scanning overlay */}
-        {scanning && !error && (
+        {scanning && !error && 'BarcodeDetector' in window && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative w-64 h-64">
               {/* Corner guides */}
@@ -179,6 +179,39 @@ export default function QRScanner({ onClose }: QRScannerProps) {
               
               {/* Scanning line animation */}
               <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent animate-scan"></div>
+            </div>
+          </div>
+        )}
+
+        {/* Fallback instructions for browsers without BarcodeDetector */}
+        {scanning && !error && !('BarcodeDetector' in window) && (
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="bg-black/80 backdrop-blur-sm border-2 border-white/20 rounded-xl p-6 max-w-md text-center">
+              <div className="text-5xl mb-4">📱</div>
+              <h3 className="text-white text-xl font-bold mb-3">Use Your Camera App</h3>
+              <p className="text-white/80 text-sm mb-4 leading-relaxed">
+                Your browser doesn't support automatic QR scanning. Please:
+              </p>
+              <ol className="text-white/90 text-sm text-left space-y-2 mb-4">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold">1.</span>
+                  <span>Open your phone's Camera app</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold">2.</span>
+                  <span>Point it at the QR code</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold">3.</span>
+                  <span>Tap the notification to continue your adventure</span>
+                </li>
+              </ol>
+              <button
+                onClick={handleClose}
+                className="bg-white/20 hover:bg-white/30 text-white font-medium px-6 py-3 rounded-lg transition-all active:scale-95 w-full"
+              >
+                Got it, close this
+              </button>
             </div>
           </div>
         )}
@@ -201,7 +234,7 @@ export default function QRScanner({ onClose }: QRScannerProps) {
       </div>
 
       {/* Instructions */}
-      {!error && (
+      {!error && 'BarcodeDetector' in window && (
         <div className="bg-black/90 backdrop-blur-sm p-4 text-center border-t border-white/10">
           <p className="text-white/80 text-sm">
             Point your camera at the QR code to scan
