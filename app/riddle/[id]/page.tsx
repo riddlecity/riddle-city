@@ -10,6 +10,7 @@ import RiddleTimeWarning from "@/components/RiddleTimeWarning";
 import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import CookieHandler from "@/components/CookieHandler";
 import ManualAnswerForm from "@/components/ManualAnswerForm";
+import ScanQRButton from "@/components/ScanQRButton";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -284,6 +285,13 @@ export default async function RiddlePage({ params }: Props) {
                 correctAnswer={answer}
                 isLastRiddle={isLastRiddle}
               />
+            </div>
+          )}
+
+          {/* Scan QR Button for non-manual answer riddles */}
+          {!has_manual_answer && groupId && (
+            <div className="mt-8 mb-8">
+              <ScanQRButton />
             </div>
           )}
 
