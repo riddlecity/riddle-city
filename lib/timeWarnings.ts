@@ -1,8 +1,28 @@
-// Updated time warnings system using database instead of cache
+// Updated time warnings system using database with caching layer
 // lib/timeWarnings.ts
 
 import { createClient } from './supabase/server';
 import { isTodayBankHoliday } from './bankHolidays';
+
+// Cache interface for opening hours
+interface CachedOpeningHours {
+  riddleId: string;
+  openingHours: DatabaseOpeningHours;
+  locationId: string;
+  cachedAt: number;
+}
+
+// In-memory cache for opening hours (1 hour TTL)
+const openingHoursCache = new Map<string, CachedOpeningHours>();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+
+// Cache for track riddles (1 hour TTL)
+interface CachedTrackRiddles {
+  trackId: string;
+  riddles: Array<{ id: string; location_id: string; opening_hours: DatabaseOpeningHours; order_index: number }>;
+  cachedAt: number;
+}
+const trackRiddlesCache = new Map<string, CachedTrackRiddles>();
 
 export interface TimeWarning {
   type: 'closed' | 'closing_soon' | 'open' | 'bank_holiday';
@@ -161,10 +181,22 @@ function formatTime(time24: string): string {
   return `${hour12}:${minute.toString().padStart(2, '0')}${period}`;
 }
 
-// Main function to check location hours and generate warnings
-export async function checkLocationHours(riddleId: string): Promise<TimeWarning | null> {
+// Helper function to get riddle opening hours with caching
+async function getRiddleOpeningHours(riddleId: string): Promise<{ openingHours: DatabaseOpeningHours; locationId: string } | null> {
+  // Check cache first
+  const cached = openingHoursCache.get(riddleId);
+  const now = Date.now();
+  
+  if (cached && (now - cached.cachedAt) < CACHE_TTL) {
+    // Cache hit and still valid
+    return {
+      openingHours: cached.openingHours,
+      locationId: cached.locationId
+    };
+  }
+  
+  // Cache miss or expired - fetch from database
   try {
-    // Get opening hours and location name from database
     const supabase = await createClient();
     const { data: riddleData, error } = await supabase
       .from('riddles')
@@ -173,10 +205,38 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
       .single();
 
     if (error || !riddleData) {
+      return null;
+    }
+
+    // Store in cache
+    openingHoursCache.set(riddleId, {
+      riddleId,
+      openingHours: riddleData.opening_hours as DatabaseOpeningHours,
+      locationId: riddleData.location_id,
+      cachedAt: now
+    });
+
+    return {
+      openingHours: riddleData.opening_hours as DatabaseOpeningHours,
+      locationId: riddleData.location_id
+    };
+  } catch (error) {
+    console.error('Error fetching riddle opening hours:', error);
+    return null;
+  }
+}
+
+// Main function to check location hours and generate warnings
+export async function checkLocationHours(riddleId: string): Promise<TimeWarning | null> {
+  try {
+    // Get opening hours from cache or database
+    const riddleData = await getRiddleOpeningHours(riddleId);
+
+    if (!riddleData) {
       return null; // No riddle data available
     }
 
-    const hours = riddleData.opening_hours as DatabaseOpeningHours;
+    const hours = riddleData.openingHours;
     // Don't use location name in warnings - use generic "this location" to avoid spoiling the riddle
     const actualLocationName = 'this location';
 
@@ -258,6 +318,44 @@ export async function checkLocationHours(riddleId: string): Promise<TimeWarning 
   }
 }
 
+// Helper function to get track riddles with caching
+async function getTrackRiddles(trackId: string): Promise<Array<{ id: string; location_id: string; opening_hours: DatabaseOpeningHours; order_index: number }> | null> {
+  // Check cache first
+  const cached = trackRiddlesCache.get(trackId);
+  const now = Date.now();
+  
+  if (cached && (now - cached.cachedAt) < CACHE_TTL) {
+    // Cache hit and still valid
+    return cached.riddles;
+  }
+  
+  // Cache miss or expired - fetch from database
+  try {
+    const supabase = await createClient();
+    const { data: riddles, error } = await supabase
+      .from('riddles')
+      .select('id, location_id, opening_hours, order_index')
+      .eq('track_id', trackId)
+      .order('order_index');
+
+    if (error || !riddles) {
+      return null;
+    }
+
+    // Store in cache
+    trackRiddlesCache.set(trackId, {
+      trackId,
+      riddles: riddles as Array<{ id: string; location_id: string; opening_hours: DatabaseOpeningHours; order_index: number }>,
+      cachedAt: now
+    });
+
+    return riddles as Array<{ id: string; location_id: string; opening_hours: DatabaseOpeningHours; order_index: number }>;
+  } catch (error) {
+    console.error('Error fetching track riddles:', error);
+    return null;
+  }
+}
+
 // Check multiple riddles and return overall warning status for payment page
 export async function checkMultipleLocationHours(trackId: string): Promise<{
   shouldWarn: boolean;
@@ -275,16 +373,10 @@ export async function checkMultipleLocationHours(trackId: string): Promise<{
     // Check if it's a bank holiday first
     const bankHoliday = isTodayBankHoliday();
     
-    const supabase = await createClient();
-    
-    // Get all riddles for this track with opening hours
-    const { data: riddles, error } = await supabase
-      .from('riddles')
-      .select('id, location_id, opening_hours, order_index')
-      .eq('track_id', trackId)
-      .order('order_index');
+    // Get all riddles for this track with opening hours (using cache)
+    const riddles = await getTrackRiddles(trackId);
 
-    if (error || !riddles) {
+    if (!riddles) {
       return {
         shouldWarn: bankHoliday,
         closedCount: 0,
