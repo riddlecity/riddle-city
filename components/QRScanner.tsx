@@ -7,6 +7,28 @@ interface QRScannerProps {
   onClose: () => void;
 }
 
+// Dynamically load ZXing library as fallback
+const loadZXing = (): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && (window as any).ZXing) {
+      resolve((window as any).ZXing);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@zxing/library@latest/umd/index.min.js';
+    script.onload = () => {
+      if ((window as any).ZXing) {
+        resolve((window as any).ZXing);
+      } else {
+        reject(new Error('ZXing failed to load'));
+      }
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
 export default function QRScanner({ onClose }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,9 +76,10 @@ export default function QRScanner({ onClose }: QRScannerProps) {
       }
     };
 
-    const startScanning = () => {
-      // Check if BarcodeDetector is available
+    const startScanning = async () => {
+      // Try BarcodeDetector first (Chrome, Edge)
       if ('BarcodeDetector' in window) {
+        console.log('Using native BarcodeDetector');
         const barcodeDetector = new (window as any).BarcodeDetector({
           formats: ['qr_code']
         });
@@ -87,8 +110,33 @@ export default function QRScanner({ onClose }: QRScannerProps) {
           }
         }, 500); // Scan every 500ms
       } else {
-        // Show alternative scanning instructions but keep camera open
-        console.log('BarcodeDetector not available, showing manual instructions');
+        // Fallback to ZXing library (Safari, Firefox, older browsers)
+        console.log('BarcodeDetector not available, trying ZXing fallback...');
+        try {
+          const ZXing = await loadZXing();
+          console.log('ZXing loaded successfully');
+          const codeReader = new ZXing.BrowserQRCodeReader();
+          
+          // Use continuous decode from video
+          codeReader.decodeFromVideoElement(
+            videoRef.current,
+            (result: any) => {
+              if (result && mounted && scanning) {
+                console.log('QR Code detected with ZXing:', result.text);
+                handleQRCodeDetected(result.text);
+                codeReader.reset();
+              }
+              // Ignore errors - they happen constantly while searching
+            }
+          );
+          
+          // Store reader for cleanup
+          (videoRef.current as any)._zxingReader = codeReader;
+        } catch (err) {
+          console.error('ZXing fallback failed:', err);
+          console.log('Showing manual camera instructions');
+          // Keep camera open but show instructions
+        }
       }
     };
 
@@ -118,6 +166,15 @@ export default function QRScanner({ onClose }: QRScannerProps) {
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
         scanIntervalRef.current = null;
+      }
+      
+      // Clean up ZXing reader if it exists
+      if (videoRef.current && (videoRef.current as any)._zxingReader) {
+        try {
+          (videoRef.current as any)._zxingReader.reset();
+        } catch (err) {
+          console.error('Error cleaning up ZXing reader:', err);
+        }
       }
       
       if (streamRef.current) {
@@ -167,8 +224,8 @@ export default function QRScanner({ onClose }: QRScannerProps) {
           className="hidden"
         />
 
-        {/* Scanning overlay */}
-        {scanning && !error && 'BarcodeDetector' in window && (
+        {/* Scanning overlay - show for both native and ZXing */}
+        {scanning && !error && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative w-64 h-64">
               {/* Corner guides */}
@@ -179,39 +236,6 @@ export default function QRScanner({ onClose }: QRScannerProps) {
               
               {/* Scanning line animation */}
               <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent animate-scan"></div>
-            </div>
-          </div>
-        )}
-
-        {/* Fallback instructions for browsers without BarcodeDetector */}
-        {scanning && !error && !('BarcodeDetector' in window) && (
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="bg-black/80 backdrop-blur-sm border-2 border-white/20 rounded-xl p-6 max-w-md text-center">
-              <div className="text-5xl mb-4">📱</div>
-              <h3 className="text-white text-xl font-bold mb-3">Use Your Camera App</h3>
-              <p className="text-white/80 text-sm mb-4 leading-relaxed">
-                Your browser doesn't support automatic QR scanning. Please:
-              </p>
-              <ol className="text-white/90 text-sm text-left space-y-2 mb-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 font-bold">1.</span>
-                  <span>Open your phone's Camera app</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 font-bold">2.</span>
-                  <span>Point it at the QR code</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500 font-bold">3.</span>
-                  <span>Tap the notification to continue your adventure</span>
-                </li>
-              </ol>
-              <button
-                onClick={handleClose}
-                className="bg-white/20 hover:bg-white/30 text-white font-medium px-6 py-3 rounded-lg transition-all active:scale-95 w-full"
-              >
-                Got it, close this
-              </button>
             </div>
           </div>
         )}
