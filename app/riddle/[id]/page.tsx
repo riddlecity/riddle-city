@@ -265,8 +265,12 @@ export default async function RiddlePage({ params }: Props) {
         <div className="w-full max-w-4xl text-center">
           <h1
             className="font-bold text-white leading-tight drop-shadow-lg mb-8
-                       text-[clamp(1.5rem,6vw,2.5rem)]
-                       md:text-[clamp(2rem,4vw,3rem)]"
+                       text-[clamp(1.75rem,6vw,2.5rem)]
+                       md:text-[clamp(2rem,4vw,3rem)]
+                       px-2"
+            style={{
+              textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
+            }}
           >
             {riddle_text}
           </h1>
@@ -287,10 +291,10 @@ export default async function RiddlePage({ params }: Props) {
           {qr_hint && (
             <div className="mt-8">
               <details className="group">
-                <summary className="cursor-pointer text-white/50 hover:text-white/70 transition-colors duration-200 text-center text-sm font-normal bg-white/10 rounded-lg px-4 py-3 hover:bg-white/20 inline-block">
-                  💡 Ask for a hint? ▼
+                <summary className="cursor-pointer text-white/60 hover:text-white/80 transition-colors duration-200 text-center text-sm sm:text-base font-medium bg-white/10 rounded-lg px-4 py-3.5 hover:bg-white/20 inline-block min-h-[48px] active:scale-95">
+                  💡 Need a hint? ▼
                 </summary>
-                <div className="text-white/70 text-sm leading-relaxed bg-black/30 backdrop-blur-sm rounded-lg p-4 border border-white/10 mt-2 max-w-lg mx-auto">
+                <div className="text-white/80 text-sm sm:text-base leading-relaxed bg-black/40 backdrop-blur-sm rounded-lg p-4 sm:p-5 border border-white/20 mt-3 max-w-lg mx-auto animate-in slide-in-from-top-2 duration-200">
                   {qr_hint}
                 </div>
               </details>
@@ -299,10 +303,10 @@ export default async function RiddlePage({ params }: Props) {
         </div>
       </div>
 
-      {/* Bottom section - copy link and skip */}
+      {/* Bottom section - copy link and skip with improved mobile spacing */}
       <div
-        className="relative z-10 p-4 flex justify-between items-end"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
+        className="relative z-10 px-4 py-3 sm:py-4 flex justify-between items-end gap-4 bg-gradient-to-t from-black/30 to-transparent"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom, 16px), 1rem)" }}
       >
         {/* Copy Link - Bottom Left */}
         {groupId && isLeader && !isLastRiddle && (

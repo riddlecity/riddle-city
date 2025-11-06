@@ -25,12 +25,53 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   line-height: 1.6;
+  /* Improve text rendering on mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent text size adjustment on orientation change */
+  -webkit-text-size-adjust: 100%;
 }
 
 img {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+/* Mobile-friendly touch targets - minimum 44x44px */
+button, 
+a, 
+[role="button"],
+input[type="submit"],
+input[type="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Improve tap feedback on mobile */
+button:active, 
+a:active,
+[role="button"]:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Better focus states for accessibility and mobile */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* Larger tap targets for form inputs on mobile */
+input,
+textarea,
+select {
+  min-height: 44px;
+  font-size: 16px; /* Prevents zoom on iOS */
 }
 
 /* Animate fade-in */
@@ -52,6 +93,18 @@ img {
 /* Optional: smoother button transitions */
 button {
   transition: all 0.2s ease-in-out;
+  /* Remove default button styles that can interfere with mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Disable pull-to-refresh bounce on body to prevent accidental refreshes */
+body {
+  overscroll-behavior-y: contain;
 }
 
 /* Clean details toggle */

@@ -115,37 +115,39 @@ export default function ManualAnswerForm({
   return (
     <div className="max-w-md mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 text-center">
+        <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4 text-center">
             🔍 Enter Your Answer
           </h3>
           
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <input
               type="text"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="Type your answer here..."
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3.5 sm:py-3 bg-white/10 border-2 border-white/20 rounded-lg text-white text-base sm:text-base placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               disabled={isSubmitting}
               autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
             />
             
             {error && (
-              <div className="bg-red-600/20 border border-red-500/50 rounded-lg p-3">
-                <p className="text-red-300 text-sm text-center">{error}</p>
+              <div className="bg-red-600/20 border border-red-500/50 rounded-lg p-3 animate-in slide-in-from-top-2 duration-200">
+                <p className="text-red-300 text-sm text-center font-medium">{error}</p>
               </div>
             )}
             
             <button
               type="submit"
               disabled={isSubmitting || !answer.trim()}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+              className="w-full min-h-[48px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 active:scale-[0.98] disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3.5 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed text-base"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Checking...
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Checking...</span>
                 </div>
               ) : (
                 'Submit Answer'

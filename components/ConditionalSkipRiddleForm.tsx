@@ -199,14 +199,14 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     <button
       onClick={handleSkip}
       disabled={isSkipping}
-      className="text-white text-right hover:text-white/80 transition-colors duration-200"
+      className="text-white text-right hover:text-white/80 active:scale-95 transition-all duration-200 min-h-[48px] px-3 py-2 rounded-lg hover:bg-white/10"
     >
-      <div className="text-xs text-white/60 mb-1">{skipText.subtitle}</div>
-      <div className="text-sm font-medium">
+      <div className="text-xs sm:text-xs text-white/60 mb-0.5">{skipText.subtitle}</div>
+      <div className="text-sm sm:text-base font-medium">
         {isSkipping ? 'Skipping...' : skipText.action}
       </div>
       {canAnyoneSkip() && !isLeader && (
-        <div className="text-xs text-white/40 mt-1">
+        <div className="text-xs text-white/40 mt-0.5">
           (Emergency skip available)
         </div>
       )}

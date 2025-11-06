@@ -501,19 +501,21 @@ export default function PreferencesPage() {
                 onChange={(e) => handleTeamNameChange(e.target.value)}
                 placeholder="Enter your team name to proceed..."
                 maxLength={30}
-                className="w-full bg-transparent px-3 py-2 text-white placeholder:text-white/50 focus:outline-none text-sm"
+                className="w-full bg-transparent px-4 py-3 text-white text-base placeholder:text-white/50 focus:outline-none min-h-[48px]"
                 required
+                autoComplete="off"
+                autoCapitalize="words"
               />
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={getRandomSuggestion}
-                className="text-xs text-purple-400 hover:text-purple-300 transition-colors duration-200"
+                className="text-xs sm:text-sm text-purple-400 hover:text-purple-300 active:scale-95 transition-all duration-200 min-h-[36px] px-2 py-1 rounded hover:bg-purple-400/10"
               >
                 💡 Random name suggestion
               </button>
-              <span className="text-xs text-white/50">
+              <span className="text-xs sm:text-sm text-white/50 tabular-nums">
                 {teamName.length}/30
               </span>
             </div>
@@ -526,13 +528,13 @@ export default function PreferencesPage() {
             <h3 className="text-base font-medium text-white mb-2">
               📧 Invite Your Team
             </h3>
-            <p className="text-xs text-white/70 mb-3">
+            <p className="text-xs sm:text-sm text-white/70 mb-3">
               You can share the game link later, or enter player emails below to send invites now:
             </p>
             <button
               type="button"
               onClick={() => setShowEmails(!showEmails)}
-              className="flex items-center justify-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors duration-200 mx-auto"
+              className="flex items-center justify-center gap-2 text-sm sm:text-base font-medium text-purple-400 hover:text-purple-300 active:scale-95 transition-all duration-200 mx-auto min-h-[44px] px-4 py-2 rounded-lg hover:bg-purple-400/10"
             >
               <span className={`transform transition-transform duration-200 ${showEmails ? 'rotate-90' : 'rotate-0'}`}>
                 ▶
@@ -542,10 +544,10 @@ export default function PreferencesPage() {
           </div>
           
           {showEmails && (
-            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
               {/* Duplicate warning */}
               {duplicateWarning && (
-                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-2 text-red-200 text-xs">
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-red-200 text-xs sm:text-sm animate-in slide-in-from-top-2 duration-200">
                   ⚠️ {duplicateWarning}
                 </div>
               )}
@@ -561,18 +563,21 @@ export default function PreferencesPage() {
                   <div key={index} className="relative">
                     <input
                       type="email"
+                      inputMode="email"
                       placeholder={`Email for Player ${index + 1}`}
                       value={email}
                       onChange={(e) => handleEmailChange(index, e.target.value)}
-                      className={`w-full rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 transition-all duration-200 text-sm ${
+                      className={`w-full rounded-lg px-4 py-3 text-white text-base placeholder:text-white/50 focus:outline-none focus:ring-2 transition-all duration-200 min-h-[48px] ${
                         isDuplicate 
-                          ? 'bg-red-500/10 border border-red-500/50 focus:ring-red-500' 
-                          : 'bg-white/10 border border-white/20 focus:ring-purple-500 focus:border-transparent'
+                          ? 'bg-red-500/10 border-2 border-red-500/50 focus:ring-red-500' 
+                          : 'bg-white/10 border-2 border-white/20 focus:ring-purple-500 focus:border-transparent'
                       }`}
+                      autoComplete="email"
+                      autoCapitalize="off"
                     />
                     {isDuplicate && (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <span className="text-red-400 text-sm">⚠️</span>
+                        <span className="text-red-400 text-lg">⚠️</span>
                       </div>
                     )}
                   </div>
@@ -580,7 +585,7 @@ export default function PreferencesPage() {
               })}
               
               {/* Helpful tip */}
-              <div className="text-xs text-white/50 text-center">
+              <div className="text-xs sm:text-sm text-white/50 text-center bg-white/5 rounded-lg p-2">
                 💡 Each email can only be used once per team
               </div>
             </div>
@@ -596,7 +601,7 @@ export default function PreferencesPage() {
             hasDuplicateEmails() || 
             (teamName.trim() !== '' && containsOffensiveContent(teamName))
           }
-          className={`w-full font-semibold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg text-sm ${
+          className={`w-full font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg text-base sm:text-lg min-h-[52px] active:scale-[0.98] ${
             loading || !teamName.trim() || hasDuplicateEmails() || (teamName.trim() !== '' && containsOffensiveContent(teamName))
               ? 'bg-gray-600 cursor-not-allowed opacity-50'
               : isAdminMode
@@ -606,25 +611,25 @@ export default function PreferencesPage() {
         >
           {loading ? (
             <div className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              {isAdminMode ? 'Creating Test Game...' : 'Processing...'}
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>{isAdminMode ? 'Creating Test Game...' : 'Processing...'}</span>
             </div>
           ) : (
             <>
-              {isAdminMode ? '🔧 Create Test Game' : 'Pay & Start Adventure'}
+              {isAdminMode ? '🔧 Create Test Game' : '💳 Pay & Start Adventure'}
             </>
           )}
         </button>
         
         {/* Show warnings */}
         {hasDuplicateEmails() && (
-          <div className="text-center text-red-400 text-sm">
+          <div className="text-center text-red-400 text-sm sm:text-base font-medium bg-red-400/10 rounded-lg p-3 border border-red-400/30 animate-in slide-in-from-top-2 duration-200">
             ⚠️ Please remove duplicate emails before continuing
           </div>
         )}
         
         {teamName.trim() !== '' && containsOffensiveContent(teamName) && (
-          <div className="text-center text-red-400 text-sm">
+          <div className="text-center text-red-400 text-sm sm:text-base font-medium bg-red-400/10 rounded-lg p-3 border border-red-400/30 animate-in slide-in-from-top-2 duration-200">
             ⚠️ Please choose a more appropriate team name
           </div>
         )}

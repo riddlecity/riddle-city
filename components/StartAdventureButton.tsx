@@ -57,27 +57,27 @@ export default function StartAdventureButton({ groupId, riddleHref }: StartAdven
       <button
         onClick={handleStart}
         disabled={isStarting}
-        className={`inline-flex items-center justify-center w-full md:w-auto
+        className={`inline-flex items-center justify-center w-full md:w-auto min-h-[52px]
                    ${isStarting 
                      ? 'bg-gray-600 cursor-not-allowed' 
-                     : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
+                     : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98]'
                    }
-                   text-white font-semibold px-8 py-4 rounded-xl
-                   transition-all duration-200 shadow-lg hover:shadow-xl text-lg
+                   text-white font-semibold px-8 py-3.5 rounded-xl
+                   transition-all duration-200 shadow-lg hover:shadow-xl text-base sm:text-lg
                    disabled:opacity-70`}
       >
         {isStarting ? (
           <>
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-            Starting...
+            <span>Starting...</span>
           </>
         ) : (
-          '🚀 Start'
+          '🚀 Start Adventure'
         )}
       </button>
       
       {error && (
-        <div className="text-red-400 text-sm text-center">
+        <div className="text-red-400 text-sm text-center font-medium animate-in slide-in-from-top-2 duration-200">
           {error}
         </div>
       )}
