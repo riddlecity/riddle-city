@@ -108,8 +108,8 @@ export default function QRScanner({ onClose }: QRScannerProps) {
           const codeReader = new ZXing.BrowserQRCodeReader();
           codeReaderRef.current = codeReader;
           
-          // Let ZXing manage the camera stream and video element
-          const result = await codeReader.decodeOnceFromConstraints(
+          // Use decodeFromConstraints for continuous scanning
+          await codeReader.decodeFromConstraints(
             {
               video: {
                 facingMode: { ideal: 'environment' },
@@ -117,13 +117,18 @@ export default function QRScanner({ onClose }: QRScannerProps) {
                 height: { ideal: 1080 }
               }
             },
-            videoRef.current
+            videoRef.current,
+            (result: any, error: any) => {
+              if (result && mounted && scanning) {
+                console.log('QR Code detected with ZXing:', result.text);
+                handleQRCodeDetected(result.text);
+              }
+              // Errors are normal while searching - only log unexpected ones
+              if (error && error.name !== 'NotFoundException') {
+                console.error('ZXing error:', error);
+              }
+            }
           );
-          
-          if (result && mounted) {
-            console.log('QR Code detected with ZXing:', result.text);
-            handleQRCodeDetected(result.text);
-          }
         }
       } catch (err: any) {
         console.error('Scanner error:', err);
