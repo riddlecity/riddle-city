@@ -115,6 +115,18 @@ export default function QRScanner({ onClose }: QRScannerProps) {
         try {
           const ZXing = await loadZXing();
           console.log('ZXing loaded successfully');
+          
+          // Wait for video to be playing
+          if (!videoRef.current || videoRef.current.readyState < 2) {
+            console.log('Waiting for video to be ready...');
+            await new Promise((resolve) => {
+              if (videoRef.current) {
+                videoRef.current.addEventListener('canplay', resolve, { once: true });
+              }
+            });
+          }
+          
+          console.log('Video ready, starting ZXing decoder...');
           const codeReader = new ZXing.BrowserQRCodeReader();
           
           // Use continuous decode from video - provide both result and error callbacks
