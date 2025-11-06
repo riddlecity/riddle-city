@@ -37,120 +37,104 @@ export default function QRScanner({ onClose }: QRScannerProps) {
   const router = useRouter();
   const streamRef = useRef<MediaStream | null>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const codeReaderRef = useRef<any>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    const startCamera = async () => {
-      try {
-        // Request camera access with back camera preferred
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' }, // Prefer back camera
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        });
-
-        if (!mounted) {
-          stream.getTracks().forEach(track => track.stop());
-          return;
-        }
-
-        streamRef.current = stream;
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          
-          // Start scanning after video starts playing
-          videoRef.current.onloadedmetadata = () => {
-            startScanning();
-          };
-        }
-      } catch (err) {
-        console.error('Camera error:', err);
-        if (mounted) {
-          setError('Unable to access camera. Please check permissions.');
-        }
-      }
-    };
-
     const startScanning = async () => {
-      // Try BarcodeDetector first (Chrome, Edge)
-      if ('BarcodeDetector' in window) {
-        console.log('Using native BarcodeDetector');
-        const barcodeDetector = new (window as any).BarcodeDetector({
-          formats: ['qr_code']
-        });
-        
-        scanIntervalRef.current = setInterval(async () => {
-          if (!videoRef.current || !canvasRef.current || !scanning) return;
-
-          const canvas = canvasRef.current;
-          const video = videoRef.current;
+      try {
+        // Try BarcodeDetector first (Chrome, Edge)
+        if ('BarcodeDetector' in window) {
+          console.log('Using native BarcodeDetector');
           
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return;
-          
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          try {
-            const barcodes = await barcodeDetector.detect(canvas);
-            
-            if (barcodes.length > 0 && mounted) {
-              const qrCode = barcodes[0].rawValue;
-              handleQRCodeDetected(qrCode);
+          // Request camera access with back camera preferred
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
             }
-          } catch (err) {
-            console.error('Barcode detection error:', err);
+          });
+
+          if (!mounted) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
           }
-        }, 500); // Scan every 500ms
-      } else {
-        // Fallback to ZXing library (Safari, Firefox, older browsers)
-        console.log('BarcodeDetector not available, trying ZXing fallback...');
-        try {
+
+          streamRef.current = stream;
+
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            await videoRef.current.play();
+          }
+
+          const barcodeDetector = new (window as any).BarcodeDetector({
+            formats: ['qr_code']
+          });
+          
+          scanIntervalRef.current = setInterval(async () => {
+            if (!videoRef.current || !canvasRef.current || !scanning) return;
+
+            const canvas = canvasRef.current;
+            const video = videoRef.current;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            try {
+              const barcodes = await barcodeDetector.detect(canvas);
+              
+              if (barcodes.length > 0 && mounted) {
+                const qrCode = barcodes[0].rawValue;
+                handleQRCodeDetected(qrCode);
+              }
+            } catch (err) {
+              console.error('Barcode detection error:', err);
+            }
+          }, 500);
+        } else {
+          // Fallback to ZXing library (Safari, Firefox, older browsers)
+          console.log('BarcodeDetector not available, using ZXing...');
+          
           const ZXing = await loadZXing();
           console.log('ZXing loaded successfully');
           
-          // Wait for video to be playing
-          if (!videoRef.current || videoRef.current.readyState < 2) {
-            console.log('Waiting for video to be ready...');
-            await new Promise((resolve) => {
-              if (videoRef.current) {
-                videoRef.current.addEventListener('canplay', resolve, { once: true });
-              }
-            });
-          }
-          
-          console.log('Video ready, starting ZXing decoder...');
           const codeReader = new ZXing.BrowserQRCodeReader();
+          codeReaderRef.current = codeReader;
           
-          // Use continuous decode from video - provide both result and error callbacks
-          codeReader.decodeFromVideoElement(
-            videoRef.current,
-            (result: any, error: any) => {
-              if (result && mounted && scanning) {
-                console.log('QR Code detected with ZXing:', result.text);
-                handleQRCodeDetected(result.text);
-                codeReader.reset();
+          // Let ZXing manage the camera stream and video element
+          const result = await codeReader.decodeOnceFromConstraints(
+            {
+              video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
               }
-              // error will be set constantly while searching for QR code - this is normal
-              if (error && !(error instanceof ZXing.NotFoundException)) {
-                console.error('ZXing decode error:', error);
-              }
-            }
+            },
+            videoRef.current
           );
           
-          // Store reader for cleanup
-          (videoRef.current as any)._zxingReader = codeReader;
-        } catch (err) {
-          console.error('ZXing fallback failed:', err);
-          console.log('Showing manual camera instructions');
-          // Keep camera open but show instructions
+          if (result && mounted) {
+            console.log('QR Code detected with ZXing:', result.text);
+            handleQRCodeDetected(result.text);
+          }
+        }
+      } catch (err: any) {
+        console.error('Scanner error:', err);
+        if (mounted) {
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            setError('Camera access denied. Please enable camera permissions.');
+          } else if (err.name === 'NotFoundError') {
+            setError('No camera found on this device.');
+          } else {
+            setError('Unable to start camera. Please try again.');
+          }
         }
       }
     };
@@ -184,9 +168,9 @@ export default function QRScanner({ onClose }: QRScannerProps) {
       }
       
       // Clean up ZXing reader if it exists
-      if (videoRef.current && (videoRef.current as any)._zxingReader) {
+      if (codeReaderRef.current) {
         try {
-          (videoRef.current as any)._zxingReader.reset();
+          codeReaderRef.current.reset();
         } catch (err) {
           console.error('Error cleaning up ZXing reader:', err);
         }
@@ -198,7 +182,7 @@ export default function QRScanner({ onClose }: QRScannerProps) {
       }
     };
 
-    startCamera();
+    startScanning();
 
     return () => {
       mounted = false;
