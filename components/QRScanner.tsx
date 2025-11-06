@@ -117,16 +117,19 @@ export default function QRScanner({ onClose }: QRScannerProps) {
           console.log('ZXing loaded successfully');
           const codeReader = new ZXing.BrowserQRCodeReader();
           
-          // Use continuous decode from video
+          // Use continuous decode from video - provide both result and error callbacks
           codeReader.decodeFromVideoElement(
             videoRef.current,
-            (result: any) => {
+            (result: any, error: any) => {
               if (result && mounted && scanning) {
                 console.log('QR Code detected with ZXing:', result.text);
                 handleQRCodeDetected(result.text);
                 codeReader.reset();
               }
-              // Ignore errors - they happen constantly while searching
+              // error will be set constantly while searching for QR code - this is normal
+              if (error && !(error instanceof ZXing.NotFoundException)) {
+                console.error('ZXing decode error:', error);
+              }
             }
           );
           
