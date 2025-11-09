@@ -116,13 +116,39 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
     }
   };
 
+  // Format time remaining as minutes or hours
+  const formatTimeRemaining = (hours: number): string => {
+    const minutes = Math.round(hours * 60);
+    if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    } else {
+      const displayHours = Math.floor(hours);
+      const remainingMinutes = minutes % 60;
+      if (remainingMinutes === 0) {
+        return `${displayHours} hour${displayHours !== 1 ? 's' : ''}`;
+      }
+      return `${displayHours}h ${remainingMinutes}m`;
+    }
+  };
+
+  // Get display message with time details
+  const getDisplayMessage = () => {
+    if (warning.type === 'closing_soon' && warning.hoursUntilClose !== undefined) {
+      return `Closes in ${formatTimeRemaining(warning.hoursUntilClose)}`;
+    }
+    if (warning.type === 'closed' && warning.hoursUntilOpen !== undefined) {
+      return `Opens in ${formatTimeRemaining(warning.hoursUntilOpen)}`;
+    }
+    return warning.message;
+  };
+
   return (
     <div className="w-full px-4 z-10 mb-4">
       <div className={`p-4 rounded-xl border-2 ${getWarningStyles()} text-white shadow-lg`}>
         <div className="flex items-center gap-3">
           <span className="text-2xl flex-shrink-0">{getWarningIcon()}</span>
           <div className="flex-1">
-            <p className="font-semibold text-white leading-tight">{warning.message}</p>
+            <p className="font-semibold text-white leading-tight">{getDisplayMessage()}</p>
           </div>
         </div>
       </div>
