@@ -217,9 +217,9 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
           {(mainLeaderboard.length > 0 || casualLeaderboard.length > 0 || noviceLeaderboard.length > 0 || unfinishedEntries.length > 0) && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 mb-6">
               <p className="text-white/80 text-sm md:text-base">
-                <span className="text-green-400 font-semibold">{mainLeaderboard.length}</span> elite (0-2 skips) • 
-                <span className="text-blue-400 font-semibold ml-1">{casualLeaderboard.length}</span> casual (3-{halfRiddles} skips) •
-                <span className="text-purple-400 font-semibold ml-1">{noviceLeaderboard.length}</span> novice ({halfRiddles + 1}+ skips) • 
+                <span className="text-green-400 font-semibold">{mainLeaderboard.length}</span> Elite (0-2 skips) • 
+                <span className="text-blue-400 font-semibold ml-1">{casualLeaderboard.length}</span> Casual (3-{halfRiddles} skips) •
+                <span className="text-purple-400 font-semibold ml-1">{noviceLeaderboard.length}</span> Novice ({halfRiddles + 1}+ skips) • 
                 <span className="text-yellow-400 font-semibold ml-1">{unfinishedEntries.length}</span> in progress
               </p>
             </div>
