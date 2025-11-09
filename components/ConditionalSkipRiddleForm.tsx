@@ -47,7 +47,10 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
         const data = await response.json();
         const { opening_hours } = data;
 
+        console.log('ConditionalSkip: Checking hours for riddle', riddleId, 'opening_hours:', opening_hours);
+
         if (!opening_hours?.parsed_hours || !isMounted) {
+          console.log('ConditionalSkip: No opening hours data available');
           if (isMounted) setLoading(false);
           return;
         }
@@ -58,8 +61,11 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
         const currentDay = dayNames[ukTime.getDay()];
         const todayHours = opening_hours.parsed_hours[currentDay];
 
+        console.log('ConditionalSkip: Current day:', currentDay, 'Hours:', todayHours);
+
         if (!todayHours) {
           // Location is closed today
+          console.log('ConditionalSkip: Location CLOSED today');
           if (isMounted) {
             setWarning({
               type: 'closed',
