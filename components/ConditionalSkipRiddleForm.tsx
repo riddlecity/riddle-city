@@ -8,6 +8,7 @@ interface Props {
   isLeader: boolean;
   riddleId: string;
   trackId: string;
+  isFinalRiddle: boolean;
 }
 
 interface TimeWarning {
@@ -17,7 +18,7 @@ interface TimeWarning {
   message: string;
 }
 
-export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId, trackId }: Props) {
+export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId, trackId, isFinalRiddle }: Props) {
   const [isSkipping, setIsSkipping] = useState(false);
   const [warning, setWarning] = useState<TimeWarning | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,12 +198,12 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     if (canAnyoneSkip()) {
       return {
         subtitle: 'Location unavailable?',
-        action: 'Skip this riddle'
+        action: isFinalRiddle ? 'Skip to complete' : 'Skip this riddle'
       };
     } else {
       return {
         subtitle: 'QR missing? Not working?',
-        action: 'Skip to next riddle'
+        action: isFinalRiddle ? 'Skip to complete' : 'Skip to next riddle'
       };
     }
   };

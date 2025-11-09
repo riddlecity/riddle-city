@@ -331,6 +331,7 @@ export default async function RiddlePage({ params }: Props) {
               isLeader={isLeader} 
               riddleId={id}
               trackId={track_id}
+              isFinalRiddle={!next_riddle_id}
             />
           </div>
         )}
