@@ -28,19 +28,20 @@ export default function RestrictedSkipRiddleForm({ groupId, isLeader }: Props) {
         body: JSON.stringify({ groupId }),
       });
 
-      const data = await response.json();
-      
       if (response.ok) {
+        const data = await response.json();
+        console.log('Skip successful');
+        
+        // Navigate to next riddle or completion page
         if (data.completed) {
           router.push(`/adventure-complete/${groupId}`);
         } else if (data.nextRiddleId) {
           router.push(`/riddle/${data.nextRiddleId}`);
+        } else {
+          // Fallback - refresh the page
+          router.refresh();
+          setIsSkipping(false);
         }
-      }
-
-      if (response.ok) {
-        // Don't redirect here - let real-time sync handle it
-        console.log('Skip successful, waiting for real-time update...');
       } else {
         console.error('Skip failed');
         setIsSkipping(false);

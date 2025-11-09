@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   groupId: string;
@@ -20,6 +21,7 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
   const [isSkipping, setIsSkipping] = useState(false);
   const [warning, setWarning] = useState<TimeWarning | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Fetch location hours and determine warning status
   useEffect(() => {
@@ -167,7 +169,19 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
       });
 
       if (response.ok) {
+        const data = await response.json();
         console.log(`Skip successful: ${isEmergency ? 'Emergency' : 'Normal'} skip`);
+        
+        // Navigate to next riddle or completion page
+        if (data.completed) {
+          router.push(`/adventure-complete/${groupId}`);
+        } else if (data.nextRiddleId) {
+          router.push(`/riddle/${data.nextRiddleId}`);
+        } else {
+          // Fallback - refresh the page
+          router.refresh();
+          setIsSkipping(false);
+        }
       } else {
         console.error('Skip failed');
         setIsSkipping(false);
