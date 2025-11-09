@@ -93,28 +93,58 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    // Get next riddle
+    // Get current riddle to check if it has a next riddle
     const { data: currentRiddle, error: riddleError } = await supabase
       .from("riddles")
       .select("next_riddle_id")
       .eq("id", group.current_riddle_id)
       .single();
 
-    if (riddleError || !currentRiddle?.next_riddle_id) {
-      console.error("No next riddle found:", riddleError);
-      return NextResponse.json({ error: "No next riddle available" }, { status: 400 });
+    if (riddleError) {
+      console.error("Failed to get current riddle:", riddleError);
+      return NextResponse.json({ error: "Current riddle not found" }, { status: 404 });
     }
 
-    const nextRiddleId = currentRiddle.next_riddle_id;
+    // If current riddle has no next_riddle_id, we're on the final riddle
+    // Skipping from the final riddle should complete the adventure
+    const isSkippingFromFinalRiddle = !currentRiddle?.next_riddle_id;
 
-    // Check if this is the final riddle
-    const { data: nextRiddle } = await supabase
-      .from("riddles")
-      .select("next_riddle_id")
-      .eq("id", nextRiddleId)
-      .single();
-    
-    const isLastRiddle = !nextRiddle?.next_riddle_id;
+    if (isSkippingFromFinalRiddle) {
+      // Complete the adventure
+      const completionTime = new Date().toISOString();
+      const updates: GroupUpdate = {
+        current_riddle_id: group.current_riddle_id, // Stay on current riddle
+        riddles_skipped: (group.riddles_skipped || 0) + 1,
+        finished: true,
+        completed_at: completionTime
+      };
+
+      const [updateResult] = await Promise.allSettled([
+        serviceSupabase
+          .from('groups')
+          .update(updates)
+          .eq('id', groupId)
+      ]);
+
+      if (updateResult.status === 'rejected') {
+        console.error("Failed to complete adventure:", updateResult.reason);
+        return NextResponse.json({ error: "Failed to complete adventure" }, { status: 500 });
+      }
+
+      console.log(`🎯 SKIP SUCCESSFUL: Completed adventure by skipping final riddle`);
+
+      return NextResponse.json({
+        success: true,
+        nextRiddleId: null,
+        completed: true,
+        message: "Adventure completed!",
+        riddles_skipped: updates.riddles_skipped,
+        wasEmergencySkip: isEmergencySkip
+      });
+    }
+
+    // Not on final riddle, so move to next riddle
+    const nextRiddleId = currentRiddle.next_riddle_id;
 
     // Prepare update data
     const updates: GroupUpdate = {
@@ -122,11 +152,7 @@ export async function POST(request: Request) {
       riddles_skipped: (group.riddles_skipped || 0) + 1
     };
 
-    if (isLastRiddle) {
-      const completionTime = new Date().toISOString();
-      updates.finished = true;
-      updates.completed_at = completionTime;
-    }
+    // Don't mark as complete - just moving to next riddle
 
     // OPTIMIZATION: Use service client for update + broadcast in parallel
     const [updateResult, broadcastResult] = await Promise.allSettled([
@@ -144,8 +170,8 @@ export async function POST(request: Request) {
             groupId,
             newRiddleId: nextRiddleId,
             skippedCount: updates.riddles_skipped,
-            isCompleted: isLastRiddle,
-            completedAt: isLastRiddle ? updates.completed_at : null,
+            isCompleted: false,
+            completedAt: null,
             wasEmergencySkip: isEmergencySkip
           }
         })
@@ -165,9 +191,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      nextRiddleId: isLastRiddle ? null : nextRiddleId,
-      completed: isLastRiddle,
-      message: isLastRiddle ? "Adventure completed!" : "Skipped to next riddle",
+      nextRiddleId: nextRiddleId,
+      completed: false,
+      message: "Skipped to next riddle",
       riddles_skipped: updates.riddles_skipped,
       wasEmergencySkip: isEmergencySkip
     });
