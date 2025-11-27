@@ -74,6 +74,9 @@ export default function ManualAnswerForm({
           setIsCorrect(true)
           setError('')
           
+          // Trigger manual sync for all group members
+          window.dispatchEvent(new Event('riddleSyncTrigger'));
+          
           // Wait a moment to show success, then redirect
           setTimeout(() => {
             if (data.completed) {

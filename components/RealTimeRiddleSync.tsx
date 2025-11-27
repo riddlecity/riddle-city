@@ -205,8 +205,15 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
       // Force reconnection when app comes back to foreground
       setTimeout(() => {
         setupRealtimeSubscription();
+        performBackupSync(); // Also run backup sync immediately
       }, 1000);
     }
+  };
+
+  // Listen for manual sync triggers (from answer submissions, QR scans, etc)
+  const handleManualSyncTrigger = () => {
+    console.log('🔄 Manual sync triggered by user action');
+    performBackupSync();
   };
 
   // Setup everything on mount
@@ -219,25 +226,28 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
     backupIntervalRef.current = setInterval(() => {
       const timeSinceLastCheck = Date.now() - lastSyncCheck.current.getTime();
       
-      // Only run backup sync if real-time hasn't updated recently
-      if (timeSinceLastCheck > 25000) { // 25 seconds
-        console.log('🔄 Running backup sync check (real-time silent for >25s)...');
+      // Only run backup sync if real-time hasn't updated recently (reduced to 10s)
+      if (timeSinceLastCheck > 10000) { // 10 seconds (was 25)
+        console.log('🔄 Running backup sync check (real-time silent for >10s)...');
         performBackupSync();
       } else {
         console.log(`🔄 Skipping backup sync (real-time active ${Math.round(timeSinceLastCheck/1000)}s ago)`);
       }
-    }, 30000); // Every 30 seconds
+    }, 10000); // Every 10 seconds (was 30)
 
-    // Run initial backup sync after 5 seconds
+    // Run initial backup sync after 2 seconds (was 5)
     setTimeout(() => {
       console.log('🔄 Running initial backup sync check...');
       performBackupSync();
-    }, 5000);
+    }, 2000);
 
     // Listen for visibility changes (mobile background/foreground)
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleVisibilityChange);
     window.addEventListener('blur', handleVisibilityChange);
+
+    // Listen for custom sync trigger events
+    window.addEventListener('riddleSyncTrigger', handleManualSyncTrigger);
 
     return () => {
       console.log("=== REALTIME CLEANUP ===");
@@ -264,6 +274,7 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleVisibilityChange);
       window.removeEventListener('blur', handleVisibilityChange);
+      window.removeEventListener('riddleSyncTrigger', handleManualSyncTrigger);
     };
   }, [groupId]);
 

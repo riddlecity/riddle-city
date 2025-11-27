@@ -34,6 +34,8 @@ export default function QRScanner({ onClose }: QRScannerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [processingMessage, setProcessingMessage] = useState<string | null>(null);
   const router = useRouter();
   const streamRef = useRef<MediaStream | null>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -144,25 +146,69 @@ export default function QRScanner({ onClose }: QRScannerProps) {
       }
     };
 
-    const handleQRCodeDetected = (qrCodeUrl: string) => {
+    const handleQRCodeDetected = async (qrCodeUrl: string) => {
       console.log('QR Code detected:', qrCodeUrl);
       setScanning(false);
+      setProcessingMessage('Verifying QR code...');
       
-      // Stop camera
-      cleanup();
-      
-      // Navigate to the QR code URL
       try {
         const url = new URL(qrCodeUrl);
-        // If it's a Riddle City URL, navigate directly
-        if (url.hostname.includes('riddlecity') || url.hostname.includes('localhost')) {
-          router.push(url.pathname + url.search);
+        
+        // Check if it's a Riddle City QR location scan
+        if (url.pathname.includes('/api/qr/location/')) {
+          // Extract location ID and params
+          const pathParts = url.pathname.split('/');
+          const locationId = pathParts[pathParts.length - 1];
+          const token = url.searchParams.get('token');
+          const ts = url.searchParams.get('ts');
+          
+          // Call a JSON endpoint instead of following redirect
+          const response = await fetch(`/api/qr/verify?locationId=${locationId}&token=${token}&ts=${ts}`);
+          const data = await response.json();
+          
+          if (!response.ok) {
+            // Show error message
+            setProcessingMessage(null);
+            setError(data.message || 'Invalid QR code');
+            
+            // Auto close after 3 seconds
+            setTimeout(() => {
+              cleanup();
+              onClose();
+            }, 3000);
+            return;
+          }
+          
+          // Show success message
+          setProcessingMessage(null);
+          setSuccessMessage(data.message || '✓ Code found! Moving to next riddle...');
+          
+          // Trigger manual sync for all group members
+          window.dispatchEvent(new Event('riddleSyncTrigger'));
+          
+          // Wait a moment then navigate
+          setTimeout(() => {
+            cleanup();
+            router.push(data.redirectUrl);
+          }, 1500);
         } else {
-          window.location.href = qrCodeUrl;
+          // Not a riddle QR code - just navigate
+          if (url.hostname.includes('riddlecity') || url.hostname.includes('localhost')) {
+            router.push(url.pathname + url.search);
+          } else {
+            window.location.href = qrCodeUrl;
+          }
         }
       } catch (err) {
         console.error('Invalid QR code URL:', err);
+        setProcessingMessage(null);
         setError('Invalid QR code format');
+        
+        // Auto close after 3 seconds
+        setTimeout(() => {
+          cleanup();
+          onClose();
+        }, 3000);
       }
     };
 
@@ -229,7 +275,7 @@ export default function QRScanner({ onClose }: QRScannerProps) {
         />
 
         {/* Scanning overlay - show for both native and ZXing */}
-        {scanning && !error && (
+        {scanning && !error && !processingMessage && !successMessage && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative w-64 h-64">
               {/* Corner guides */}
@@ -240,6 +286,28 @@ export default function QRScanner({ onClose }: QRScannerProps) {
               
               {/* Scanning line animation */}
               <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent animate-scan"></div>
+            </div>
+          </div>
+        )}
+
+        {/* Processing message */}
+        {processingMessage && (
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="bg-blue-900/90 backdrop-blur-sm border border-blue-500/50 rounded-xl p-6 max-w-md text-center">
+              <div className="flex items-center justify-center mb-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              </div>
+              <p className="text-white font-medium">{processingMessage}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Success message */}
+        {successMessage && (
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="bg-green-900/90 backdrop-blur-sm border border-green-500/50 rounded-xl p-6 max-w-md text-center animate-in fade-in duration-300">
+              <div className="text-5xl mb-3">✓</div>
+              <p className="text-white font-medium text-lg">{successMessage}</p>
             </div>
           </div>
         )}
