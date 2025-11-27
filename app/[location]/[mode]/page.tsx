@@ -156,11 +156,16 @@ export default function PreferencesPage() {
 
   // 🔧 Check for admin mode on page load
   useEffect(() => {
-    const adminParam = searchParams?.get('admin');
-    if (adminParam) {
-      setIsAdminMode(true);
-      console.log('🔧 Admin mode detected');
-    }
+    // 🔧 TESTING MODE: Always enabled for now (default for all users)
+    setIsAdminMode(true);
+    console.log('🔧 Testing mode enabled by default');
+    
+    // Optional: Keep URL parameter override for future use
+    // const adminParam = searchParams?.get('admin');
+    // if (adminParam) {
+    //   setIsAdminMode(true);
+    //   console.log('🔧 Admin mode detected');
+    // }
 
     // Check if we're returning from successful payment
     const sessionId = searchParams?.get('session_id');
@@ -275,8 +280,9 @@ export default function PreferencesPage() {
   const proceedWithPayment = async () => {
     setLoading(true);
     try {
-      // 🔧 Check for admin parameter
-      const adminParam = searchParams?.get('admin');
+      // 🔧 Testing mode is now default - no admin param needed
+      // Optional: Keep for future use when payments are re-enabled
+      // const adminParam = searchParams?.get('admin');
       
       const payload = {
         location, 
@@ -284,7 +290,7 @@ export default function PreferencesPage() {
         players, 
         emails, 
         teamName: teamName.trim(),
-        ...(adminParam && { adminKey: adminParam }) // 🔧 Add admin key if present
+        // adminKey not needed - testing mode is default
       };
 
       const res = await fetch("/api/checkout-session", {
@@ -473,12 +479,20 @@ export default function PreferencesPage() {
               
               {/* Dynamic pricing display */}
               <div className="mt-2 text-center">
-                <p className="text-white/60 text-xs">
-                  Total cost: <span className="text-white font-semibold">£{players * 15}</span>
-                  {players > 2 && (
-                    <span className="text-white/50"> ({players} players × £15 each)</span>
-                  )}
-                </p>
+                {isAdminMode ? (
+                  <div className="inline-block px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
+                    <p className="text-yellow-400 text-sm font-semibold">
+                      🔧 Testing Mode - No Payment Required
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-white/60 text-xs">
+                    Total cost: <span className="text-white font-semibold">£{(players * 12.99).toFixed(2)}</span>
+                    {players > 2 && (
+                      <span className="text-white/50"> ({players} players × £12.99 each)</span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
           </div>
