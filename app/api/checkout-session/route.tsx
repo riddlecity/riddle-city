@@ -8,18 +8,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export async function POST(req: Request) {
   try {
-    const { players, location, mode, teamName, emails } = await req.json();
+    const { players, location, mode, teamName, emails, adminKey } = await req.json();
 
-    // 🔧 TESTING MODE: Always enabled for now (default for all users)
-    const isAdminTest = true; // Temporarily set to true for all requests
-    
-    // Optional: Keep for future use when payments are re-enabled
-    // const ADMIN_KEY = process.env.ADMIN_TEST_KEY; // Set this in your env
-    // const { adminKey } = await req.json();
-    // const isAdminTest = adminKey && ADMIN_KEY && adminKey === ADMIN_KEY;
+    // 🔧 ADMIN BYPASS: Check for admin key first
+    const ADMIN_KEY = process.env.ADMIN_TEST_KEY; // Set this in your env
+    const isAdminTest = adminKey && ADMIN_KEY && adminKey === ADMIN_KEY;
 
     if (isAdminTest) {
-      console.log("🔧 TESTING MODE: Creating test group without payment (default for all users)...");
+      console.log("🔧 ADMIN: Creating test group without payment...");
 
       if (!teamName || !teamName.trim()) {
         return NextResponse.json({ error: "Team name is required" }, { status: 400 });
