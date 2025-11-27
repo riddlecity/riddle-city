@@ -474,9 +474,9 @@ export default function PreferencesPage() {
               {/* Dynamic pricing display */}
               <div className="mt-2 text-center">
                 <p className="text-white/60 text-xs">
-                  Total cost: <span className="text-white font-semibold">£{players * 15}</span>
+                  Total cost: <span className="text-white font-semibold">£{(players * 12.99).toFixed(2)}</span>
                   {players > 2 && (
-                    <span className="text-white/50"> ({players} players × £15 each)</span>
+                    <span className="text-white/50"> ({players} players × £12.99 each)</span>
                   )}
                 </p>
               </div>

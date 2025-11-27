@@ -211,7 +211,7 @@ export default function LocationPage({ params }: Props) {
                 )}
               </div>
               <div className="text-right ml-4">
-                <div className="text-xl font-bold">£15</div>
+                <div className="text-xl font-bold">£12.99</div>
                 <div className="text-xs font-normal text-pink-100">
                   per person
                 </div>
@@ -283,7 +283,7 @@ export default function LocationPage({ params }: Props) {
               <div className="text-right ml-4">
                 {pubStartLabel && !pubLoading ? (
                   <>
-                    <div className="text-xl font-bold">£20</div>
+                    <div className="text-xl font-bold">£12.99</div>
                     <div className="text-xs font-normal text-yellow-100">
                       per person
                     </div>
