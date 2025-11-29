@@ -16,14 +16,14 @@ export default function AlternativeRiddleToggle({
   const [showingAlt, setShowingAlt] = useState(false);
 
   return (
-    <>
+    <div className="relative">
       {/* Main Riddle Text */}
       <h1
         className={`font-bold text-white leading-tight drop-shadow-lg mb-8
                    text-[clamp(1.75rem,6vw,2.5rem)]
                    md:text-[clamp(2rem,4vw,3rem)]
-                   px-2 transition-opacity duration-300 ${
-                     showingAlt ? 'opacity-0 absolute' : 'opacity-100'
+                   px-2 transition-all duration-300 ${
+                     showingAlt ? 'opacity-0 invisible absolute top-0 left-0 right-0' : 'opacity-100 visible'
                    }`}
         style={{
           textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
@@ -33,19 +33,19 @@ export default function AlternativeRiddleToggle({
       </h1>
 
       {/* Alternative Riddle Text */}
-      {showingAlt && (
-        <h1
-          className="font-bold text-white leading-tight drop-shadow-lg mb-8
-                     text-[clamp(1.75rem,6vw,2.5rem)]
-                     md:text-[clamp(2rem,4vw,3rem)]
-                     px-2 animate-in fade-in duration-300"
-          style={{
-            textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
-          }}
-        >
-          {altRiddle}
-        </h1>
-      )}
+      <h1
+        className={`font-bold text-white leading-tight drop-shadow-lg mb-8
+                   text-[clamp(1.75rem,6vw,2.5rem)]
+                   md:text-[clamp(2rem,4vw,3rem)]
+                   px-2 transition-all duration-300 ${
+                     showingAlt ? 'opacity-100 visible' : 'opacity-0 invisible absolute top-0 left-0 right-0'
+                   }`}
+        style={{
+          textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
+        }}
+      >
+        {altRiddle}
+      </h1>
 
       {/* Toggle Button */}
       <div className="mt-6">
@@ -66,6 +66,6 @@ export default function AlternativeRiddleToggle({
           </button>
         )}
       </div>
-    </>
+    </div>
   );
 }
