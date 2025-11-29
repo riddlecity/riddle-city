@@ -11,6 +11,7 @@ import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import CookieHandler from "@/components/CookieHandler";
 import ManualAnswerForm from "@/components/ManualAnswerForm";
 import ScanQRButton from "@/components/ScanQRButton";
+import AlternativeRiddleToggle from "@/components/AlternativeRiddleToggle";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -114,7 +115,7 @@ export default async function RiddlePage({ params }: Props) {
   const { data, error } = await supabase
     .from("riddles")
     .select(
-      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id"
+      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id, alt_message, alt_riddle"
     )
     .eq("id", id)
     .single();
@@ -131,6 +132,8 @@ export default async function RiddlePage({ params }: Props) {
     has_manual_answer,
     answer,
     next_riddle_id,
+    alt_message,
+    alt_riddle,
   } = data;
 
   // Get user info from cookies with retry logic
@@ -264,17 +267,26 @@ export default async function RiddlePage({ params }: Props) {
       {/* Main content area - riddle centered in logo */}
       <div className="flex-1 flex items-center justify-center px-4 z-10">
         <div className="w-full max-w-4xl text-center">
-          <h1
-            className="font-bold text-white leading-tight drop-shadow-lg mb-8
-                       text-[clamp(1.75rem,6vw,2.5rem)]
-                       md:text-[clamp(2rem,4vw,3rem)]
-                       px-2"
-            style={{
-              textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
-            }}
-          >
-            {riddle_text}
-          </h1>
+          {/* Alternative Riddle Toggle if available */}
+          {alt_message && alt_riddle ? (
+            <AlternativeRiddleToggle
+              riddleText={riddle_text}
+              altMessage={alt_message}
+              altRiddle={alt_riddle}
+            />
+          ) : (
+            <h1
+              className="font-bold text-white leading-tight drop-shadow-lg mb-8
+                         text-[clamp(1.75rem,6vw,2.5rem)]
+                         md:text-[clamp(2rem,4vw,3rem)]
+                         px-2"
+              style={{
+                textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
+              }}
+            >
+              {riddle_text}
+            </h1>
+          )}
 
           {/* Manual Answer Form */}
           {has_manual_answer && groupId && (
