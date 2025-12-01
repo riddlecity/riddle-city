@@ -44,20 +44,22 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
         needsRedirect: group.current_riddle_id !== currentUrlId
       });
 
-      // Check if we need to redirect
-      if (group.current_riddle_id !== currentUrlId) {
-        console.log(`🔄 BACKUP SYNC: Riddle mismatch detected! URL: ${currentUrlId}, DB: ${group.current_riddle_id}`);
-        
-        if (group.finished) {
-          console.log(`🔄 BACKUP SYNC: Adventure finished, redirecting to completion page`);
-          window.location.href = `/adventure-complete/${groupId}`;
-        } else {
-          console.log(`🔄 BACKUP SYNC: Redirecting to correct riddle: ${group.current_riddle_id}`);
-          window.location.href = `/riddle/${group.current_riddle_id}`;
-        }
-      } else {
-        console.log('🔄 BACKUP SYNC: In sync ✅');
+      // Check if game is finished and redirect to completion page
+      if (group.finished && !window.location.pathname.includes('/adventure-complete/')) {
+        console.log(`🔄 BACKUP SYNC: Adventure finished, redirecting to completion page`);
+        window.location.href = `/adventure-complete/${groupId}`;
+        return;
       }
+
+      // Check if we need to redirect to different riddle
+      if (!group.finished && group.current_riddle_id !== currentUrlId) {
+        console.log(`🔄 BACKUP SYNC: Riddle mismatch detected! URL: ${currentUrlId}, DB: ${group.current_riddle_id}`);
+        console.log(`🔄 BACKUP SYNC: Redirecting to correct riddle: ${group.current_riddle_id}`);
+        window.location.href = `/riddle/${group.current_riddle_id}`;
+        return;
+      }
+      
+      console.log('🔄 BACKUP SYNC: In sync ✅');
 
       lastSyncCheck.current = new Date();
     } catch (error) {
@@ -119,17 +121,21 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
             setReconnectAttempts(0);
             lastSyncCheck.current = new Date();
             
+            // Check if game just finished
+            if (isFinished && !window.location.pathname.includes('/adventure-complete/')) {
+              console.log(`🔄 REALTIME: Adventure finished, redirecting to completion page`);
+              window.location.href = `/adventure-complete/${groupId}`;
+              return;
+            }
+            
+            // Check if riddle changed
             if (newRiddleId && newRiddleId !== currentUrlId) {
-              if (isFinished) {
-                console.log(`🔄 REDIRECTING TO COMPLETION: ${currentUrlId} → adventure-complete/${groupId}`);
-                window.location.href = `/adventure-complete/${groupId}`;
-              } else {
-                console.log(`🔄 REDIRECTING: ${currentUrlId} → ${newRiddleId}`);
-                window.location.href = `/riddle/${newRiddleId}`;
-              }
+              console.log(`🔄 REALTIME: Redirecting: ${currentUrlId} → ${newRiddleId}`);
+              window.location.href = `/riddle/${newRiddleId}`;
             } else {
               console.log("❌ NO REDIRECT:", {
-                reason: !newRiddleId ? "No new riddle ID" : "Same as current URL"
+                reason: !newRiddleId ? "No new riddle ID" : "Same as current URL",
+                isFinished
               });
             }
           }
