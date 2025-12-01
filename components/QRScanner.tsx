@@ -189,7 +189,13 @@ export default function QRScanner({ onClose }: QRScannerProps) {
           // Wait a moment then navigate
           setTimeout(() => {
             cleanup();
-            router.push(data.redirectUrl);
+            
+            // Check if it's an external URL (like library website)
+            if (data.redirectUrl.startsWith('http://') || data.redirectUrl.startsWith('https://')) {
+              window.location.href = data.redirectUrl;
+            } else {
+              router.push(data.redirectUrl);
+            }
           }, 1500);
         } else {
           // Not a riddle QR code - just navigate
