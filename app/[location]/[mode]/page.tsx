@@ -473,12 +473,20 @@ export default function PreferencesPage() {
               
               {/* Dynamic pricing display */}
               <div className="mt-2 text-center">
-                <p className="text-white/60 text-xs">
-                  Total cost: <span className="text-white font-semibold">£{(players * 12.99).toFixed(2)}</span>
-                  {players > 2 && (
-                    <span className="text-white/50"> ({players} players × £12.99 each)</span>
-                  )}
-                </p>
+                {/\(testing\)/i.test(teamName) ? (
+                  <div className="inline-block px-3 py-1 bg-green-500/20 border border-green-500/50 rounded-lg">
+                    <p className="text-green-400 text-sm font-semibold">
+                      🧪 Testing Mode - FREE (£0.00)
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-white/60 text-xs">
+                    Total cost: <span className="text-white font-semibold">£{(players * 12.99).toFixed(2)}</span>
+                    {players > 2 && (
+                      <span className="text-white/50"> ({players} players × £12.99 each)</span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -120,6 +120,14 @@ export async function POST(req: Request) {
     const userId = uuidv4();
     await supabase.from("profiles").upsert({ id: userId });
 
+    // 🧪 TESTING MODE: Check if team name contains "(testing)"
+    const isTestingMode = /\(testing\)/i.test(teamName);
+    const displayTeamName = isTestingMode 
+      ? teamName.replace(/\(testing\)/gi, '').trim() 
+      : teamName.trim();
+    
+    console.log(isTestingMode ? "🧪 TESTING MODE: Free checkout enabled" : "💳 Regular checkout");
+
     const groupData = {
       track_id: track.id,
       player_limit: players,
@@ -128,7 +136,7 @@ export async function POST(req: Request) {
       is_versus: false,
       current_riddle_id: track.start_riddle_id,
       created_by: userId,
-      team_name: teamName.trim(),
+      team_name: displayTeamName, // Store without "(testing)"
       riddles_skipped: 0,
     };
 
@@ -175,10 +183,10 @@ export async function POST(req: Request) {
           price_data: {
             currency: "gbp",
             product_data: {
-              name: `${track.name} - Team: ${teamName.trim()}`,
-              description: `Adventure for ${players} player${players > 1 ? "s" : ""}`,
+              name: `${track.name} - Team: ${displayTeamName}`,
+              description: `Adventure for ${players} player${players > 1 ? "s" : ""}${isTestingMode ? " (TEST)" : ""}`,
             },
-            unit_amount: track.price_per_person,
+            unit_amount: isTestingMode ? 0 : track.price_per_person, // £0.00 for testing
           },
           quantity: players,
         },
@@ -187,12 +195,13 @@ export async function POST(req: Request) {
       metadata: {
         group_id: group.id,
         user_id: userId,
-        team_name: teamName.trim(),
+        team_name: displayTeamName,
         track_id: track.id,
         player_count: players.toString(),
         emails: JSON.stringify(validEmails),
         location,
         mode,
+        is_test: isTestingMode.toString(), // Track if it was a test
       },
       // 24-hour expiration (max allowed by Stripe)
       expires_at: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
@@ -208,7 +217,8 @@ export async function POST(req: Request) {
     console.log("✅ Checkout session created successfully:", {
       groupId: group.id,
       userId,
-      teamName: teamName.trim(),
+      teamName: displayTeamName,
+      isTestingMode,
       sessionId: session.id,
       emailCount: validEmails.length,
       successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/start-game?session_id=${session.id}`,
@@ -217,7 +227,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       sessionUrl: session.url,
       groupId: group.id,
-      teamName: teamName.trim(),
+      teamName: displayTeamName,
     });
   } catch (err) {
     console.error("Checkout session creation failed:", err);
