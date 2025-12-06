@@ -51,19 +51,7 @@ export async function GET(request: NextRequest) {
     const groupId = cookieStore.get("group_id")?.value;
     const userId = cookieStore.get("user_id")?.value;
     
-    // Special handling for library location - redirect non-players to library website
     if (!groupId || !userId) {
-      if (locationId === 'library') {
-        return NextResponse.json(
-          { 
-            success: true, 
-            message: 'Redirecting to library website...',
-            redirectUrl: 'https://www.barnsley.gov.uk/services/libraries/find-a-library/library-the-lightbox/'
-          },
-          { status: 200 }
-        );
-      }
-      
       return NextResponse.json(
         { success: false, message: '❌ No active game session found' },
         { status: 401 }

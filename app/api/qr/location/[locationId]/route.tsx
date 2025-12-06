@@ -52,12 +52,7 @@ export async function GET(request: NextRequest, { params }: Props) {
     const groupId = cookieStore.get("group_id")?.value;
     const userId = cookieStore.get("user_id")?.value;
     
-    // Special handling for library location - redirect non-players to library website
     if (!groupId || !userId) {
-      if (locationId === 'library') {
-        return NextResponse.redirect(new URL('https://www.barnsley.gov.uk/services/libraries/find-a-library/library-the-lightbox/', request.url));
-      }
-      
       return NextResponse.redirect(new URL('/riddle-unauthorized?reason=no_session', request.url));
     }
     
