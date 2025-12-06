@@ -120,13 +120,27 @@ export async function POST(req: Request) {
     const userId = uuidv4();
     await supabase.from("profiles").upsert({ id: userId });
 
-    // 🧪 TESTING MODE: Check if team name contains "(testing)"
-    const isTestingMode = /\(testing\)/i.test(teamName);
+    // 🧪 TESTING MODE: Check if team name contains "(testing)" AND email is authorized
+    const testingModeRequested = /\(testing\)/i.test(teamName);
+    const authorizedTestEmails = (process.env.TESTING_MODE_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+    const userEmail = (emails && emails.length > 0 ? emails[0] : '').toLowerCase();
+    const isAuthorizedForTesting = authorizedTestEmails.includes(userEmail);
+    const isTestingMode = testingModeRequested && isAuthorizedForTesting;
+    
+    // If someone tries testing mode without authorization, reject it
+    if (testingModeRequested && !isAuthorizedForTesting) {
+      console.warn('⚠️ Unauthorized testing mode attempt from:', userEmail || 'no email');
+      return NextResponse.json(
+        { error: 'Invalid team name format' },
+        { status: 400 }
+      );
+    }
+    
     const displayTeamName = isTestingMode 
       ? teamName.replace(/\(testing\)/gi, '').trim() 
       : teamName.trim();
     
-    console.log(isTestingMode ? "🧪 TESTING MODE: Free checkout enabled" : "💳 Regular checkout");
+    console.log(isTestingMode ? "🧪 TESTING MODE: Free checkout enabled for " + userEmail : "💳 Regular checkout");
 
     const groupData = {
       track_id: track.id,
