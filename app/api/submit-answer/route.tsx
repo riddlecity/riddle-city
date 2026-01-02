@@ -96,7 +96,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the answer is correct (case-insensitive)
-    const isCorrect = userAnswer.toLowerCase().trim() === riddle.answer.toLowerCase().trim();
+    // Support multiple correct answers separated by " / " (e.g., "42 / 4-2")
+    const correctAnswers = riddle.answer.split('/').map((a: string) => a.trim().toLowerCase());
+    const normalizedUserAnswer = userAnswer.toLowerCase().trim();
+    const isCorrect = correctAnswers.includes(normalizedUserAnswer);
 
     if (!isCorrect) {
       return NextResponse.json({ 
