@@ -96,10 +96,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the answer is correct (case-insensitive)
-    // Support multiple correct answers separated by " / " (e.g., "42 / 4-2")
-    const correctAnswers = riddle.answer.split('/').map((a: string) => a.trim().toLowerCase());
+    // Support multiple correct answers separated by "/" (e.g., "42/4-2" or "42 / 4-2")
+    const correctAnswers = riddle.answer
+      .split('/')
+      .map((a: string) => a.trim().toLowerCase())
+      .filter((a: string) => a.length > 0); // Remove empty strings
+    
     const normalizedUserAnswer = userAnswer.toLowerCase().trim();
     const isCorrect = correctAnswers.includes(normalizedUserAnswer);
+
+    // Debug logging
+    console.log('🔍 ANSWER CHECK:', {
+      riddleId: group.current_riddle_id,
+      rawAnswer: riddle.answer,
+      rawAnswerType: typeof riddle.answer,
+      rawAnswerLength: riddle.answer?.length,
+      correctAnswers: correctAnswers,
+      userAnswer: userAnswer,
+      normalizedUserAnswer: normalizedUserAnswer,
+      normalizedLength: normalizedUserAnswer.length,
+      isCorrect: isCorrect,
+      matches: correctAnswers.map((ans: string) => ({
+        answer: ans,
+        length: ans.length,
+        matches: ans === normalizedUserAnswer
+      }))
+    });
 
     if (!isCorrect) {
       return NextResponse.json({ 
