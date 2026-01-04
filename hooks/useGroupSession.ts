@@ -287,11 +287,16 @@ export function useGroupSession(autoRedirect: boolean = false) {
         }
       }
       
+      // Map database mode to URL mode (standard -> pubcrawl, date -> date)
+      const getModeForUrl = (dbMode: string): string => {
+        return dbMode === 'standard' ? 'pubcrawl' : dbMode;
+      };
+      
       // Extract location and mode from trackId (e.g., "date_barnsley" -> "barnsley/date")
       if (session.trackId && sessionId) {
         const parts = session.trackId.split('_')
         if (parts.length >= 2) {
-          const mode = parts[0] // "date" or "pub"
+          const mode = getModeForUrl(parts[0]) // "date" or "pubcrawl"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
           const startPageUrl = `/${location}/${mode}/start/${sessionId}?session_id=${sessionId}&success=true`
           console.log('🔍 USE GROUP SESSION: Constructed start page URL for leader (with query params):', startPageUrl)
@@ -303,7 +308,7 @@ export function useGroupSession(autoRedirect: boolean = false) {
       if (session.trackId) {
         const parts = session.trackId.split('_')
         if (parts.length >= 2) {
-          const mode = parts[0] // "date" or "pub"
+          const mode = getModeForUrl(parts[0]) // "date" or "pubcrawl"
           const location = parts.slice(1).join('_') // "barnsley" (or multi-part locations)
           
           // If we have sessionId, use the full start URL (this is the preferred path for leaders)

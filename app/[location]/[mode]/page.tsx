@@ -14,7 +14,17 @@ export default function PreferencesPage() {
   const searchParams = useSearchParams();
   const location = (params?.location as string) || "unknown";
   const mode = (params?.mode as string) || "unknown";
-  const trackId = `${mode}_${location}`; // e.g., "date_barnsley"
+  
+  // Map URL mode to database trackId format
+  const getTrackIdMode = (urlMode: string): string => {
+    const modeMap: Record<string, string> = {
+      'pubcrawl': 'standard',
+      'date': 'date'
+    };
+    return modeMap[urlMode] || urlMode;
+  };
+  
+  const trackId = `${getTrackIdMode(mode)}_${location}`; // e.g., "standard_barnsley" or "date_barnsley"
   
   const [players, setPlayers] = useState(2);
   const [teamName, setTeamName] = useState("");
@@ -50,7 +60,7 @@ export default function PreferencesPage() {
   // Function to get friendly mode display name
   const getModeDisplayName = (mode: string): string => {
     const modeNames: Record<string, string> = {
-      'standard': 'pub crawl',
+      'pubcrawl': 'pub crawl',
       'date': 'date day adventure'
     };
     return modeNames[mode] || mode;
@@ -258,7 +268,7 @@ export default function PreferencesPage() {
 
     // Check time warnings before proceeding
     try {
-      const trackId = `${mode}_${location.toLowerCase()}`;
+      const trackId = `${getTrackIdMode(mode)}_${location.toLowerCase()}`;
       const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
       
       if (response.ok) {

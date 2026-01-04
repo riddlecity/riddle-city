@@ -264,7 +264,7 @@ export default function LocationPage({ params }: Props) {
                 : "bg-gray-600/30 cursor-not-allowed"
             } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-left`}
             onClick={() =>
-              pubStartLabel && !pubLoading ? handleModeSelect("standard") : null
+              pubStartLabel && !pubLoading ? handleModeSelect("pubcrawl") : null
             }
           >
             {/* Header row with title and price */}
