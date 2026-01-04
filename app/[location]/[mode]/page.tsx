@@ -299,7 +299,7 @@ export default function PreferencesPage() {
       
       const payload = {
         location, 
-        mode, 
+        mode: getTrackIdMode(mode), // Convert URL mode to database mode
         players, 
         emails, 
         teamName: teamName.trim(),
