@@ -47,6 +47,15 @@ export default function PreferencesPage() {
     console.log('🔍 Debug locations:', { trackId, locations, locationsLoading });
   }, [trackId, locations, locationsLoading]);
 
+  // Function to get friendly mode display name
+  const getModeDisplayName = (mode: string): string => {
+    const modeNames: Record<string, string> = {
+      'standard': 'pub crawl',
+      'date': 'date day adventure'
+    };
+    return modeNames[mode] || mode;
+  };
+
   // Function to capitalize first letter
   const capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -433,7 +442,7 @@ export default function PreferencesPage() {
       {/* Main heading with better spacing */}
       <div className="w-full text-center mt-4 sm:mt-4 mb-6">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center tracking-tight leading-tight">
-          Start your {mode} in {capitalize(location)}
+          Start your {getModeDisplayName(mode)} in {capitalize(location)}
         </h1>
       </div>
       

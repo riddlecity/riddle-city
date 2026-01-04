@@ -224,7 +224,7 @@ export default function LocationPage({ params }: Props) {
                 ? 'Loading location data...' 
                 : loadTimeout 
                 ? 'Ready (time warnings may not be available)'
-                : 'Perfect for couples exploring together'
+                : 'Perfect for couples on a romantic adventure'
               }
             </div>
 
