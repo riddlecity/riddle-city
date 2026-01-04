@@ -36,9 +36,14 @@ export default function ManualAnswerForm({
 
     try {
       // For manual answer riddles, check the answer locally first
+      // Support multiple correct answers separated by "/" (e.g., "42/4-2")
+      const correctAnswers = correctAnswer
+        .split('/')
+        .map(a => a.trim().toLowerCase())
+        .filter(a => a.length > 0);
+      
       const userAnswerNormalized = answer.trim().toLowerCase();
-      const correctAnswerNormalized = correctAnswer.trim().toLowerCase();
-      const isAnswerCorrect = userAnswerNormalized === correctAnswerNormalized;
+      const isAnswerCorrect = correctAnswers.includes(userAnswerNormalized);
 
       // Only make API call if answer is correct to update game state
       if (!isAnswerCorrect) {
