@@ -79,49 +79,24 @@ export default function CollageGenerator({
     
     const cellWidth = 450;
     const cellHeight = 450;
-    const padding = 15;
-    const headerHeight = 200;
-    const footerHeight = 100;
+    const padding = 8; // Smaller padding for cleaner look
+    const footerHeight = 80;
 
     canvas.width = maxCols * cellWidth + (maxCols + 1) * padding;
-    canvas.height = rows * cellHeight + (rows + 1) * padding + headerHeight + footerHeight;
+    canvas.height = rows * cellHeight + (rows + 1) * padding + footerHeight;
 
-    // Background - Dark neutral
-    ctx.fillStyle = "#171717";
+    // Background - Warm cream/tan color like the example
+    ctx.fillStyle = "#f5f1e8";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load logo
+    // Load logo first
     const logo = new Image();
     const logoLoaded = new Promise<void>((resolve) => {
       logo.onload = () => resolve();
-      logo.onerror = () => resolve(); // Continue even if logo fails
+      logo.onerror = () => resolve();
       logo.src = "/riddle-city-logo.png";
     });
     await logoLoaded;
-
-    // Header with gradient - Dark to darker
-    const gradient = ctx.createLinearGradient(0, 0, 0, headerHeight);
-    gradient.addColorStop(0, "#262626");
-    gradient.addColorStop(1, "#171717");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, headerHeight);
-    
-    // Draw logo in header
-    if (logo.complete) {
-      const logoSize = 120;
-      ctx.drawImage(logo, (canvas.width - logoSize) / 2, 20, logoSize, logoSize);
-    }
-    
-    // Adventure name
-    ctx.fillStyle = "white";
-    ctx.font = "bold 48px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(adventureName, canvas.width / 2, 165);
-    
-    // Team name with red accent
-    ctx.font = "32px Arial";
-    ctx.fillStyle = "#dc2626";
-    ctx.fillText(teamName, canvas.width / 2, 195);
 
     // Load and draw photos with proper aspect ratio
     let photoIndex = 0;
@@ -148,37 +123,35 @@ export default function CollageGenerator({
             const rowOffsetX = (canvasContentWidth - totalRowWidth) / 2;
             
             const x = colIndex * cellWidth + (colIndex + 1) * padding + rowOffsetX;
-            const y = rowIndex * cellHeight + (rowIndex + 1) * padding + headerHeight;
+            const y = rowIndex * cellHeight + (rowIndex + 1) * padding;
 
-            // Draw red border
-            ctx.fillStyle = "#dc2626";
-            ctx.fillRect(x - 8, y - 8, cellWidth + 16, cellHeight + 16);
-            
-            // Draw dark background
-            ctx.fillStyle = "#171717";
-            ctx.fillRect(x, y, cellWidth, cellHeight);
-            
-            // Calculate dimensions to fit image while maintaining aspect ratio
+            // Calculate dimensions to fill and crop image to fit cell (cover behavior)
             const imgAspect = img.width / img.height;
             const cellAspect = cellWidth / cellHeight;
             
             let drawWidth, drawHeight, imgOffsetX, imgOffsetY;
             
             if (imgAspect > cellAspect) {
-              // Image is wider - fit to width
-              drawWidth = cellWidth;
-              drawHeight = cellWidth / imgAspect;
-              imgOffsetX = 0;
-              imgOffsetY = (cellHeight - drawHeight) / 2;
-            } else {
-              // Image is taller - fit to height
+              // Image is wider - fit to height and crop sides
               drawHeight = cellHeight;
               drawWidth = cellHeight * imgAspect;
               imgOffsetX = (cellWidth - drawWidth) / 2;
               imgOffsetY = 0;
+            } else {
+              // Image is taller - fit to width and crop top/bottom
+              drawWidth = cellWidth;
+              drawHeight = cellWidth / imgAspect;
+              imgOffsetX = 0;
+              imgOffsetY = (cellHeight - drawHeight) / 2;
             }
             
+            // Clip to cell bounds and draw
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, cellWidth, cellHeight);
+            ctx.clip();
             ctx.drawImage(img, x + imgOffsetX, y + imgOffsetY, drawWidth, drawHeight);
+            ctx.restore();
             
             resolve();
           };
@@ -202,20 +175,54 @@ export default function CollageGenerator({
       return;
     }
 
-    // Footer - Dark gradient
+    // Overlay text on top of photos
+    // Semi-transparent purple overlay at the top
+    const overlayHeight = 180;
+    const overlayGradient = ctx.createLinearGradient(0, 0, 0, overlayHeight);
+    overlayGradient.addColorStop(0, "rgba(147, 51, 234, 0.85)"); // Purple with opacity
+    overlayGradient.addColorStop(1, "rgba(147, 51, 234, 0)"); // Fade to transparent
+    ctx.fillStyle = overlayGradient;
+    ctx.fillRect(0, 0, canvas.width, overlayHeight);
+    
+    // Draw logo
+    if (logo.complete) {
+      const logoSize = 80;
+      ctx.drawImage(logo, (canvas.width - logoSize) / 2, 15, logoSize, logoSize);
+    }
+    
+    // Adventure name
+    ctx.fillStyle = "white";
+    ctx.font = "bold 38px Arial";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+    ctx.shadowBlur = 15;
+    ctx.fillText(adventureName, canvas.width / 2, 120);
+    
+    // Team name
+    ctx.font = "24px Arial";
+    ctx.fillStyle = "#fde68a";
+    ctx.fillText(teamName, canvas.width / 2, 155);
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    // Footer - Purple gradient
     const footerGradient = ctx.createLinearGradient(0, canvas.height - footerHeight, 0, canvas.height);
-    footerGradient.addColorStop(0, "#171717");
-    footerGradient.addColorStop(1, "#262626");
+    footerGradient.addColorStop(0, "#7c3aed");
+    footerGradient.addColorStop(1, "#9333ea");
     ctx.fillStyle = footerGradient;
     ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
     
     ctx.fillStyle = "white";
-    ctx.font = "bold 28px Arial";
+    ctx.font = "bold 26px Arial";
     ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+    ctx.shadowBlur = 8;
     ctx.fillText(`⏱️ Completed in ${completionTime}`, canvas.width / 2, canvas.height - 55);
-    ctx.font = "24px Arial";
-    ctx.fillStyle = "#dc2626";
-    ctx.fillText("#RiddleCity", canvas.width / 2, canvas.height - 20);
+    ctx.font = "22px Arial";
+    ctx.fillStyle = "#fde68a";
+    ctx.fillText("#RiddleCity", canvas.width / 2, canvas.height - 25);
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
 
     // Convert to downloadable URL
     const url = canvas.toDataURL("image/jpeg", 0.9);
@@ -263,14 +270,14 @@ export default function CollageGenerator({
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="bg-neutral-800 p-4 rounded-lg border-2 border-red-600">
-            <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded" />
+          <div className="bg-neutral-900 p-4 rounded-xl border-4 border-purple-500 shadow-2xl">
+            <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded-lg" />
           </div>
           
           <div className="flex gap-3">
             <button
               onClick={downloadCollage}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
             >
               <Download className="w-5 h-5" />
               Download
@@ -281,7 +288,7 @@ export default function CollageGenerator({
                 downloadCollage();
                 alert("📱 Collage downloaded! Share it on Instagram and tag us @RiddleCity with #RiddleCity");
               }}
-              className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
             >
               <Instagram className="w-5 h-5" />
               Share to Instagram
@@ -289,7 +296,7 @@ export default function CollageGenerator({
           </div>
 
           <p className="text-sm text-center text-gray-400">
-            ❤️ Tag <strong>@RiddleCity</strong> and use <strong>#RiddleCity</strong> when you post!
+            💜 Tag <strong>@RiddleCity</strong> and use <strong>#RiddleCity</strong> when you post!
           </p>
         </div>
       )}
