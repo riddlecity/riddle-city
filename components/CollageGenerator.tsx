@@ -79,15 +79,29 @@ export default function CollageGenerator({
     
     const cellWidth = 450;
     const cellHeight = 450;
-    const padding = 8; // Smaller padding for cleaner look
+    const padding = 12;
+    const borderWidth = 40; // Decorative border
     const footerHeight = 80;
 
-    canvas.width = maxCols * cellWidth + (maxCols + 1) * padding;
-    canvas.height = rows * cellHeight + (rows + 1) * padding + footerHeight;
+    canvas.width = maxCols * cellWidth + (maxCols + 1) * padding + (borderWidth * 2);
+    canvas.height = rows * cellHeight + (rows + 1) * padding + footerHeight + (borderWidth * 2);
 
-    // Background - Warm cream/tan color like the example
-    ctx.fillStyle = "#f5f1e8";
+    // Background - Black
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Decorative red border
+    const borderGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    borderGradient.addColorStop(0, "#dc2626");
+    borderGradient.addColorStop(0.5, "#991b1b");
+    borderGradient.addColorStop(1, "#dc2626");
+    ctx.strokeStyle = borderGradient;
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(borderWidth / 2, borderWidth / 2, canvas.width - borderWidth, canvas.height - borderWidth);
+    
+    // Inner black background for photos
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(borderWidth, borderWidth, canvas.width - (borderWidth * 2), canvas.height - (borderWidth * 2));
 
     // Load logo first
     const logo = new Image();
@@ -122,8 +136,8 @@ export default function CollageGenerator({
             const canvasContentWidth = maxCols * cellWidth + (maxCols - 1) * padding;
             const rowOffsetX = (canvasContentWidth - totalRowWidth) / 2;
             
-            const x = colIndex * cellWidth + (colIndex + 1) * padding + rowOffsetX;
-            const y = rowIndex * cellHeight + (rowIndex + 1) * padding;
+            const x = colIndex * cellWidth + (colIndex + 1) * padding + rowOffsetX + borderWidth;
+            const y = rowIndex * cellHeight + (rowIndex + 1) * padding + borderWidth;
 
             // Calculate dimensions to fill and crop image to fit cell (cover behavior)
             const imgAspect = img.width / img.height;
@@ -175,52 +189,60 @@ export default function CollageGenerator({
       return;
     }
 
-    // Overlay text on top of photos
-    // Semi-transparent purple overlay at the top
-    const overlayHeight = 180;
-    const overlayGradient = ctx.createLinearGradient(0, 0, 0, overlayHeight);
-    overlayGradient.addColorStop(0, "rgba(147, 51, 234, 0.85)"); // Purple with opacity
-    overlayGradient.addColorStop(1, "rgba(147, 51, 234, 0)"); // Fade to transparent
-    ctx.fillStyle = overlayGradient;
-    ctx.fillRect(0, 0, canvas.width, overlayHeight);
+    // Center decorative label overlay
+    const labelWidth = 500;
+    const labelHeight = 140;
+    const labelX = (canvas.width - labelWidth) / 2;
+    const labelY = (canvas.height - labelHeight) / 2;
     
-    // Draw logo
+    // White decorative background
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 20);
+    ctx.fill();
+    
+    // Red inner border
+    ctx.strokeStyle = "#dc2626";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.roundRect(labelX + 10, labelY + 10, labelWidth - 20, labelHeight - 20, 15);
+    ctx.stroke();
+    
+    // Logo in center of label
     if (logo.complete) {
-      const logoSize = 80;
-      ctx.drawImage(logo, (canvas.width - logoSize) / 2, 15, logoSize, logoSize);
+      const logoSize = 50;
+      ctx.drawImage(logo, labelX + (labelWidth - logoSize) / 2, labelY + 20, logoSize, logoSize);
     }
     
     // Adventure name
-    ctx.fillStyle = "white";
-    ctx.font = "bold 38px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.font = "bold 32px Arial";
     ctx.textAlign = "center";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-    ctx.shadowBlur = 15;
-    ctx.fillText(adventureName, canvas.width / 2, 120);
-    
-    // Team name
-    ctx.font = "24px Arial";
-    ctx.fillStyle = "#fde68a";
-    ctx.fillText(teamName, canvas.width / 2, 155);
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
+    ctx.fillText(adventureName, canvas.width / 2, labelY + 95);
+    
+    // Team name
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#dc2626";
+    ctx.fillText(teamName, canvas.width / 2, labelY + 122);
 
-    // Footer - Purple gradient
-    const footerGradient = ctx.createLinearGradient(0, canvas.height - footerHeight, 0, canvas.height);
-    footerGradient.addColorStop(0, "#7c3aed");
-    footerGradient.addColorStop(1, "#9333ea");
+    // Footer - Red gradient
+    const footerGradient = ctx.createLinearGradient(0, canvas.height - footerHeight - borderWidth, 0, canvas.height - borderWidth);
+    footerGradient.addColorStop(0, "#000000");
+    footerGradient.addColorStop(1, "#991b1b");
     ctx.fillStyle = footerGradient;
-    ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
+    ctx.fillRect(borderWidth, canvas.height - footerHeight - borderWidth, canvas.width - (borderWidth * 2), footerHeight);
     
     ctx.fillStyle = "white";
-    ctx.font = "bold 26px Arial";
+    ctx.font = "bold 24px Arial";
     ctx.textAlign = "center";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
     ctx.shadowBlur = 8;
-    ctx.fillText(`⏱️ Completed in ${completionTime}`, canvas.width / 2, canvas.height - 55);
-    ctx.font = "22px Arial";
-    ctx.fillStyle = "#fde68a";
-    ctx.fillText("#RiddleCity", canvas.width / 2, canvas.height - 25);
+    ctx.fillText(`⏱️ Completed in ${completionTime}`, canvas.width / 2, canvas.height - footerHeight / 2 - borderWidth + 5);
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#fca5a5";
+    ctx.fillText("#RiddleCity", canvas.width / 2, canvas.height - footerHeight / 2 - borderWidth + 35);
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
 
@@ -252,7 +274,7 @@ export default function CollageGenerator({
   return (
     <div className="bg-neutral-900 rounded-xl p-6 border-2 border-neutral-700">
       <div className="flex items-center gap-2 mb-4">
-        <ImageIcon className="w-6 h-6 text-red-600" />
+        <ImageIcon className="w-6 h-6 text-purple-600" />
         <h2 className="text-xl font-bold text-white">Your Team Collage</h2>
       </div>
 
@@ -264,13 +286,13 @@ export default function CollageGenerator({
         <button
           onClick={generateCollage}
           disabled={isGenerating}
-          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
           {isGenerating ? "⏳ Creating Your Collage..." : "🎨 Generate Collage"}
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="bg-neutral-900 p-4 rounded-xl border-4 border-purple-500 shadow-2xl">
+          <div className="bg-black p-2 rounded-xl border-2 border-red-600 shadow-2xl">
             <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded-lg" />
           </div>
           
