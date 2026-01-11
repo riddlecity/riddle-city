@@ -251,11 +251,10 @@ export default function CollageGenerator({
       };
     }
     else if (count === 7) {
-      // 7 photos: 3-column top (3 photos) + 2 rows of 2 photos + badge
+      // 7 photos: 3-column top (3 photos) + 2 rows of 2 photos + overlay badge
       const row1Height = Math.floor(contentHeight * 0.38);
       const row2Height = Math.floor(contentHeight * 0.32);
-      const row3Height = Math.floor(contentHeight * 0.30);
-      const badgeHeight = contentHeight - row1Height - row2Height - row3Height - (GUTTER * 3);
+      const row3Height = contentHeight - row1Height - row2Height - (GUTTER * 2);
       
       // Row 1: 3 photos in equal columns
       const col3Width = Math.floor((contentWidth - (GUTTER * 2)) / 3);
@@ -273,9 +272,18 @@ export default function CollageGenerator({
       tiles.push({ x: GUTTER, y: GUTTER + row1Height + GUTTER + row2Height + GUTTER, width: col2Width2, height: row3Height, type: 'photo' });
       tiles.push({ x: GUTTER + col2Width2 + GUTTER, y: GUTTER + row1Height + GUTTER + row2Height + GUTTER, width: col2Width, height: row3Height, type: 'photo' });
       
-      // Badge at bottom
-      tiles.push({ x: GUTTER, y: GUTTER + row1Height + GUTTER + row2Height + GUTTER + row3Height + GUTTER, width: contentWidth, height: badgeHeight, type: 'badge' });
-      return { tiles };
+      // Badge overlays center
+      const badgeWidth = Math.floor(contentWidth * 0.70);
+      const badgeHeight = Math.floor(contentHeight * 0.20);
+      return { 
+        tiles,
+        overlayBadge: {
+          x: GUTTER + (contentWidth - badgeWidth) / 2,
+          y: GUTTER + (contentHeight - badgeHeight) / 2,
+          width: badgeWidth,
+          height: badgeHeight
+        }
+      };
     }
     else if (count === 8) {
       // 8 photos: 4 rows of 2, varied heights + overlay badge
