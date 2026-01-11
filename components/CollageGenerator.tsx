@@ -283,7 +283,7 @@ export default function CollageGenerator({
           if (tempCtx) {
             tempCtx.drawImage(logo, 0, 0, logoWidth, logoHeight);
             tempCtx.globalCompositeOperation = 'source-in';
-            tempCtx.fillStyle = badgeColors.logo;
+            tempCtx.fillStyle = "#dc2626"; // Always use brand red for logo
             tempCtx.fillRect(0, 0, logoWidth, logoHeight);
             
             ctx.save();
@@ -296,7 +296,7 @@ export default function CollageGenerator({
         
         // Draw text
         const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-        ctx.fillStyle = badgeColors.text;
+        ctx.fillStyle = "#dc2626"; // Always use brand red for text
         ctx.textAlign = "center";
         
         const primarySize = Math.max(18, Math.floor(tile.height * 0.09));
