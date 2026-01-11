@@ -11,9 +11,6 @@ interface PhotoCaptureProps {
 
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [showCamera, setShowCamera] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if photo already exists for this riddle
