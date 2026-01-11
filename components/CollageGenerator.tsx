@@ -143,17 +143,6 @@ export default function CollageGenerator({
       return result;
     };
 
-    // Helper to split area into rows
-    const splitRows = (x: number, y: number, width: number, _height: number, heights: number[]): Tile[] => {
-      const result: Tile[] = [];
-      let currentY = y;
-      heights.forEach((h) => {
-        result.push({ x, y: currentY, width, height: h });
-        currentY += h + GUTTER;
-      });
-      return result;
-    };
-
     switch (count) {
       case 1: {
         // Single large photo (70%) + completion badge at bottom (final tile)
