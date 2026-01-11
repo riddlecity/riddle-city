@@ -78,7 +78,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
       {/* Compact button - top right */}
       <button
         onClick={() => fileInputRef.current?.click()}
-        className={`fixed top-20 right-4 z-20 ${
+        className={`fixed top-20 right-4 z-20 focus:outline-none ${
           hasPhoto 
             ? 'bg-green-600 hover:bg-green-700' 
             : 'bg-purple-600 hover:bg-purple-700'
@@ -118,7 +118,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               // Minimized view - just small thumbnail
               <button
                 onClick={() => setIsMinimized(false)}
-                className="relative"
+                className="relative focus:outline-none"
                 title="Expand photo"
               >
                 <img src={currentPhoto} alt="Team photo" className="w-12 h-12 rounded object-cover" />
