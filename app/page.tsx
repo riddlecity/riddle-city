@@ -27,8 +27,19 @@ export default function Home() {
 
   // Handle starting fresh - use the clearSession method from the hook
   const handleStartFresh = async () => {
-    await clearSession();
-    window.location.reload();
+    const confirmed = window.confirm(
+      '⚠️ Warning: Starting Fresh\n\n' +
+      'This will permanently delete your current adventure progress.\n\n' +
+      '• You will lose access to your current game\n' +
+      '• All progress will be lost\n' +
+      '• You will need to pay again to start a new adventure\n\n' +
+      'Are you sure you want to start fresh?'
+    );
+    
+    if (confirmed) {
+      await clearSession();
+      window.location.reload();
+    }
   };
 
   // Show loading state while checking session
