@@ -33,8 +33,8 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         const TARGET_HEIGHT = 720;
         const TARGET_ASPECT = TARGET_WIDTH / TARGET_HEIGHT; // 16:9 landscape
         
-        let sourceWidth = img.width;
-        let sourceHeight = img.height;
+        const sourceWidth = img.width;
+        const sourceHeight = img.height;
         const sourceAspect = sourceWidth / sourceHeight;
         
         // Always output landscape dimensions
