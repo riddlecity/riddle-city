@@ -41,6 +41,20 @@ export default async function LeaderboardsPage() {
         />
       </div>
 
+      {/* Logo - Top Left */}
+      <div className="absolute top-4 left-4 z-10">
+        <Link href="/">
+          <Image
+            src="/riddle-city-logo.png"
+            alt="Riddle City Logo"
+            width={50}
+            height={50}
+            className="md:w-[60px] md:h-[60px] drop-shadow-lg hover:scale-105 transition-transform duration-200"
+            priority
+          />
+        </Link>
+      </div>
+
       {/* Back button */}
       <div className="w-full max-w-4xl mb-6">
         <Link

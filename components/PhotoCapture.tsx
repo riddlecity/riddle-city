@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Check } from "lucide-react";
 
 interface PhotoCaptureProps {
   riddleId: string;
@@ -14,59 +14,57 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if photo already exists for this riddle
   const existingPhoto = typeof window !== "undefined" 
     ? localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`)
     : null;
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-      }
-      setShowCamera(true);
-    } catch (error) {
-      console.error("Camera access denied:", error);
-      alert("Please allow camera access to take photos");
-    }
-  };
+  const handlePhotoCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setShowCamera(false);
-  };
-
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(videoRef.current, 0, 0);
-    
-    // Compress to reasonable size (0.7 quality JPEG)
-    const compressedPhoto = canvas.toDataURL("image/jpeg", 0.7);
-    
-    // Store in localStorage
-    localStorage.setItem(`riddlecity_photo_${groupId}_${riddleId}`, compressedPhoto);
-    
-    setPhoto(compressedPhoto);
-    stopCamera();
-    
-    if (onPhotoTaken) onPhotoTaken();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // Compress image
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 1280;
+        const MAX_HEIGHT = 720;
+        
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const compressedPhoto = canvas.toDataURL("image/jpeg", 0.7);
+        
+        localStorage.setItem(`riddlecity_photo_${groupId}_${riddleId}`, compressedPhoto);
+        setPhoto(compressedPhoto);
+        
+        if (onPhotoTaken) onPhotoTaken();
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   const deletePhoto = () => {
@@ -75,80 +73,61 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   };
 
   const currentPhoto = photo || existingPhoto;
+  const hasPhoto = !!currentPhoto;
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
-      <div className="flex items-center gap-2 mb-3">
-        <Camera className="w-5 h-5 text-purple-600" />
-        <h3 className="font-semibold text-purple-900">Team Photo</h3>
-      </div>
-      
-      <p className="text-sm text-gray-600 mb-3">
-        📸 Snap a team photo to create your collage at the end!
-      </p>
+    <>
+      {/* Compact button - top right */}
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className={`fixed top-20 right-4 z-20 ${
+          hasPhoto 
+            ? 'bg-green-600 hover:bg-green-700' 
+            : 'bg-purple-600 hover:bg-purple-700'
+        } text-white text-xs font-semibold py-2 px-3 rounded-lg shadow-lg transition-all duration-200 flex items-center gap-2`}
+        style={{ minHeight: '40px' }}
+      >
+        {hasPhoto ? (
+          <>
+            <Check className="w-4 h-4" />
+            <span>Photo saved</span>
+          </>
+        ) : (
+          <>
+            <Camera className="w-4 h-4" />
+            <span>Team photo</span>
+          </>
+        )}
+      </button>
 
-      {!showCamera && !currentPhoto && (
-        <button
-          onClick={startCamera}
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
-        >
-          <Camera className="w-5 h-5" />
-          Take Team Photo
-        </button>
-      )}
+      {/* Hidden file input that triggers camera */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoCapture}
+        className="hidden"
+      />
 
-      {showCamera && (
-        <div className="space-y-3">
-          <div className="relative bg-black rounded-lg overflow-hidden">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-auto"
-            />
-          </div>
-          <div className="flex gap-2">
+      {/* Preview modal when photo exists */}
+      {hasPhoto && (
+        <div className="fixed top-20 right-4 z-30 mt-12 bg-black/90 backdrop-blur-sm rounded-lg p-2 shadow-2xl border border-white/20">
+          <div className="relative">
+            <img src={currentPhoto} alt="Team photo" className="w-32 h-auto rounded" />
             <button
-              onClick={capturePhoto}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              📸 Capture
-            </button>
-            <button
-              onClick={stopCamera}
-              className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {currentPhoto && !showCamera && (
-        <div className="space-y-3">
-          <div className="relative bg-black rounded-lg overflow-hidden">
-            <img src={currentPhoto} alt="Team photo" className="w-full h-auto" />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={startCamera}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              📸 Retake Photo
-            </button>
-            <button
-              onClick={deletePhoto}
-              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                deletePhoto();
+              }}
+              className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors"
               title="Delete photo"
             >
-              <X className="w-5 h-5" />
+              <X className="w-3 h-3" />
             </button>
           </div>
-          <p className="text-xs text-center text-green-600 font-medium">
-            ✓ Photo saved for collage
-          </p>
         </div>
       )}
-    </div>
+    </>
   );
 }

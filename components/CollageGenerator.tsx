@@ -81,9 +81,16 @@ export default function CollageGenerator({
     // Load and draw photos
     const photoEntries = Object.entries(photos);
     const imagePromises = photoEntries.map(([, dataUrl], index) => {
-      return new Promise<void>((resolve) => {
+      return new Promise<void>((resolve, reject) => {
         const img = new Image();
+        
+        // Add timeout to prevent hanging
+        const timeout = setTimeout(() => {
+          reject(new Error(`Image ${index + 1} failed to load`));
+        }, 5000);
+        
         img.onload = () => {
+          clearTimeout(timeout);
           const col = index % cols;
           const row = Math.floor(index / cols);
           const x = col * photoWidth + (col + 1) * padding;
@@ -103,11 +110,24 @@ export default function CollageGenerator({
           
           resolve();
         };
+        
+        img.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error(`Image ${index + 1} failed to load`));
+        };
+        
         img.src = dataUrl;
       });
     });
 
-    await Promise.all(imagePromises);
+    try {
+      await Promise.all(imagePromises);
+    } catch (error) {
+      console.error("Error loading images:", error);
+      setIsGenerating(false);
+      alert("Some photos couldn't be loaded. Please try capturing them again.");
+      return;
+    }
 
     // Footer
     ctx.fillStyle = "#7c3aed";
@@ -139,6 +159,7 @@ export default function CollageGenerator({
       <div className="bg-gray-50 rounded-xl p-6 text-center border-2 border-gray-200">
         <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <p className="text-gray-600">No team photos were taken during this adventure</p>
+        <p className="text-xs text-gray-500 mt-2">Leaders can capture photos at each riddle location</p>
       </div>
     );
   }

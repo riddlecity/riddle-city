@@ -322,16 +322,13 @@ export default async function RiddlePage({ params }: Props) {
             </div>
           )}
         </div>
-      </div>
 
-      {/* Photo Capture - Only for Leaders */}
+      {/* Photo Capture - Only for Leaders - Fixed Position */}
       {groupId && isLeader && (
-        <div className="relative z-10 px-4 pb-4">
-          <PhotoCapture 
-            riddleId={id}
-            groupId={groupId}
-          />
-        </div>
+        <PhotoCapture 
+          riddleId={id}
+          groupId={groupId}
+        />
       )}
 
       {/* Bottom section - copy link and skip with improved mobile spacing */}
