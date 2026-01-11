@@ -238,15 +238,15 @@ export default function CollageGenerator({
     if (config.hasFooter) {
       const footerY = whiteBorderSize + config.rows * cellSize + (config.rows + 1) * borderSize;
       
-      // Dark background matching site
-      ctx.fillStyle = darkBg;
+      // White background for footer
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(whiteBorderSize, footerY, innerWidth, footerHeight);
       
-      // Logo - wider proportions
+      // Logo on far LEFT - bigger
       if (logo.complete) {
-        const logoWidth = 150;
-        const logoHeight = 110;
-        ctx.drawImage(logo, whiteBorderSize + (innerWidth - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
+        const logoWidth = 180;
+        const logoHeight = 140;
+        ctx.drawImage(logo, whiteBorderSize + 10, footerY + 5, logoWidth, logoHeight);
       }
       
       // Get emoji and color for adventure type
@@ -266,21 +266,25 @@ export default function CollageGenerator({
       // Professional font stack
       const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
       
-      // Adventure name with emoji - color varies by type
+      // CENTER: Adventure name with team/time
+      const centerX = whiteBorderSize + innerWidth / 2;
+      
+      // Adventure name - color varies by type
       ctx.fillStyle = adventureColor;
       ctx.font = `bold 18px ${fontStack}`;
       ctx.textAlign = "center";
-      ctx.fillText(`${adventureEmoji} ${adventureName}`, whiteBorderSize + innerWidth / 2, footerY + 125);
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, centerX, footerY + 60);
       
-      // All details on one line - white and bold
-      ctx.fillStyle = "#ffffff";
+      // Team and time below
+      ctx.fillStyle = "#1f2937";
       ctx.font = `bold 15px ${fontStack}`;
-      ctx.fillText(`${teamName} • Completed in ${completionTime}`, whiteBorderSize + innerWidth / 2, footerY + 142);
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, centerX, footerY + 85);
       
-      // Website URL - bigger and red to match branding
+      // FAR RIGHT: Website URL
       ctx.font = `bold 16px ${fontStack}`;
       ctx.fillStyle = "#dc2626";
-      ctx.fillText("RIDDLECITY.CO.UK", whiteBorderSize + innerWidth / 2, footerY + 160);
+      ctx.textAlign = "right";
+      ctx.fillText("RIDDLECITY.CO.UK", whiteBorderSize + innerWidth - 10, footerY + 75);
     }
 
     // Convert to downloadable URL

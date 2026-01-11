@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, X, Check, Minimize2, Maximize2 } from "lucide-react";
+import { Camera, X, Check, ChevronDown, ChevronUp } from "lucide-react";
 
 interface PhotoCaptureProps {
   riddleId: string;
@@ -11,7 +11,7 @@ interface PhotoCaptureProps {
 
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if photo already exists for this riddle
@@ -75,28 +75,67 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
 
   return (
     <>
-      {/* Compact button - top right */}
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        className={`fixed top-20 right-4 z-20 focus:outline-none ${
-          hasPhoto 
-            ? 'bg-green-600 hover:bg-green-700' 
-            : 'bg-purple-600 hover:bg-purple-700'
-        } text-white text-xs font-semibold py-2 px-3 rounded-lg shadow-lg transition-all duration-200 flex items-center gap-2`}
-        style={{ minHeight: '40px' }}
-      >
-        {hasPhoto ? (
-          <>
-            <Check className="w-4 h-4" />
-            <span>Photo saved</span>
-          </>
-        ) : (
-          <>
-            <Camera className="w-4 h-4" />
-            <span>Team photo</span>
-          </>
+      {/* Fixed button at top */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-neutral-900 border-b border-neutral-800 shadow-lg">
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={`w-full ${
+            hasPhoto 
+              ? 'bg-green-600 hover:bg-green-700' 
+              : 'bg-purple-600 hover:bg-purple-700'
+          } text-white text-sm font-semibold py-3 px-4 flex items-center justify-between transition-colors focus:outline-none`}
+        >
+          <div className="flex items-center gap-2">
+            {hasPhoto ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Team photo taken</span>
+              </>
+            ) : (
+              <>
+                <Camera className="w-4 h-4" />
+                <span>Take team photo</span>
+              </>
+            )}
+          </div>
+          {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+        </button>
+        
+        {!isCollapsed && (
+          <div className="bg-neutral-800 p-3">
+            <div className="flex gap-3 items-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors focus:outline-none"
+              >
+                <Camera className="w-4 h-4" />
+                {hasPhoto ? 'Retake photo' : 'Capture photo'}
+              </button>
+              
+              {hasPhoto && (
+                <>
+                  <div className="relative">
+                    <img src={currentPhoto} alt="Team photo" className="w-16 h-16 rounded object-cover" />
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePhoto();
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors focus:outline-none"
+                    title="Delete photo"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         )}
-      </button>
+      </div>
 
       {/* Hidden file input that triggers camera */}
       <input
@@ -107,51 +146,6 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         onChange={handlePhotoCapture}
         className="hidden"
       />
-
-      {/* Preview modal when photo exists */}
-      {hasPhoto && (
-        <div className={`fixed top-20 right-4 z-30 mt-12 bg-black/90 backdrop-blur-sm rounded-lg shadow-2xl transition-all ${
-          isMinimized ? 'p-1' : 'p-2'
-        }`}>
-          <div className="relative">
-            {isMinimized ? (
-              // Minimized view - just small thumbnail
-              <button
-                onClick={() => setIsMinimized(false)}
-                className="relative focus:outline-none"
-                title="Expand photo"
-              >
-                <img src={currentPhoto} alt="Team photo" className="w-12 h-12 rounded object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
-                  <Maximize2 className="w-4 h-4 text-white" />
-                </div>
-              </button>
-            ) : (
-              // Expanded view
-              <>
-                <img src={currentPhoto} alt="Team photo" className="w-32 h-auto rounded" />
-                <button
-                  onClick={() => setIsMinimized(true)}
-                  className="absolute top-0 left-0 bg-blue-500 hover:bg-blue-600 text-white p-1 rounded-full transition-colors"
-                  title="Minimize photo"
-                >
-                  <Minimize2 className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deletePhoto();
-                  }}
-                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors"
-                  title="Delete photo"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </>
   );
 }
