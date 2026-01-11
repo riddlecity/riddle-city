@@ -586,6 +586,20 @@ export default function PreferencesPage() {
                   otherIndex !== index && otherEmail.trim().toLowerCase() === normalizedEmail
                 );
                 
+                // First email field should be disabled and show a message
+                if (index === 0) {
+                  return (
+                    <div key={index} className="relative">
+                      <input
+                        type="email"
+                        disabled
+                        placeholder="Enter Group Leader Email on next page"
+                        className="w-full rounded-lg px-4 py-3 text-white/50 text-base placeholder:text-white/50 bg-white/5 border-2 border-white/10 cursor-not-allowed min-h-[48px]"
+                      />
+                    </div>
+                  );
+                }
+                
                 return (
                   <div key={index} className="relative">
                     <input

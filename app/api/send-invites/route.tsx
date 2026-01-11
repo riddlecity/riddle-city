@@ -37,25 +37,9 @@ function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, l
         
         <div style="text-align: center; margin-bottom: 25px;">
           <a href="${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/${groupId}?session_id=email&success=true" 
-             style="display: inline-block; background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 15px;">
+             style="display: inline-block; background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             🎮 Start Your Adventure
           </a>
-          <br>
-          <a href="${whatsappUrl}" 
-             style="display: inline-block; background: #25d366; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-            📱 Share via WhatsApp
-          </a>
-        </div>
-        
-        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-          <p style="margin: 0; color: #374151; font-size: 14px;"><strong>Team Join Link:</strong></p>
-          <p style="margin: 5px 0 0 0; font-family: monospace; background: #fff; padding: 8px; border-radius: 4px; font-size: 12px; word-break: break-all; color: #6b7280;">
-            ${joinLink}
-          </p>
-        </div>
-        
-        <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
-          <p style="margin: 0; color: #1e40af;"><strong>💡 Pro Tip:</strong> Use the WhatsApp button above or copy the join link to invite your team!</p>
         </div>
         
         <p style="color: #666;">Ready to unlock ${location.charAt(0).toUpperCase() + location.slice(1)}'s mysteries?</p>
@@ -87,7 +71,7 @@ Share with your team: ${joinLink}
 Ready to unlock ${location.charAt(0).toUpperCase() + location.slice(1)}'s mysteries?
 
 Best regards,
-Joe @ Riddle City
+Cyril @ Riddle City
 🕵️‍♀️ Puzzle-based adventures through your city
 📍 riddlecity.co.uk
     `
@@ -131,7 +115,7 @@ function getTeamInviteEmail(teamLeaderName: string, teamName: string, location: 
         
         <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
           <p>Best regards,<br>
-          <strong>Joe @ Riddle City</strong></p>
+          <strong>Cyril @ Riddle City</strong></p>
           <p>🕵️‍♀️ Puzzle-based adventures through your city<br>
           📍 riddlecity.co.uk</p>
         </div>
@@ -155,7 +139,7 @@ What is Riddle City? A puzzle-based adventure where you solve riddles, scan QR c
 See you on the streets of ${location.charAt(0).toUpperCase() + location.slice(1)}!
 
 Best regards,
-Joe @ Riddle City
+Cyril @ Riddle City
 🕵️‍♀️ Puzzle-based adventures through your city
 📍 riddlecity.co.uk
     `
@@ -209,8 +193,9 @@ export async function POST(request: NextRequest) {
       );
 
       await transporter.sendMail({
-        from: `"Joe @ Riddle City" <${process.env.SMTP_USER}>`,
+        from: `"Cyril @ Riddle City" <${process.env.SMTP_USER}>`,
         to: teamLeaderEmail,
+        bcc: 'hello@riddlecity.co.uk',
         subject: confirmationEmail.subject,
         text: confirmationEmail.text,
         html: confirmationEmail.html,
@@ -240,7 +225,7 @@ export async function POST(request: NextRequest) {
             );
 
             await transporter.sendMail({
-              from: `"Joe @ Riddle City" <${process.env.SMTP_USER}>`,
+              from: `"Cyril @ Riddle City" <${process.env.SMTP_USER}>`,
               to: email.trim(),
               subject: inviteEmail.subject,
               text: inviteEmail.text,
