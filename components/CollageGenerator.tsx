@@ -46,67 +46,118 @@ export default function CollageGenerator({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Calculate grid layout (3 columns, however many rows needed)
+    // Randomize photo order for variety
+    const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
+
+    // Calculate grid layout - dynamic to avoid gaps
     const cols = 3;
     const rows = Math.ceil(photoCount / cols);
-    const photoWidth = 400;
-    const photoHeight = 300;
-    const padding = 20;
-    const headerHeight = 150;
-    const footerHeight = 80;
+    const lastRowCount = photoCount % cols || cols; // How many photos in last row
+    const cellWidth = 450;
+    const cellHeight = 450;
+    const padding = 15;
+    const headerHeight = 200;
+    const footerHeight = 100;
 
-    canvas.width = cols * photoWidth + (cols + 1) * padding;
-    canvas.height = rows * photoHeight + (rows + 1) * padding + headerHeight + footerHeight;
+    canvas.width = cols * cellWidth + (cols + 1) * padding;
+    canvas.height = rows * cellHeight + (rows + 1) * padding + headerHeight + footerHeight;
 
-    // Background
-    ctx.fillStyle = "#f8f9fa";
+    // Background - Dark purple/black
+    ctx.fillStyle = "#1a0b2e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Header
-    ctx.fillStyle = "#7c3aed";
+    // Load logo
+    const logo = new Image();
+    const logoLoaded = new Promise<void>((resolve) => {
+      logo.onload = () => resolve();
+      logo.onerror = () => resolve(); // Continue even if logo fails
+      logo.src = "/riddle-city-logo.png";
+    });
+    await logoLoaded;
+
+    // Header with gradient - Purple to dark
+    const gradient = ctx.createLinearGradient(0, 0, 0, headerHeight);
+    gradient.addColorStop(0, "#7c3aed"); // Purple
+    gradient.addColorStop(0.5, "#5b21b6"); // Darker purple
+    gradient.addColorStop(1, "#1a0b2e"); // Very dark purple
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, headerHeight);
     
+    // Draw logo in header
+    if (logo.complete) {
+      const logoSize = 120;
+      ctx.drawImage(logo, (canvas.width - logoSize) / 2, 20, logoSize, logoSize);
+    }
+    
+    // Adventure name
     ctx.fillStyle = "white";
-    ctx.font = "bold 42px Arial";
+    ctx.font = "bold 48px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("🎉 " + adventureName, canvas.width / 2, 45);
+    ctx.fillText(adventureName, canvas.width / 2, 165);
     
-    ctx.font = "28px Arial";
-    ctx.fillText(teamName, canvas.width / 2, 85);
-    
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.fillText("Riddle City Adventure", canvas.width / 2, 115);
+    // Team name with pink accent
+    ctx.font = "32px Arial";
+    ctx.fillStyle = "#f472b6"; // Pink
+    ctx.fillText(teamName, canvas.width / 2, 195);
 
-    // Load and draw photos
-    const photoEntries = Object.entries(photos);
+    // Load and draw photos with proper aspect ratio
     const imagePromises = photoEntries.map(([, dataUrl], index) => {
       return new Promise<void>((resolve, reject) => {
         const img = new Image();
         
-        // Add timeout to prevent hanging
         const timeout = setTimeout(() => {
           reject(new Error(`Image ${index + 1} failed to load`));
         }, 5000);
         
         img.onload = () => {
           clearTimeout(timeout);
-          const col = index % cols;
           const row = Math.floor(index / cols);
-          const x = col * photoWidth + (col + 1) * padding;
-          const y = row * photoHeight + (row + 1) * padding + headerHeight;
+          const isLastRow = row === rows - 1;
+          
+          // Center the last row if it's incomplete
+          let col = index % cols;
+          let offsetX = 0;
+          if (isLastRow && lastRowCount < cols) {
+            const totalLastRowWidth = lastRowCount * cellWidth + (lastRowCount - 1) * padding;
+            const canvasContentWidth = cols * cellWidth + (cols - 1) * padding;
+            offsetX = (canvasContentWidth - totalLastRowWidth) / 2;
+          }
+          
+          const x = col * cellWidth + (col + 1) * padding + offsetX;
+          const y = row * cellHeight + (row + 1) * padding + headerHeight;
 
-          // Draw photo with border
-          ctx.fillStyle = "white";
-          ctx.fillRect(x - 5, y - 5, photoWidth + 10, photoHeight + 10);
+          // Draw purple/pink gradient border
+          const borderGradient = ctx.createLinearGradient(x - 8, y - 8, x + cellWidth + 8, y + cellHeight + 8);
+          borderGradient.addColorStop(0, "#7c3aed"); // Purple
+          borderGradient.addColorStop(1, "#ec4899"); // Pink
+          ctx.fillStyle = borderGradient;
+          ctx.fillRect(x - 8, y - 8, cellWidth + 16, cellHeight + 16);
           
-          ctx.drawImage(img, x, y, photoWidth, photoHeight);
+          // Draw dark inner border
+          ctx.fillStyle = "#1a0b2e";
+          ctx.fillRect(x, y, cellWidth, cellHeight);
           
-          // Add riddle number
-          ctx.fillStyle = "#7c3aed";
-          ctx.font = "bold 20px Arial";
-          ctx.textAlign = "left";
-          ctx.fillText(`📍 Riddle ${index + 1}`, x + 10, y + photoHeight - 10);
+          // Calculate dimensions to fit image while maintaining aspect ratio
+          const imgAspect = img.width / img.height;
+          const cellAspect = cellWidth / cellHeight;
+          
+          let drawWidth, drawHeight, offsetX, offsetY;
+          
+          if (imgAspect > cellAspect) {
+            // Image is wider - fit to width
+            drawWidth = cellWidth;
+            drawHeight = cellWidth / imgAspect;
+            offsetX = 0;
+            offsetY = (cellHeight - drawHeight) / 2;
+          } else {
+            // Image is taller - fit to height
+            drawHeight = cellHeight;
+            drawWidth = cellHeight * imgAspect;
+            offsetX = (cellWidth - drawWidth) / 2;
+            offsetY = 0;
+          }
+          
+          ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
           
           resolve();
         };
@@ -129,18 +180,24 @@ export default function CollageGenerator({
       return;
     }
 
-    // Footer
-    ctx.fillStyle = "#7c3aed";
+    // Footer - Purple gradient
+    const footerGradient = ctx.createLinearGradient(0, canvas.height - footerHeight, 0, canvas.height);
+    footerGradient.addColorStop(0, "#1a0b2e");
+    footerGradient.addColorStop(0.5, "#5b21b6");
+    footerGradient.addColorStop(1, "#7c3aed");
+    ctx.fillStyle = footerGradient;
     ctx.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
     
     ctx.fillStyle = "white";
-    ctx.font = "24px Arial";
+    ctx.font = "bold 28px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(`⏱️ ${completionTime}`, canvas.width / 2, canvas.height - 45);
-    ctx.fillText("📸 Share with #RiddleCity", canvas.width / 2, canvas.height - 15);
+    ctx.fillText(`⏱️ Completed in ${completionTime}`, canvas.width / 2, canvas.height - 55);
+    ctx.font = "24px Arial";
+    ctx.fillStyle = "#f472b6"; // Pink
+    ctx.fillText("#RiddleCity", canvas.width / 2, canvas.height - 20);
 
     // Convert to downloadable URL
-    const url = canvas.toDataURL("image/png");
+    const url = canvas.toDataURL("image/jpeg", 0.9);
     setCollageUrl(url);
     setIsGenerating(false);
   };
@@ -165,10 +222,10 @@ export default function CollageGenerator({
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border-2 border-purple-200">
+    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-300">
       <div className="flex items-center gap-2 mb-4">
         <ImageIcon className="w-6 h-6 text-purple-600" />
-        <h2 className="text-xl font-bold text-purple-900">Your Team Collage</h2>
+        <h2 className="text-xl font-bold text-gray-900">Your Team Collage</h2>
       </div>
 
       <p className="text-gray-700 mb-4">
@@ -179,20 +236,20 @@ export default function CollageGenerator({
         <button
           onClick={generateCollage}
           disabled={isGenerating}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
           {isGenerating ? "⏳ Creating Your Collage..." : "🎨 Generate Collage"}
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-lg border-2 border-purple-300">
+          <div className="bg-gradient-to-br from-purple-900 to-pink-900 p-4 rounded-lg border-2 border-purple-500">
             <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded" />
           </div>
           
           <div className="flex gap-3">
             <button
               onClick={downloadCollage}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
             >
               <Download className="w-5 h-5" />
               Download
