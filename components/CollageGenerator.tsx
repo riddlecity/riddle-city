@@ -160,11 +160,22 @@ export default function CollageGenerator({
       }
       
       case 2: {
-        // Vertical stack, top photo slightly larger (58/42 split)
-        const topHeight = Math.floor(contentHeight * 0.58);
-        const bottomHeight = contentHeight - topHeight - GUTTER;
-        tiles.push({ x: GUTTER, y: GUTTER, width: contentWidth, height: topHeight });
-        tiles.push({ x: GUTTER, y: GUTTER + topHeight + GUTTER, width: contentWidth, height: bottomHeight });
+        // Row 1: 1 photo
+        // Row 2: 1 photo 
+        // Row 3: Completion badge (final tile)
+        const row1Height = Math.floor(contentHeight * 0.40);
+        const row2Height = Math.floor(contentHeight * 0.35);
+        const row3Height = Math.floor((contentHeight - row1Height - row2Height - (GUTTER * 2)) * badgeSizeMultiplier);
+        
+        tiles.push({ x: GUTTER, y: GUTTER, width: contentWidth, height: row1Height });
+        tiles.push({ x: GUTTER, y: GUTTER + row1Height + GUTTER, width: contentWidth, height: row2Height });
+        tiles.push({ 
+          x: GUTTER, 
+          y: GUTTER + row1Height + GUTTER + row2Height + GUTTER, 
+          width: contentWidth, 
+          height: row3Height, 
+          isLogo: true 
+        });
         break;
       }
       
@@ -192,17 +203,29 @@ export default function CollageGenerator({
       }
       
       case 4: {
-        // 2×2 grid with asymmetric sizing (55/45 alternating)
-        const row1Height = Math.floor(contentHeight * 0.55);
-        const row2Height = contentHeight - row1Height - GUTTER;
+        // Row 1: 2 photos (45/55)
+        // Row 2: 2 photos (55/45)
+        // Row 3: Completion badge (full width, final tile)
+        const row1Height = Math.floor(contentHeight * 0.38);
+        const row2Height = Math.floor(contentHeight * 0.38);
+        const row3Height = Math.floor((contentHeight - row1Height - row2Height - (GUTTER * 2)) * badgeSizeMultiplier);
         const col1Width = Math.floor(contentWidth * 0.45);
         const col2Width = contentWidth - col1Width - GUTTER;
         
         // Top row: 45% left, 55% right
         tiles.push(...splitCols(GUTTER, GUTTER, contentWidth, row1Height, [col1Width, col2Width]));
         
-        // Bottom row: 55% left, 45% right
+        // Middle row: 55% left, 45% right
         tiles.push(...splitCols(GUTTER, GUTTER + row1Height + GUTTER, contentWidth, row2Height, [col2Width, col1Width]));
+        
+        // Completion badge at bottom (final tile)
+        tiles.push({ 
+          x: GUTTER, 
+          y: GUTTER + row1Height + GUTTER + row2Height + GUTTER, 
+          width: contentWidth, 
+          height: row3Height, 
+          isLogo: true 
+        });
         break;
       }
       
@@ -232,20 +255,28 @@ export default function CollageGenerator({
       }
       
       case 6: {
-        // 2×3 grid with asymmetric column widths (58/42)
-        const rowHeight = Math.floor((contentHeight - (GUTTER * 2)) / 3);
+        // Row 1: 2 photos (58/42)
+        // Row 2: 2 photos (42/58)
+        // Row 3: 2 photos (58/42)
+        // Row 4: Completion badge (full width, final tile)
+        const rowHeight = Math.floor(contentHeight * 0.24);
+        const row4Height = Math.floor((contentHeight - (rowHeight * 3) - (GUTTER * 3)) * badgeSizeMultiplier);
         const col1Width = Math.floor(contentWidth * 0.58);
         const col2Width = contentWidth - col1Width - GUTTER;
         
-        for (let row = 0; row < 3; row++) {
-          const y = GUTTER + (row * (rowHeight + GUTTER));
-          // Alternate which column is wider
-          if (row % 2 === 0) {
-            tiles.push(...splitCols(GUTTER, y, contentWidth, rowHeight, [col1Width, col2Width]));
-          } else {
-            tiles.push(...splitCols(GUTTER, y, contentWidth, rowHeight, [col2Width, col1Width]));
-          }
-        }
+        // Rows 1-3: alternating asymmetry
+        tiles.push(...splitCols(GUTTER, GUTTER, contentWidth, rowHeight, [col1Width, col2Width]));
+        tiles.push(...splitCols(GUTTER, GUTTER + rowHeight + GUTTER, contentWidth, rowHeight, [col2Width, col1Width]));
+        tiles.push(...splitCols(GUTTER, GUTTER + (rowHeight + GUTTER) * 2, contentWidth, rowHeight, [col1Width, col2Width]));
+        
+        // Completion badge at bottom (final tile)
+        tiles.push({ 
+          x: GUTTER, 
+          y: GUTTER + (rowHeight + GUTTER) * 3, 
+          width: contentWidth, 
+          height: row4Height, 
+          isLogo: true 
+        });
         break;
       }
       
@@ -281,11 +312,14 @@ export default function CollageGenerator({
       }
       
       case 8: {
-        // 2×4 grid with asymmetric columns (55/45 alternating by row)
-        const rowHeight = Math.floor((contentHeight - (GUTTER * 3)) / 4);
+        // 4 rows of 2 photos with alternating asymmetry
+        // Row 5: Completion badge (full width, final tile)
+        const rowHeight = Math.floor(contentHeight * 0.21);
+        const row5Height = Math.floor((contentHeight - (rowHeight * 4) - (GUTTER * 4)) * badgeSizeMultiplier);
         const col1Width = Math.floor(contentWidth * 0.55);
         const col2Width = contentWidth - col1Width - GUTTER;
         
+        // Rows 1-4: alternating asymmetry
         for (let row = 0; row < 4; row++) {
           const y = GUTTER + (row * (rowHeight + GUTTER));
           if (row % 2 === 0) {
@@ -294,6 +328,15 @@ export default function CollageGenerator({
             tiles.push(...splitCols(GUTTER, y, contentWidth, rowHeight, [col2Width, col1Width]));
           }
         }
+        
+        // Completion badge at bottom (final tile)
+        tiles.push({ 
+          x: GUTTER, 
+          y: GUTTER + (rowHeight + GUTTER) * 4, 
+          width: contentWidth, 
+          height: row5Height, 
+          isLogo: true 
+        });
         break;
       }
       
@@ -325,11 +368,14 @@ export default function CollageGenerator({
       
       case 10:
       default: {
-        // 2×5 grid with alternating asymmetry
-        const rowHeight = Math.floor((contentHeight - (GUTTER * 4)) / 5);
+        // 5 rows of 2 photos with alternating asymmetry
+        // Row 6: Completion badge (full width, final tile)
+        const rowHeight = Math.floor(contentHeight * 0.18);
+        const row6Height = Math.floor((contentHeight - (rowHeight * 5) - (GUTTER * 5)) * badgeSizeMultiplier);
         const col1Width = Math.floor(contentWidth * 0.58);
         const col2Width = contentWidth - col1Width - GUTTER;
         
+        // Rows 1-5: alternating asymmetry
         for (let row = 0; row < 5; row++) {
           const y = GUTTER + (row * (rowHeight + GUTTER));
           if (row % 2 === 0) {
@@ -338,6 +384,15 @@ export default function CollageGenerator({
             tiles.push(...splitCols(GUTTER, y, contentWidth, rowHeight, [col2Width, col1Width]));
           }
         }
+        
+        // Completion badge at bottom (final tile)
+        tiles.push({ 
+          x: GUTTER, 
+          y: GUTTER + (rowHeight + GUTTER) * 5, 
+          width: contentWidth, 
+          height: row6Height, 
+          isLogo: true 
+        });
         break;
       }
     }
