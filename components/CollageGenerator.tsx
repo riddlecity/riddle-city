@@ -75,14 +75,14 @@ export default function CollageGenerator({
 
     const config = getLayoutConfig(photoCount);
     const cellSize = 400;
-    const borderSize = 8; // White border between photos
+    const borderSize = 12; // Thick black border
     const footerHeight = config.hasFooter ? 150 : 0;
 
     canvas.width = config.cols * cellSize + (config.cols + 1) * borderSize;
     canvas.height = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
 
-    // Background - White
-    ctx.fillStyle = "#ffffff";
+    // Background - Black borders
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Load collage-specific logo
@@ -117,10 +117,11 @@ export default function CollageGenerator({
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo dominates the space - professional size
+        // Logo dominates the space - wider to prevent squishing
         if (logo.complete) {
-          const logoSize = 300; // Takes up most of the box
-          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 10, logoSize, logoSize);
+          const logoWidth = 360;
+          const logoHeight = 300;
+          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 10, logoWidth, logoHeight);
         }
         
         // Get emoji for adventure type
@@ -224,10 +225,11 @@ export default function CollageGenerator({
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, footerY, canvas.width, footerHeight);
       
-      // Logo - professional size
+      // Logo - wider proportions
       if (logo.complete) {
-        const logoSize = 110;
-        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 8, logoSize, logoSize);
+        const logoWidth = 130;
+        const logoHeight = 110;
+        ctx.drawImage(logo, (canvas.width - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
       }
       
       // Get emoji for adventure type
