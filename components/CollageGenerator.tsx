@@ -126,17 +126,25 @@ export default function CollageGenerator({
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Get emoji for adventure type
+        // Get emoji and color for adventure type
         let adventureEmoji = "🎉";
-        if (adventureName.toLowerCase().includes("date")) adventureEmoji = "💕";
-        else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
-        else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
+        let adventureColor = "#ec4899"; // Default pink
+        if (adventureName.toLowerCase().includes("date")) {
+          adventureEmoji = "💕";
+          adventureColor = "#ec4899"; // Pink for date
+        } else if (adventureName.toLowerCase().includes("pub")) {
+          adventureEmoji = "🍺";
+          adventureColor = "#f59e0b"; // Amber for pub
+        } else if (adventureName.toLowerCase().includes("mystery")) {
+          adventureEmoji = "🔍";
+          adventureColor = "#8b5cf6"; // Purple for mystery
+        }
         
         // Professional font stack matching website
         const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
         
-        // Adventure name at TOP - bright pink, no shadow needed on white
-        ctx.fillStyle = "#ec4899";
+        // Adventure name at TOP - color varies by type
+        ctx.fillStyle = adventureColor;
         ctx.font = `bold 19px ${fontStack}`;
         ctx.textAlign = "center";
         ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 30);
@@ -153,10 +161,10 @@ export default function CollageGenerator({
         ctx.font = `bold 15px ${fontStack}`;
         ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 385);
         
-        // Website URL at BOTTOM - bigger, red, and ALL CAPS
+        // Website URL at BOTTOM - moved up from border
         ctx.font = `bold 16px ${fontStack}`;
         ctx.fillStyle = "#dc2626";
-        ctx.fillText("RIDDLECITY.CO.UK", x + infoWidth / 2, y + 403);
+        ctx.fillText("RIDDLECITY.CO.UK", x + infoWidth / 2, y + 398);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -241,17 +249,25 @@ export default function CollageGenerator({
         ctx.drawImage(logo, whiteBorderSize + (innerWidth - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
       }
       
-      // Get emoji for adventure type
+      // Get emoji and color for adventure type
       let adventureEmoji = "🎉";
-      if (adventureName.toLowerCase().includes("date")) adventureEmoji = "💕";
-      else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
-      else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
+      let adventureColor = "#ec4899"; // Default pink
+      if (adventureName.toLowerCase().includes("date")) {
+        adventureEmoji = "💕";
+        adventureColor = "#ec4899"; // Pink for date
+      } else if (adventureName.toLowerCase().includes("pub")) {
+        adventureEmoji = "🍺";
+        adventureColor = "#f59e0b"; // Amber for pub
+      } else if (adventureName.toLowerCase().includes("mystery")) {
+        adventureEmoji = "🔍";
+        adventureColor = "#8b5cf6"; // Purple for mystery
+      }
       
       // Professional font stack
       const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
       
-      // Adventure name with emoji - bright pink
-      ctx.fillStyle = "#ec4899";
+      // Adventure name with emoji - color varies by type
+      ctx.fillStyle = adventureColor;
       ctx.font = `bold 18px ${fontStack}`;
       ctx.textAlign = "center";
       ctx.fillText(`${adventureEmoji} ${adventureName}`, whiteBorderSize + innerWidth / 2, footerY + 125);
