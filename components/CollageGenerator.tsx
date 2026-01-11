@@ -75,10 +75,11 @@ export default function CollageGenerator({
 
     const config = getLayoutConfig(photoCount);
     const cellSize = 400;
-    const borderSize = 8; // Dark border between photos
-    const outerBorderSize = 16; // Thick dark border around entire collage
+    const borderSize = 8; // Red border between photos
+    const outerBorderSize = 16; // Thick red border around entire collage
     const footerHeight = config.hasFooter ? 150 : 0;
     const darkBg = "#121212"; // Off-black from home page
+    const redBorder = "#dc2626"; // Red matching site branding
 
     const innerWidth = config.cols * cellSize + (config.cols + 1) * borderSize;
     const innerHeight = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
@@ -86,12 +87,12 @@ export default function CollageGenerator({
     canvas.width = innerWidth + (outerBorderSize * 2);
     canvas.height = innerHeight + (outerBorderSize * 2);
 
-    // Outer dark border (frame)
-    ctx.fillStyle = darkBg;
+    // Outer red border (frame)
+    ctx.fillStyle = redBorder;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Inner dark background
-    ctx.fillStyle = darkBg;
+    // Inner red background (creates red borders between photos)
+    ctx.fillStyle = redBorder;
     ctx.fillRect(outerBorderSize, outerBorderSize, innerWidth, innerHeight);
 
     // Load collage-specific logo
