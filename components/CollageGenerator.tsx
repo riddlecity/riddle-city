@@ -75,15 +75,23 @@ export default function CollageGenerator({
 
     const config = getLayoutConfig(photoCount);
     const cellSize = 400;
-    const borderSize = 12; // Thick black border
+    const borderSize = 8; // White border between photos
+    const outerBorderSize = 16; // Thick black border around entire collage
     const footerHeight = config.hasFooter ? 150 : 0;
 
-    canvas.width = config.cols * cellSize + (config.cols + 1) * borderSize;
-    canvas.height = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
+    const innerWidth = config.cols * cellSize + (config.cols + 1) * borderSize;
+    const innerHeight = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
+    
+    canvas.width = innerWidth + (outerBorderSize * 2);
+    canvas.height = innerHeight + (outerBorderSize * 2);
 
-    // Background - Black borders
+    // Outer black border (frame)
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Inner white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(outerBorderSize, outerBorderSize, innerWidth, innerHeight);
 
     // Load collage-specific logo
     const logo = new Image();
@@ -102,8 +110,8 @@ export default function CollageGenerator({
     for (let i = 0; i < totalCells; i++) {
       const col = i % config.cols;
       const row = Math.floor(i / config.cols);
-      const x = col * cellSize + (col + 1) * borderSize;
-      const y = row * cellSize + (row + 1) * borderSize;
+      const x = outerBorderSize + col * cellSize + (col + 1) * borderSize;
+      const y = outerBorderSize + row * cellSize + (row + 1) * borderSize;
 
       // Check if this is the info box position
       const isInfoBox = !config.hasFooter && config.infoBoxPosition && i === config.infoBoxPosition - 1;
@@ -117,11 +125,11 @@ export default function CollageGenerator({
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo dominates the space - wider to prevent squishing
+        // Logo dominates the space - very wide to prevent squishing
         if (logo.complete) {
-          const logoWidth = 360;
-          const logoHeight = 300;
-          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 10, logoWidth, logoHeight);
+          const logoWidth = 380;
+          const logoHeight = 290;
+          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 15, logoWidth, logoHeight);
         }
         
         // Get emoji for adventure type
@@ -219,7 +227,7 @@ export default function CollageGenerator({
 
     // Draw footer if needed
     if (config.hasFooter) {
-      const footerY = config.rows * cellSize + (config.rows + 1) * borderSize;
+      const footerY = outerBorderSize + config.rows * cellSize + (config.rows + 1) * borderSize;
       
       // White background
       ctx.fillStyle = "#ffffff";
@@ -227,9 +235,9 @@ export default function CollageGenerator({
       
       // Logo - wider proportions
       if (logo.complete) {
-        const logoWidth = 130;
+        const logoWidth = 150;
         const logoHeight = 110;
-        ctx.drawImage(logo, (canvas.width - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
+        ctx.drawImage(logo, outerBorderSize + (innerWidth - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
       }
       
       // Get emoji for adventure type
@@ -245,12 +253,12 @@ export default function CollageGenerator({
       ctx.fillStyle = "#db2777";
       ctx.font = `bold 17px ${fontStack}`;
       ctx.textAlign = "center";
-      ctx.fillText(`${adventureEmoji} ${adventureName}`, canvas.width / 2, footerY + 125);
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, outerBorderSize + innerWidth / 2, footerY + 125);
       
       // All details on one line
       ctx.fillStyle = "#000000";
       ctx.font = `14px ${fontStack}`;
-      ctx.fillText(`${teamName} • Completed in ${completionTime}`, canvas.width / 2, footerY + 145);
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, outerBorderSize + innerWidth / 2, footerY + 145);
     }
 
     // Convert to downloadable URL
