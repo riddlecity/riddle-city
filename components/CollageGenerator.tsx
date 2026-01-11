@@ -159,7 +159,7 @@ export default function CollageGenerator({
         // Team name and completion BELOW logo - dark gray and bold
         ctx.fillStyle = "#1f2937";
         ctx.font = `bold 15px ${fontStack}`;
-        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 385);
+        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 380);
         
         // Website URL at BOTTOM - moved up from border
         ctx.font = `bold 16px ${fontStack}`;
@@ -333,29 +333,20 @@ export default function CollageGenerator({
             <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded-lg" />
           </div>
           
-          <div className="flex gap-3">
-            <button
-              onClick={downloadCollage}
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
-            >
-              <Download className="w-5 h-5" />
-              Download
-            </button>
-            
-            <button
-              onClick={() => {
-                downloadCollage();
-                alert("📱 Collage downloaded! Share it on Instagram and tag us @RiddleCity with #RiddleCity");
-              }}
-              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
-            >
-              <Instagram className="w-5 h-5" />
-              Share to Instagram
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              downloadCollage();
+              alert("📱 Collage downloaded! Share it on Instagram and tag riddlecity.co.uk with #RiddleCity");
+            }}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
+          >
+            <Download className="w-5 h-5" />
+            <Instagram className="w-5 h-5" />
+            Download and Share to Instagram
+          </button>
 
           <p className="text-sm text-center text-gray-400">
-            💜 Tag <strong>@RiddleCity</strong> and use <strong>#RiddleCity</strong> when you post!
+            💜 Tag <strong>riddlecity.co.uk</strong> and use <strong>#RiddleCity</strong> when you post!
           </p>
         </div>
       )}
