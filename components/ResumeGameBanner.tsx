@@ -106,7 +106,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
   const getButtonText = () => {
     if (!activeSession?.paid) return 'Complete Payment';
     if (!activeSession?.gameStarted) {
-      return isLeader ? 'Go to Session' : 'Join Team';
+      return isLeader ? 'Resume Adventure' : 'Join Team';
     }
     if (activeSession?.finished) return 'View Results';
     return 'Resume Game';
@@ -131,7 +131,7 @@ export default function ResumeGameBanner({ onVisibilityChange }: ResumeGameBanne
             <div className="text-2xl">🎮</div>
             <div>
               <div className="font-semibold">
-                You have an active game as "{activeSession?.teamName || 'Your Team'}"
+                You have an active game as "{decodeURIComponent(activeSession?.teamName || 'Your Team')}"
               </div>
               <div className="text-sm text-white/80">
                 {getDescription()}

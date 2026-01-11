@@ -3,10 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useGroupSession } from "@/hooks/useGroupSession";
+import StartFreshModal from "@/components/StartFreshModal";
 
 export default function Home() {
   const { loading, hasActiveGroup, getResumeUrl, clearSession } = useGroupSession();
   const [showInfo, setShowInfo] = useState(false);
+  const [showStartFreshModal, setShowStartFreshModal] = useState(false);
   
   // Get resume URL
   const resumeUrl = getResumeUrl();
@@ -27,19 +29,8 @@ export default function Home() {
 
   // Handle starting fresh - use the clearSession method from the hook
   const handleStartFresh = async () => {
-    const confirmed = window.confirm(
-      '⚠️ Warning: Starting Fresh\n\n' +
-      'This will permanently delete your current adventure progress.\n\n' +
-      '• You will lose access to your current game\n' +
-      '• All progress will be lost\n' +
-      '• You will need to pay again to start a new adventure\n\n' +
-      'Are you sure you want to start fresh?'
-    );
-    
-    if (confirmed) {
-      await clearSession();
-      window.location.reload();
-    }
+    await clearSession();
+    window.location.reload();
   };
 
   // Show loading state while checking session
@@ -93,7 +84,7 @@ export default function Home() {
               🔍 Resume Adventure
             </Link>
             <button
-              onClick={handleStartFresh}
+              onClick={() => setShowStartFreshModal(true)}
               className="block w-full bg-gray-600/50 hover:bg-gray-600/70 text-white/90 font-medium py-2 px-6 rounded-lg transition-all duration-200 text-sm border border-gray-500/30"
             >
               🆕 Start Fresh Instead
@@ -101,6 +92,13 @@ export default function Home() {
           </div>
         </div>
       )}
+      
+      {/* Start Fresh Modal */}
+      <StartFreshModal
+        isOpen={showStartFreshModal}
+        onClose={() => setShowStartFreshModal(false)}
+        onConfirm={handleStartFresh}
+      />
       
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
         <Link
