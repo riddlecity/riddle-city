@@ -10,11 +10,17 @@ export default async function LeaderboardsPage() {
   const { data: tracks } = await supabase
     .from('tracks')
     .select('id, name, location, mode')
+    .not('location', 'is', null)
     .order('location')
     .order('mode');
 
-  // Group tracks by location
+  // Group tracks by location, filtering out any null/empty locations
   const tracksByLocation = tracks?.reduce((acc: any, track) => {
+    // Skip tracks with null, empty, or invalid locations
+    if (!track.location || track.location.trim() === '' || track.location.toLowerCase() === 'null') {
+      return acc;
+    }
+    
     if (!acc[track.location]) {
       acc[track.location] = [];
     }

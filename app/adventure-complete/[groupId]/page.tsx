@@ -322,11 +322,13 @@ export default async function AdventureCompletePage({ params }: Props) {
               {/* Adventure Type */}
               <div className="text-center">
                 <div className="text-lg md:text-2xl font-bold text-white mb-1">
-                  {adventureType === "Date Day Adventure" ? "💘" : "🎮"}
+                  {adventureType === "Date Day Adventure" ? "💘" : adventureType === "Pub Crawl Adventure" ? "🍻" : "🎮"}
                 </div>
                 <div className="text-white/60 text-xs md:text-sm">
                   {adventureType === "Date Day Adventure"
                     ? "Date Day"
+                    : adventureType === "Pub Crawl Adventure"
+                    ? "Pub Crawl"
                     : "Adventure"}
                 </div>
               </div>

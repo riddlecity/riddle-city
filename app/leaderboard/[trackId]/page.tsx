@@ -192,14 +192,23 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
       {/* Content */}
       <div className="flex-1 flex flex-col justify-start pt-16 md:pt-20 pb-4 relative z-10 max-w-4xl mx-auto w-full">
         <div className="text-center">
-          {/* Back to Completion Page - Moved to top */}
+          {/* Back button - conditional based on where user came from */}
           <div className="mb-4">
-            <Link 
-              href={`/adventure-complete/${searchParamsData?.from_group || ''}`}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
-            >
-              ← Back to Completion
-            </Link>
+            {searchParamsData?.from_group ? (
+              <Link 
+                href={`/adventure-complete/${searchParamsData.from_group}`}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-sm md:text-base"
+              >
+                ← Back to Completion
+              </Link>
+            ) : (
+              <Link 
+                href="/leaderboards"
+                className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors duration-200 text-sm md:text-base"
+              >
+                ← Back to Leaderboards
+              </Link>
+            )}
           </div>
 
           {/* Header */}
