@@ -109,7 +109,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
 
       {/* Preview modal when photo exists */}
       {hasPhoto && (
-        <div className="fixed top-20 right-4 z-30 mt-12 bg-black/90 backdrop-blur-sm rounded-lg p-2 shadow-2xl border border-white/20">
+        <div className="fixed top-20 right-4 z-30 mt-12 bg-black/90 backdrop-blur-sm rounded-lg p-2 shadow-2xl">
           <div className="relative">
             <img src={currentPhoto} alt="Team photo" className="w-32 h-auto rounded" />
             <button
