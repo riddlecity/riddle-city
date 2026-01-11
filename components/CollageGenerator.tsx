@@ -552,7 +552,7 @@ export default function CollageGenerator({
     if (!collageUrl) return;
     
     const link = document.createElement("a");
-    link.download = `riddlecity-${teamName.replace(/\s+/g, "-")}-collage.png`;
+    link.download = `riddlecity-collage.png`;
     link.href = collageUrl;
     link.click();
   };
