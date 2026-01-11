@@ -117,10 +117,10 @@ export default function CollageGenerator({
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo takes up half the box - MUCH BIGGER
+        // Logo dominates the space - professional size
         if (logo.complete) {
-          const logoSize = 200; // Half of 400px box
-          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 20, logoSize, logoSize);
+          const logoSize = 300; // Takes up most of the box
+          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 10, logoSize, logoSize);
         }
         
         // Get emoji for adventure type
@@ -129,31 +129,34 @@ export default function CollageGenerator({
         else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
         else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
         
-        // Adventure name with emoji - NO BOX, just text
+        // Professional font stack matching website
+        const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+        
+        // Adventure name with emoji - clean and bold
         ctx.fillStyle = "#db2777";
-        ctx.font = "bold 20px Arial";
+        ctx.font = `bold 19px ${fontStack}`;
         ctx.textAlign = "center";
-        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 250);
+        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 325);
         
         // Completed message
         ctx.fillStyle = "#000000";
-        ctx.font = "bold 18px Arial";
-        ctx.fillText("COMPLETED!", x + infoWidth / 2, y + 285);
+        ctx.font = `bold 17px ${fontStack}`;
+        ctx.fillText("COMPLETED!", x + infoWidth / 2, y + 350);
         
-        // Team name
-        ctx.font = "16px Arial";
+        // Team name - lighter weight
+        ctx.font = `15px ${fontStack}`;
         ctx.fillStyle = "#666";
-        ctx.fillText(teamName, x + infoWidth / 2, y + 315);
+        ctx.fillText(teamName, x + infoWidth / 2, y + 370);
         
-        // Time
-        ctx.font = "bold 16px Arial";
+        // Time - clean and simple
+        ctx.font = `600 15px ${fontStack}`;
         ctx.fillStyle = "#000000";
-        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 345);
+        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 388);
         
-        // Hashtag
-        ctx.font = "14px Arial";
+        // Hashtag - subtle
+        ctx.font = `13px ${fontStack}`;
         ctx.fillStyle = "#db2777";
-        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 375);
+        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 406);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -231,10 +234,10 @@ export default function CollageGenerator({
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, footerY, canvas.width, footerHeight);
       
-      // Logo - bigger
+      // Logo - professional size
       if (logo.complete) {
-        const logoSize = 90;
-        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 10, logoSize, logoSize);
+        const logoSize = 110;
+        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 8, logoSize, logoSize);
       }
       
       // Get emoji for adventure type
@@ -243,16 +246,19 @@ export default function CollageGenerator({
       else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
       else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
       
-      // Adventure name with emoji - no box
-      ctx.fillStyle = "#db2777";
-      ctx.font = "bold 18px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(`${adventureEmoji} ${adventureName}`, canvas.width / 2, footerY + 115);
+      // Professional font stack
+      const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
       
-      // Team name and time below
+      // Adventure name with emoji
+      ctx.fillStyle = "#db2777";
+      ctx.font = `bold 17px ${fontStack}`;
+      ctx.textAlign = "center";
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, canvas.width / 2, footerY + 128);
+      
+      // Team name and time - clean layout
       ctx.fillStyle = "#000000";
-      ctx.font = "bold 14px Arial";
-      ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 140);
+      ctx.font = `600 14px ${fontStack}`;
+      ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 145);
     }
 
     // Convert to downloadable URL
