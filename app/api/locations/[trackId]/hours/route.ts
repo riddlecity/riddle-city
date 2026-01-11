@@ -1,7 +1,6 @@
 // app/api/locations/[trackId]/hours/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../../lib/supabase/server';
-import { getCachedOpeningHours } from '../../../../../lib/openingHoursCache';
 
 export async function GET(
   _request: Request,
@@ -25,7 +24,7 @@ export async function GET(
         id,
         order_index,
         location_id,
-        google_place_url
+        opening_hours
       `)
       .eq('track_id', trackId)
       .order('order_index');
@@ -44,34 +43,24 @@ export async function GET(
     console.log('🔍 Fetching opening hours for', locations.length, 'locations in parallel');
     
     const locationPromises = locations.map(async (location) => {
-      const formattedLocation = {
-        id: location.id,
-        order: location.order_index,
-        name: location.location_id,
-        google_place_url: location.google_place_url,
-        opening_hours: null as any
-      };
-
-      // Only fetch hours if Google Place URL exists
-      if (location.google_place_url) {
+      // Parse opening_hours from database
+      let parsedHours = null;
+      if (location.opening_hours) {
         try {
-          const hours = await getCachedOpeningHours(
-            location.google_place_url,
-            location.location_id
-          );
-          
-          if (hours) {
-            formattedLocation.opening_hours = hours;
-            console.log('✅ Loaded hours for:', location.location_id);
-          } else {
-            console.log('⚠️ No hours found for:', location.location_id);
-          }
-        } catch (error) {
-          console.error('❌ Error loading hours for', location.location_id, ':', error);
+          parsedHours = typeof location.opening_hours === 'string' 
+            ? JSON.parse(location.opening_hours) 
+            : location.opening_hours;
+        } catch (e) {
+          console.error('Failed to parse opening hours for', location.location_id, ':', e);
         }
       }
 
-      return formattedLocation;
+      return {
+        id: location.id,
+        order: location.order_index,
+        name: location.location_id,
+        opening_hours: parsedHours
+      };
     });
 
     // Wait for all hours to load in parallel

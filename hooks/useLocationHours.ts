@@ -5,7 +5,6 @@ interface LocationWithHours {
   id: string;
   order: number;
   name: string;
-  google_place_url: string;
   opening_hours?: OpeningHours;
 }
 

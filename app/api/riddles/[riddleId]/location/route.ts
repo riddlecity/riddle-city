@@ -18,7 +18,7 @@ export async function GET(
     // Get riddle's location data including opening hours
     const { data: riddle, error } = await supabase
       .from('riddles')
-      .select('google_place_url, location_id, opening_hours')
+      .select('location_id, opening_hours')
       .eq('id', riddleId)
       .single();
 
@@ -27,7 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch riddle location' }, { status: 500 });
     }
 
-    if (!riddle || !riddle.google_place_url) {
+    if (!riddle) {
       return NextResponse.json({ error: 'No location data found for this riddle' }, { status: 404 });
     }
 
@@ -44,7 +44,6 @@ export async function GET(
     }
 
     return NextResponse.json({ 
-      google_place_url: riddle.google_place_url,
       location_name: riddle.location_id,
       opening_hours: parsedHours ? { parsed_hours: parsedHours } : null
     });

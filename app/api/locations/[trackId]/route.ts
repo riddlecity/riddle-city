@@ -23,7 +23,7 @@ export async function GET(
         id,
         order_index,
         location_id,
-        google_place_url
+        opening_hours
       `)
       .eq('track_id', trackId)
       .order('order_index');
@@ -43,7 +43,7 @@ export async function GET(
       id: location.id,
       order: location.order_index,
       name: location.location_id,
-      google_place_url: location.google_place_url
+      opening_hours: location.opening_hours
     }));
 
     console.log('🔍 Successfully fetched', formattedLocations.length, 'locations');
