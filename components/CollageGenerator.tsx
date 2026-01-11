@@ -385,16 +385,20 @@ export default function CollageGenerator({
     // Get layout
     const layout = getInstagramLayout(photoCount);
     
+    // Randomize photo order
+    const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
+    
     // Analyze photo brightness to determine badge color
     const avgBrightness = await analyzePhotoBrightness(photoEntries.map(([, url]) => url));
     const badgeColors = avgBrightness > 128 ? DARK_BADGE : LIGHT_BADGE; // If photos are bright, use dark badge
     
-    // Randomize photo order
-    const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
-    
     // Draw tiles
     let photoIndex = 0;
-    const imagePcompletion badge (end stamp)
+    const imagePromises: Promise<void>[] = [];
+
+    for (const tile of layout) {
+      if (tile.isLogo) {
+        // Draw completion badge (end stamp)
         ctx.fillStyle = badgeColors.bg;
         ctx.save();
         drawRoundedRect(ctx, tile.x, tile.y, tile.width, tile.height, CORNER_RADIUS);
