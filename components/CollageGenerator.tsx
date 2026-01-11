@@ -126,7 +126,7 @@ export default function CollageGenerator({
   const getLayout = (count: number): { tiles: Tile[], overlayBadge?: { x: number, y: number, width: number, height: number } } => {
     const tiles: Tile[] = [];
     const contentWidth = CANVAS_WIDTH - (GUTTER * 2);
-    const contentHeight = CANVAS_HEIGHT - (GUTTER * 3) - 80;
+    const contentHeight = CANVAS_HEIGHT - (GUTTER * 2);
 
     if (count === 1) {
       // 1 photo: large photo + badge below
@@ -400,14 +400,14 @@ export default function CollageGenerator({
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Load logo
-    const logo = new Image();
-    const logoLoaded = new Promise<void>((resolve) => {
-      logo.onload = () => resolve();
-      logo.onerror = () => resolve();
-      logo.src = "/collagelogo.png";
+    // Load stamp
+    const stamp = new Image();
+    const stampLoaded = new Promise<void>((resolve) => {
+      stamp.onload = () => resolve();
+      stamp.onerror = () => resolve();
+      stamp.src = "/collagestamp.png";
     });
-    await logoLoaded;
+    await stampLoaded;
 
     // Get layout and photos
     const { tiles, overlayBadge } = getLayout(photoCount);
@@ -430,46 +430,33 @@ export default function CollageGenerator({
         ctx.fill();
         ctx.restore();
         
-        // Draw logo
-        if (logo.complete) {
-          const logoScale = 0.80; // Increased from 0.60
-          const logoMaxWidth = tile.width * logoScale;
-          const logoMaxHeight = tile.height * logoScale * 0.65;
+        // Draw stamp - fills entire tile
+        if (stamp.complete) {
+          const stampScale = 0.90;
+          const stampMaxWidth = tile.width * stampScale;
+          const stampMaxHeight = tile.height * stampScale;
           
-          const logoAspect = logo.width / logo.height;
-          let logoWidth, logoHeight;
+          const stampAspect = stamp.width / stamp.height;
+          let stampWidth, stampHeight;
           
-          if (logoMaxWidth / logoAspect < logoMaxHeight) {
-            logoWidth = logoMaxWidth;
-            logoHeight = logoMaxWidth / logoAspect;
+          if (stampMaxWidth / stampAspect < stampMaxHeight) {
+            stampWidth = stampMaxWidth;
+            stampHeight = stampMaxWidth / stampAspect;
           } else {
-            logoHeight = logoMaxHeight;
-            logoWidth = logoMaxHeight * logoAspect;
+            stampHeight = stampMaxHeight;
+            stampWidth = stampMaxHeight * stampAspect;
           }
           
-          const logoX = tile.x + (tile.width - logoWidth) / 2;
-          const logoY = tile.y + (tile.height - logoHeight) / 2 - 25;
+          const stampX = tile.x + (tile.width - stampWidth) / 2;
+          const stampY = tile.y + (tile.height - stampHeight) / 2;
           
-          // Draw logo directly (already in brand colors)
+          // Draw stamp directly
           ctx.save();
           drawRoundedRect(ctx, tile.x, tile.y, tile.width, tile.height, CORNER_RADIUS);
           ctx.clip();
-          ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+          ctx.drawImage(stamp, stampX, stampY, stampWidth, stampHeight);
           ctx.restore();
         }
-        
-        // Draw text
-        const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-        ctx.fillStyle = "#dc2626"; // Always use brand red for text
-        ctx.textAlign = "center";
-        
-        const primarySize = Math.max(18, Math.floor(tile.height * 0.09));
-        ctx.font = `bold ${primarySize}px ${fontStack}`;
-        ctx.fillText("COMPLETED", tile.x + tile.width / 2, tile.y + tile.height - 42);
-        
-        const secondarySize = Math.max(13, Math.floor(tile.height * 0.065));
-        ctx.font = `${secondarySize}px ${fontStack}`;
-        ctx.fillText(completionTime, tile.x + tile.width / 2, tile.y + tile.height - 20);
       } else if (photoIndex < photoEntries.length) {
         // Draw photo
         const [, dataUrl] = photoEntries[photoIndex++];
@@ -531,68 +518,30 @@ export default function CollageGenerator({
     if (overlayBadge) {
       const tile = overlayBadge;
       
-      // No background - transparent overlay
-      // Draw logo
-      if (logo.complete) {
-        const logoScale = 0.80; // Increased from 0.60
-        const logoMaxWidth = tile.width * logoScale;
-        const logoMaxHeight = tile.height * logoScale * 0.65;
+      // No background - transparent overlay with big stamp
+      if (stamp.complete) {
+        const stampScale = 0.95;
+        const stampMaxWidth = tile.width * stampScale;
+        const stampMaxHeight = tile.height * stampScale;
         
-        const logoAspect = logo.width / logo.height;
-        let logoWidth, logoHeight;
+        const stampAspect = stamp.width / stamp.height;
+        let stampWidth, stampHeight;
         
-        if (logoMaxWidth / logoAspect < logoMaxHeight) {
-          logoWidth = logoMaxWidth;
-          logoHeight = logoMaxWidth / logoAspect;
+        if (stampMaxWidth / stampAspect < stampMaxHeight) {
+          stampWidth = stampMaxWidth;
+          stampHeight = stampMaxWidth / stampAspect;
         } else {
-          logoHeight = logoMaxHeight;
-          logoWidth = logoMaxHeight * logoAspect;
+          stampHeight = stampMaxHeight;
+          stampWidth = stampMaxHeight * stampAspect;
         }
         
-        const logoX = tile.x + (tile.width - logoWidth) / 2;
-        const logoY = tile.y + (tile.height - logoHeight) / 2 - 25;
+        const stampX = tile.x + (tile.width - stampWidth) / 2;
+        const stampY = tile.y + (tile.height - stampHeight) / 2;
         
-        // Draw logo directly (already in brand colors)
-        ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+        // Draw stamp directly - overlays photos
+        ctx.drawImage(stamp, stampX, stampY, stampWidth, stampHeight);
       }
-      
-      // Draw text
-      const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-      ctx.fillStyle = "#dc2626";
-      ctx.textAlign = "center";
-      
-      const primarySize = Math.max(18, Math.floor(tile.height * 0.09));
-      ctx.font = `bold ${primarySize}px ${fontStack}`;
-      ctx.fillText("COMPLETED", tile.x + tile.width / 2, tile.y + tile.height - 42);
-      
-      const secondarySize = Math.max(13, Math.floor(tile.height * 0.065));
-      ctx.font = `${secondarySize}px ${fontStack}`;
-      ctx.fillText(completionTime, tile.x + tile.width / 2, tile.y + tile.height - 20);
     }
-
-    // Draw footer
-    const footerY = CANVAS_HEIGHT - 80;
-    const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
-    
-    let adventureColor = "#ec4899";
-    if (adventureName.toLowerCase().includes("pub")) {
-      adventureColor = "#f59e0b";
-    } else if (adventureName.toLowerCase().includes("mystery")) {
-      adventureColor = "#8b5cf6";
-    }
-    
-    ctx.fillStyle = adventureColor;
-    ctx.font = `bold 20px ${fontStack}`;
-    ctx.textAlign = "center";
-    ctx.fillText(adventureName, CANVAS_WIDTH / 2, footerY + 20);
-    
-    ctx.fillStyle = "#1f2937";
-    ctx.font = `bold 16px ${fontStack}`;
-    ctx.fillText(teamName, CANVAS_WIDTH / 2, footerY + 44);
-    
-    ctx.fillStyle = "#dc2626";
-    ctx.font = `bold 18px ${fontStack}`;
-    ctx.fillText("RIDDLECITY.CO.UK", CANVAS_WIDTH / 2, footerY + 70);
 
     const url = canvas.toDataURL("image/jpeg", 0.9);
     setCollageUrl(url);
