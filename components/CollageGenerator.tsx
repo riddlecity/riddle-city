@@ -306,24 +306,12 @@ export default function CollageGenerator({
           const logoX = tile.x + (tile.width - logoWidth) / 2;
           const logoY = tile.y + (tile.height - logoHeight) / 2 - 25;
           
-          // Colorize logo
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = logoWidth;
-          tempCanvas.height = logoHeight;
-          const tempCtx = tempCanvas.getContext('2d');
-          
-          if (tempCtx) {
-            tempCtx.drawImage(logo, 0, 0, logoWidth, logoHeight);
-            tempCtx.globalCompositeOperation = 'source-in';
-            tempCtx.fillStyle = "#dc2626"; // Always use brand red for logo
-            tempCtx.fillRect(0, 0, logoWidth, logoHeight);
-            
-            ctx.save();
-            drawRoundedRect(ctx, tile.x, tile.y, tile.width, tile.height, CORNER_RADIUS);
-            ctx.clip();
-            ctx.drawImage(tempCanvas, logoX, logoY);
-            ctx.restore();
-          }
+          // Draw logo directly (already in brand colors)
+          ctx.save();
+          drawRoundedRect(ctx, tile.x, tile.y, tile.width, tile.height, CORNER_RADIUS);
+          ctx.clip();
+          ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+          ctx.restore();
         }
         
         // Draw text
@@ -420,20 +408,8 @@ export default function CollageGenerator({
         const logoX = tile.x + (tile.width - logoWidth) / 2;
         const logoY = tile.y + (tile.height - logoHeight) / 2 - 25;
         
-        // Colorize logo
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = logoWidth;
-        tempCanvas.height = logoHeight;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        if (tempCtx) {
-          tempCtx.drawImage(logo, 0, 0, logoWidth, logoHeight);
-          tempCtx.globalCompositeOperation = 'source-in';
-          tempCtx.fillStyle = "#dc2626";
-          tempCtx.fillRect(0, 0, logoWidth, logoHeight);
-          
-          ctx.drawImage(tempCanvas, logoX, logoY);
-        }
+        // Draw logo directly (already in brand colors)
+        ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
       }
       
       // Draw text
