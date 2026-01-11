@@ -158,7 +158,7 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
   const casualLeaderboard = finishedEntries.filter(entry => entry.skips > 2 && entry.skips <= halfRiddles); // Casual: 3 to half
   const noviceLeaderboard = finishedEntries.filter(entry => entry.skips > halfRiddles); // Novice: more than half
 
-  const adventureType = track.mode === 'date' ? 'Date Day Adventure' : 'Adventure';
+  const adventureType = track.mode === 'date' ? 'Date Day Adventure' : track.mode === 'pub' ? 'Pub Crawl Adventure' : 'Adventure';
   const cityName = track.location.charAt(0).toUpperCase() + track.location.slice(1);
 
   return (

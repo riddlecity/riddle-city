@@ -117,7 +117,7 @@ export default async function AdventureCompletePage({ params }: Props) {
   // Get track info to show adventure type
   const trackParts = group.track_id?.split("_") || [];
   const adventureType =
-    trackParts[0] === "date" ? "Date Day Adventure" : "Adventure";
+    trackParts[0] === "date" ? "Date Day Adventure" : trackParts[0] === "pub" ? "Pub Crawl Adventure" : "Adventure";
   const cityName = trackParts[1]
     ? trackParts[1].charAt(0).toUpperCase() + trackParts[1].slice(1)
     : "Unknown";
