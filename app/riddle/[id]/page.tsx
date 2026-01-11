@@ -12,6 +12,7 @@ import CookieHandler from "@/components/CookieHandler";
 import ManualAnswerForm from "@/components/ManualAnswerForm";
 import ScanQRButton from "@/components/ScanQRButton";
 import AlternativeRiddleToggle from "@/components/AlternativeRiddleToggle";
+import PhotoCapture from "@/components/PhotoCapture";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -322,6 +323,16 @@ export default async function RiddlePage({ params }: Props) {
           )}
         </div>
       </div>
+
+      {/* Photo Capture - Only for Leaders */}
+      {groupId && isLeader && (
+        <div className="relative z-10 px-4 pb-4">
+          <PhotoCapture 
+            riddleId={id}
+            groupId={groupId}
+          />
+        </div>
+      )}
 
       {/* Bottom section - copy link and skip with improved mobile spacing */}
       <div

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import CollageGenerator from "@/components/CollageGenerator";
 
 interface Props {
   params: Promise<{ groupId: string }>;
@@ -171,9 +172,11 @@ export default async function AdventureCompletePage({ params }: Props) {
   const { data: trackRiddles } = await supabase
     .from("riddles")
     .select("id")
-    .eq("track_id", group.track_id);
+    .eq("track_id", group.track_id)
+    .order("order_index", { ascending: true });
   
   const riddleCount = trackRiddles?.length || 8; // Default to 8 if we can't get count
+  const riddleIds = trackRiddles?.map(r => r.id) || [];
   const MIN_TIME_PER_RIDDLE = 5 * 60 * 1000; // 5 minutes per riddle in milliseconds
   const minimumLegitTime = riddleCount * MIN_TIME_PER_RIDDLE;
 
@@ -333,6 +336,17 @@ export default async function AdventureCompletePage({ params }: Props) {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Photo Collage - Before Leaderboard */}
+          <div className="mb-4">
+            <CollageGenerator
+              groupId={groupId}
+              teamName={group.team_name || "Your Team"}
+              adventureName={`${cityName} ${adventureType}`}
+              completionTime={formattedTime}
+              riddleIds={riddleIds}
+            />
           </div>
 
           {/* Suspicious Time Warning - if current team completed too fast */}
