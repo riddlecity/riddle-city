@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 
 // Email templates
 function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, location: string, mode: string, players: number, groupId: string) {
-  const adventureType = mode === 'date' ? 'Date Day Adventure' : 'Adventure';
+  const adventureType = mode === 'date' ? 'Date Day Adventure' : mode === 'pub' ? 'Pub Crawl Adventure' : 'Adventure';
   
   return {
     subject: `Payment confirmed - Your Riddle City adventure awaits!`,
@@ -66,7 +66,7 @@ Cyril @ Riddle City
 }
 
 function getTeamInviteEmail(teamLeaderName: string, teamName: string, location: string, mode: string, groupId: string) {
-  const adventureType = mode === 'date' ? 'Date Day Adventure' : 'Adventure';
+  const adventureType = mode === 'date' ? 'Date Day Adventure' : mode === 'pub' ? 'Pub Crawl Adventure' : 'Adventure';
   const joinLink = `${process.env.NEXT_PUBLIC_BASE_URL}/join/${groupId}`;
   
   return {
