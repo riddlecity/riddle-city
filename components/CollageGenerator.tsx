@@ -242,11 +242,11 @@ export default function CollageGenerator({
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(whiteBorderSize, footerY, innerWidth, footerHeight);
       
-      // Logo on far LEFT - bigger
+      // LEFT COLUMN: Logo - bigger
       if (logo.complete) {
         const logoWidth = 180;
         const logoHeight = 140;
-        ctx.drawImage(logo, whiteBorderSize + 10, footerY + 5, logoWidth, logoHeight);
+        ctx.drawImage(logo, whiteBorderSize + 15, footerY + 5, logoWidth, logoHeight);
       }
       
       // Get emoji and color for adventure type
@@ -266,25 +266,24 @@ export default function CollageGenerator({
       // Professional font stack
       const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
       
-      // CENTER: Adventure name with team/time
-      const centerX = whiteBorderSize + innerWidth / 2;
+      // RIGHT COLUMN: Info stacked vertically
+      const rightColumnX = whiteBorderSize + 220; // Start after logo
       
-      // Adventure name - color varies by type
+      // Adventure name at top
       ctx.fillStyle = adventureColor;
       ctx.font = `bold 18px ${fontStack}`;
-      ctx.textAlign = "center";
-      ctx.fillText(`${adventureEmoji} ${adventureName}`, centerX, footerY + 60);
+      ctx.textAlign = "left";
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, rightColumnX, footerY + 40);
       
-      // Team and time below
+      // Team and time in middle
       ctx.fillStyle = "#1f2937";
       ctx.font = `bold 15px ${fontStack}`;
-      ctx.fillText(`${teamName} • Completed in ${completionTime}`, centerX, footerY + 85);
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, rightColumnX, footerY + 70);
       
-      // FAR RIGHT: Website URL
+      // Website URL at bottom
       ctx.font = `bold 16px ${fontStack}`;
       ctx.fillStyle = "#dc2626";
-      ctx.textAlign = "right";
-      ctx.fillText("RIDDLECITY.CO.UK", whiteBorderSize + innerWidth - 10, footerY + 75);
+      ctx.fillText("RIDDLECITY.CO.UK", rightColumnX, footerY + 100);
     }
 
     // Convert to downloadable URL
