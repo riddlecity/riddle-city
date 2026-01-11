@@ -75,13 +75,14 @@ export default function CollageGenerator({
 
     const config = getLayoutConfig(photoCount);
     const cellSize = 400;
+    const borderSize = 8; // White border between photos
     const footerHeight = config.hasFooter ? 150 : 0;
 
-    canvas.width = config.cols * cellSize;
-    canvas.height = config.rows * cellSize + footerHeight;
+    canvas.width = config.cols * cellSize + (config.cols + 1) * borderSize;
+    canvas.height = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
 
-    // Background - Black
-    ctx.fillStyle = "#000000";
+    // Background - White
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Load logo first
@@ -101,48 +102,54 @@ export default function CollageGenerator({
     for (let i = 0; i < totalCells; i++) {
       const col = i % config.cols;
       const row = Math.floor(i / config.cols);
-      const x = col * cellSize;
-      const y = row * cellSize;
+      const x = col * cellSize + (col + 1) * borderSize;
+      const y = row * cellSize + (row + 1) * borderSize;
 
       // Check if this is the info box position
-      const isInfoBox = !config.hasFooter && config.infoBoxPosition && i >= config.infoBoxPosition - 1;
+      const isInfoBox = !config.hasFooter && config.infoBoxPosition && i === config.infoBoxPosition - 1;
       const isDoubleWideInfo = photoCount === 10 && i === 10; // For 10 photos, info takes 2 boxes
 
       if (isInfoBox) {
-        // Draw info box
-        const infoWidth = isDoubleWideInfo ? cellSize * 2 : cellSize;
+        // Draw info box with website gradient style
+        const infoWidth = isDoubleWideInfo ? cellSize * 2 + borderSize : cellSize;
         
-        ctx.fillStyle = "#1a1a1a";
+        // Pink/magenta gradient like website
+        const gradient = ctx.createLinearGradient(x, y, x + infoWidth, y + cellSize);
+        gradient.addColorStop(0, "#db2777"); // Pink
+        gradient.addColorStop(1, "#be185d"); // Darker pink
+        ctx.fillStyle = gradient;
         ctx.fillRect(x, y, infoWidth, cellSize);
         
         // Logo
         if (logo.complete) {
           const logoSize = 80;
-          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 40, logoSize, logoSize);
+          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 50, logoSize, logoSize);
         }
         
         // Adventure name
         ctx.fillStyle = "white";
         ctx.font = "bold 28px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(adventureName, x + infoWidth / 2, y + 160);
+        ctx.fillText(adventureName, x + infoWidth / 2, y + 170);
         
         // Team name
         ctx.font = "20px Arial";
-        ctx.fillStyle = "#dc2626";
-        ctx.fillText(teamName, x + infoWidth / 2, y + 195);
+        ctx.fillStyle = "white";
+        ctx.fillText(teamName, x + infoWidth / 2, y + 205);
         
         // Completion time
         ctx.font = "18px Arial";
-        ctx.fillStyle = "#999";
-        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 240);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 250);
         
         // Hashtag
         ctx.font = "16px Arial";
-        ctx.fillStyle = "#dc2626";
-        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 275);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 285);
         
-        if (isDoubleWideInfo) break; // Skip next cell
+        if (isDoubleWideInfo) {
+          i++; // Skip next cell
+        }
         continue;
       }
 
@@ -210,9 +217,13 @@ export default function CollageGenerator({
 
     // Draw footer if needed
     if (config.hasFooter) {
-      const footerY = config.rows * cellSize;
+      const footerY = config.rows * cellSize + (config.rows + 1) * borderSize;
       
-      ctx.fillStyle = "#1a1a1a";
+      // Pink gradient footer like website
+      const footerGradient = ctx.createLinearGradient(0, footerY, 0, footerY + footerHeight);
+      footerGradient.addColorStop(0, "#db2777");
+      footerGradient.addColorStop(1, "#be185d");
+      ctx.fillStyle = footerGradient;
       ctx.fillRect(0, footerY, canvas.width, footerHeight);
       
       // Logo
@@ -229,11 +240,11 @@ export default function CollageGenerator({
       
       // Team name and time
       ctx.font = "16px Arial";
-      ctx.fillStyle = "#999";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
       ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 120);
       
       // Hashtag
-      ctx.fillStyle = "#dc2626";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
       ctx.fillText("#RiddleCity", canvas.width / 2, footerY + 140);
     }
 
@@ -283,7 +294,7 @@ export default function CollageGenerator({
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="bg-black p-2 rounded-xl border-2 border-red-600 shadow-2xl">
+          <div className="bg-white p-2 rounded-xl border-2 border-pink-300 shadow-2xl">
             <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded-lg" />
           </div>
           
