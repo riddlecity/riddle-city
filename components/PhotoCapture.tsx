@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, X, Check } from "lucide-react";
+import { Camera, X, Check, Minimize2, Maximize2 } from "lucide-react";
 
 interface PhotoCaptureProps {
   riddleId: string;
@@ -11,6 +11,7 @@ interface PhotoCaptureProps {
 
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
   const [photo, setPhoto] = useState<string | null>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if photo already exists for this riddle
@@ -109,19 +110,45 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
 
       {/* Preview modal when photo exists */}
       {hasPhoto && (
-        <div className="fixed top-20 right-4 z-30 mt-12 bg-black/90 backdrop-blur-sm rounded-lg p-2 shadow-2xl">
+        <div className={`fixed top-20 right-4 z-30 mt-12 bg-black/90 backdrop-blur-sm rounded-lg shadow-2xl transition-all ${
+          isMinimized ? 'p-1' : 'p-2'
+        }`}>
           <div className="relative">
-            <img src={currentPhoto} alt="Team photo" className="w-32 h-auto rounded" />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                deletePhoto();
-              }}
-              className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors"
-              title="Delete photo"
-            >
-              <X className="w-3 h-3" />
-            </button>
+            {isMinimized ? (
+              // Minimized view - just small thumbnail
+              <button
+                onClick={() => setIsMinimized(false)}
+                className="relative"
+                title="Expand photo"
+              >
+                <img src={currentPhoto} alt="Team photo" className="w-12 h-12 rounded object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
+                  <Maximize2 className="w-4 h-4 text-white" />
+                </div>
+              </button>
+            ) : (
+              // Expanded view
+              <>
+                <img src={currentPhoto} alt="Team photo" className="w-32 h-auto rounded" />
+                <button
+                  onClick={() => setIsMinimized(true)}
+                  className="absolute top-0 left-0 bg-blue-500 hover:bg-blue-600 text-white p-1 rounded-full transition-colors"
+                  title="Minimize photo"
+                >
+                  <Minimize2 className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePhoto();
+                  }}
+                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition-colors"
+                  title="Delete photo"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
