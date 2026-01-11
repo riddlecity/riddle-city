@@ -77,11 +77,11 @@ export default async function LeaderboardsPage() {
                   {locationTracks.map((track: any) => {
                     const adventureType = track.mode === 'date' 
                       ? 'Date Day Adventure' 
-                      : track.mode === 'pub' 
+                      : track.mode === 'standard' || track.mode === 'pub'
                       ? 'Pub Crawl Adventure' 
                       : 'Adventure';
                     
-                    const icon = track.mode === 'date' ? '💘' : track.mode === 'pub' ? '🍻' : '🎮';
+                    const icon = track.mode === 'date' ? '💘' : (track.mode === 'standard' || track.mode === 'pub') ? '🍻' : '🎮';
                     
                     return (
                       <Link
