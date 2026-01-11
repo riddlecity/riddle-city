@@ -40,9 +40,9 @@ interface Tile {
 
 export default function CollageGenerator({ 
   groupId, 
-  teamName,
-  adventureName,
-  completionTime, 
+  teamName: _teamName,
+  adventureName: _adventureName,
+  completionTime: _completionTime, 
   riddleIds 
 }: CollageGeneratorProps) {
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
