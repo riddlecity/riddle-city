@@ -110,42 +110,54 @@ export default function CollageGenerator({
       const isDoubleWideInfo = photoCount === 10 && i === 10; // For 10 photos, info takes 2 boxes
 
       if (isInfoBox) {
-        // Draw info box with website gradient style
+        // Draw info box with website style
         const infoWidth = isDoubleWideInfo ? cellSize * 2 + borderSize : cellSize;
         
-        // Pink/magenta gradient like website
-        const gradient = ctx.createLinearGradient(x, y, x + infoWidth, y + cellSize);
-        gradient.addColorStop(0, "#db2777"); // Pink
-        gradient.addColorStop(1, "#be185d"); // Darker pink
-        ctx.fillStyle = gradient;
+        // White background
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo
+        // Logo at top
         if (logo.complete) {
-          const logoSize = 80;
-          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 50, logoSize, logoSize);
+          const logoSize = 100;
+          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 30, logoSize, logoSize);
         }
         
-        // Adventure name
-        ctx.fillStyle = "white";
-        ctx.font = "bold 28px Arial";
+        // "Your Mystery Awaits" text
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 24px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(adventureName, x + infoWidth / 2, y + 170);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 3;
+        ctx.strokeText("Your Mystery Awaits", x + infoWidth / 2, y + 160);
+        ctx.fillText("Your Mystery Awaits", x + infoWidth / 2, y + 160);
         
-        // Team name
-        ctx.font = "20px Arial";
+        // Colored adventure name box
+        const boxY = y + 180;
+        const boxHeight = 50;
+        const boxPadding = 20;
+        const gradient = ctx.createLinearGradient(x + boxPadding, boxY, x + infoWidth - boxPadding, boxY);
+        gradient.addColorStop(0, "#db2777"); // Pink
+        gradient.addColorStop(1, "#be185d");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x + boxPadding, boxY, infoWidth - (boxPadding * 2), boxHeight);
+        
+        // Adventure name in white on colored box
         ctx.fillStyle = "white";
-        ctx.fillText(teamName, x + infoWidth / 2, y + 205);
+        ctx.font = "bold 20px Arial";
+        ctx.fillText(adventureName, x + infoWidth / 2, boxY + 32);
         
-        // Completion time
-        ctx.font = "18px Arial";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 250);
+        // Team name and time below
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(teamName.toUpperCase(), x + infoWidth / 2, y + 270);
+        ctx.font = "16px Arial";
+        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 295);
         
         // Hashtag
-        ctx.font = "16px Arial";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 285);
+        ctx.font = "14px Arial";
+        ctx.fillStyle = "#999";
+        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 320);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -219,33 +231,37 @@ export default function CollageGenerator({
     if (config.hasFooter) {
       const footerY = config.rows * cellSize + (config.rows + 1) * borderSize;
       
-      // Pink gradient footer like website
-      const footerGradient = ctx.createLinearGradient(0, footerY, 0, footerY + footerHeight);
-      footerGradient.addColorStop(0, "#db2777");
-      footerGradient.addColorStop(1, "#be185d");
-      ctx.fillStyle = footerGradient;
+      // White background
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, footerY, canvas.width, footerHeight);
       
       // Logo
       if (logo.complete) {
-        const logoSize = 60;
-        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 15, logoSize, logoSize);
+        const logoSize = 70;
+        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 10, logoSize, logoSize);
       }
       
-      // Adventure name
+      // Colored adventure name box
+      const boxY = footerY + 90;
+      const boxHeight = 40;
+      const boxWidth = canvas.width * 0.7;
+      const boxX = (canvas.width - boxWidth) / 2;
+      const gradient = ctx.createLinearGradient(boxX, boxY, boxX + boxWidth, boxY);
+      gradient.addColorStop(0, "#db2777");
+      gradient.addColorStop(1, "#be185d");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+      
+      // Adventure name in white on colored box
       ctx.fillStyle = "white";
-      ctx.font = "bold 20px Arial";
+      ctx.font = "bold 18px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(adventureName, canvas.width / 2, footerY + 95);
+      ctx.fillText(adventureName, canvas.width / 2, boxY + 26);
       
-      // Team name and time
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 120);
-      
-      // Hashtag
-      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.fillText("#RiddleCity", canvas.width / 2, footerY + 140);
+      // Team name and time below
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText(`${teamName.toUpperCase()} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 145);
     }
 
     // Convert to downloadable URL
