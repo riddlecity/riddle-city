@@ -96,9 +96,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the answer is correct (case-insensitive)
-    // Support multiple correct answers separated by "/" (e.g., "42/4-2" or "42 / 4-2")
+    // Support multiple correct answers separated by "|" (e.g., "42|4-2" or "42 | 4-2")
     const correctAnswers = riddle.answer
-      .split('/')
+      .split('|')
       .map((a: string) => a.trim().toLowerCase())
       .filter((a: string) => a.length > 0); // Remove empty strings
     

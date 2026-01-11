@@ -36,9 +36,9 @@ export default function ManualAnswerForm({
 
     try {
       // For manual answer riddles, check the answer locally first
-      // Support multiple correct answers separated by "/" (e.g., "42/4-2")
+      // Support multiple correct answers separated by "|" (e.g., "42|4-2")
       const correctAnswers = correctAnswer
-        .split('/')
+        .split('|')
         .map(a => a.trim().toLowerCase())
         .filter(a => a.length > 0);
       
