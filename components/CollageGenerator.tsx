@@ -113,51 +113,65 @@ export default function CollageGenerator({
         // Draw info box with website style
         const infoWidth = isDoubleWideInfo ? cellSize * 2 + borderSize : cellSize;
         
-        // White background
-        ctx.fillStyle = "#ffffff";
+        // Black background for contrast
+        ctx.fillStyle = "#000000";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo at top
+        // Logo at top - MUCH BIGGER
         if (logo.complete) {
-          const logoSize = 100;
-          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 30, logoSize, logoSize);
+          const logoSize = 140;
+          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 20, logoSize, logoSize);
         }
         
-        // "Your Mystery Awaits" text
-        ctx.fillStyle = "#000000";
-        ctx.font = "bold 24px Arial";
+        // "Your Mystery Awaits" text - styled like website
+        ctx.fillStyle = "white";
+        ctx.font = "bold 26px Arial";
         ctx.textAlign = "center";
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 3;
-        ctx.strokeText("Your Mystery Awaits", x + infoWidth / 2, y + 160);
-        ctx.fillText("Your Mystery Awaits", x + infoWidth / 2, y + 160);
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 4;
+        ctx.strokeText("Your Mystery Awaits", x + infoWidth / 2, y + 180);
+        ctx.fillText("Your Mystery Awaits", x + infoWidth / 2, y + 180);
+        
+        // Get emoji for adventure type
+        let adventureEmoji = "🎉";
+        if (adventureName.toLowerCase().includes("date")) adventureEmoji = "💕";
+        else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
+        else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
         
         // Colored adventure name box
-        const boxY = y + 180;
+        const boxY = y + 200;
         const boxHeight = 50;
-        const boxPadding = 20;
+        const boxPadding = 15;
         const gradient = ctx.createLinearGradient(x + boxPadding, boxY, x + infoWidth - boxPadding, boxY);
-        gradient.addColorStop(0, "#db2777"); // Pink
+        gradient.addColorStop(0, "#db2777");
         gradient.addColorStop(1, "#be185d");
         ctx.fillStyle = gradient;
         ctx.fillRect(x + boxPadding, boxY, infoWidth - (boxPadding * 2), boxHeight);
         
-        // Adventure name in white on colored box
+        // Adventure name with emoji in white on colored box
         ctx.fillStyle = "white";
         ctx.font = "bold 20px Arial";
-        ctx.fillText(adventureName, x + infoWidth / 2, boxY + 32);
+        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, boxY + 32);
         
-        // Team name and time below
-        ctx.fillStyle = "#000000";
+        // Congratulations message
+        ctx.fillStyle = "white";
         ctx.font = "bold 18px Arial";
-        ctx.fillText(teamName.toUpperCase(), x + infoWidth / 2, y + 270);
+        ctx.fillText("COMPLETED!", x + infoWidth / 2, y + 280);
+        
+        // Team name below
         ctx.font = "16px Arial";
-        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 295);
+        ctx.fillStyle = "#cccccc";
+        ctx.fillText(teamName, x + infoWidth / 2, y + 305);
+        
+        // Time
+        ctx.font = "bold 16px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 330);
         
         // Hashtag
         ctx.font = "14px Arial";
-        ctx.fillStyle = "#999";
-        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 320);
+        ctx.fillStyle = "#db2777";
+        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 355);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -231,20 +245,26 @@ export default function CollageGenerator({
     if (config.hasFooter) {
       const footerY = config.rows * cellSize + (config.rows + 1) * borderSize;
       
-      // White background
-      ctx.fillStyle = "#ffffff";
+      // Black background for contrast
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, footerY, canvas.width, footerHeight);
       
-      // Logo
+      // Logo - bigger
       if (logo.complete) {
-        const logoSize = 70;
-        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 10, logoSize, logoSize);
+        const logoSize = 80;
+        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 8, logoSize, logoSize);
       }
       
+      // Get emoji for adventure type
+      let adventureEmoji = "🎉";
+      if (adventureName.toLowerCase().includes("date")) adventureEmoji = "💕";
+      else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
+      else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
+      
       // Colored adventure name box
-      const boxY = footerY + 90;
-      const boxHeight = 40;
-      const boxWidth = canvas.width * 0.7;
+      const boxY = footerY + 95;
+      const boxHeight = 38;
+      const boxWidth = canvas.width * 0.75;
       const boxX = (canvas.width - boxWidth) / 2;
       const gradient = ctx.createLinearGradient(boxX, boxY, boxX + boxWidth, boxY);
       gradient.addColorStop(0, "#db2777");
@@ -252,16 +272,16 @@ export default function CollageGenerator({
       ctx.fillStyle = gradient;
       ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
       
-      // Adventure name in white on colored box
+      // Adventure name with emoji in white on colored box
       ctx.fillStyle = "white";
-      ctx.font = "bold 18px Arial";
+      ctx.font = "bold 17px Arial";
       ctx.textAlign = "center";
-      ctx.fillText(adventureName, canvas.width / 2, boxY + 26);
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, canvas.width / 2, boxY + 24);
       
       // Team name and time below
-      ctx.fillStyle = "#000000";
-      ctx.font = "bold 14px Arial";
-      ctx.fillText(`${teamName.toUpperCase()} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 145);
+      ctx.fillStyle = "white";
+      ctx.font = "bold 13px Arial";
+      ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 145);
     }
 
     // Convert to downloadable URL
