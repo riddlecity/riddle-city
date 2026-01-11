@@ -135,28 +135,36 @@ export default function CollageGenerator({
         // Professional font stack matching website
         const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
         
-        // Adventure name at TOP - bright pink, bolder
-        ctx.fillStyle = "#ec4899";
-        ctx.font = `bold 20px ${fontStack}`;
-        ctx.textAlign = "center";
-        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 30);
+        // White box for adventure name at TOP
+        const boxWidth = infoWidth * 0.9;
+        const boxHeight = 35;
+        const boxX = x + (infoWidth - boxWidth) / 2;
+        const boxY = y + 10;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
         
-        // Logo in CENTER - bigger and wider
+        // Adventure name in white box - bright pink text
+        ctx.fillStyle = "#ec4899";
+        ctx.font = `bold 18px ${fontStack}`;
+        ctx.textAlign = "center";
+        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, boxY + 24);
+        
+        // Logo in CENTER - MUCH bigger to fill space
         if (logo.complete) {
-          const logoWidth = 390;
-          const logoHeight = 310;
-          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 50, logoWidth, logoHeight);
+          const logoWidth = 395;
+          const logoHeight = 330;
+          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 55, logoWidth, logoHeight);
         }
         
         // Team name and completion BELOW logo - white and bold
         ctx.fillStyle = "#ffffff";
-        ctx.font = `bold 16px ${fontStack}`;
-        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 375);
+        ctx.font = `bold 15px ${fontStack}`;
+        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 392);
         
         // Website URL at BOTTOM - bigger, red, and ALL CAPS
-        ctx.font = `bold 17px ${fontStack}`;
+        ctx.font = `bold 16px ${fontStack}`;
         ctx.fillStyle = "#dc2626";
-        ctx.fillText("RIDDLECITY.CO.UK", x + infoWidth / 2, y + 395);
+        ctx.fillText("RIDDLECITY.CO.UK", x + infoWidth / 2, y + 410);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
