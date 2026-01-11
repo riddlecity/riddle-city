@@ -80,7 +80,7 @@ export default function CollageGenerator({
 
     // Load and draw photos
     const photoEntries = Object.entries(photos);
-    const imagePromises = photoEntries.map(([riddleId, dataUrl], index) => {
+    const imagePromises = photoEntries.map(([, dataUrl], index) => {
       return new Promise<void>((resolve) => {
         const img = new Image();
         img.onload = () => {
