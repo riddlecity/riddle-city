@@ -77,22 +77,27 @@ export default function CollageGenerator({
     const cellSize = 400;
     const borderSize = 12; // Slightly thicker uniform borders
     const outerBorderSize = 12; // Same thickness as inner borders
+    const whiteBorderSize = 16; // White border around entire collage
     const footerHeight = config.hasFooter ? 150 : 0;
     const darkBg = "#121212"; // Off-black from home page
 
     const innerWidth = config.cols * cellSize + (config.cols + 1) * borderSize;
     const innerHeight = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
     
-    canvas.width = innerWidth + (outerBorderSize * 2);
-    canvas.height = innerHeight + (outerBorderSize * 2);
+    canvas.width = innerWidth + (outerBorderSize * 2) + (whiteBorderSize * 2);
+    canvas.height = innerHeight + (outerBorderSize * 2) + (whiteBorderSize * 2);
 
-    // Outer dark border (frame)
-    ctx.fillStyle = darkBg;
+    // Outermost white border
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Dark border (frame) inside white border
+    ctx.fillStyle = darkBg;
+    ctx.fillRect(whiteBorderSize, whiteBorderSize, innerWidth + (outerBorderSize * 2), innerHeight + (outerBorderSize * 2));
     
     // Inner dark background (creates dark borders between photos)
     ctx.fillStyle = darkBg;
-    ctx.fillRect(outerBorderSize, outerBorderSize, innerWidth, innerHeight);
+    ctx.fillRect(whiteBorderSize + outerBorderSize, whiteBorderSize + outerBorderSize, innerWidth, innerHeight);
 
     // Load collage-specific logo
     const logo = new Image();
@@ -111,8 +116,8 @@ export default function CollageGenerator({
     for (let i = 0; i < totalCells; i++) {
       const col = i % config.cols;
       const row = Math.floor(i / config.cols);
-      const x = outerBorderSize + col * cellSize + (col + 1) * borderSize;
-      const y = outerBorderSize + row * cellSize + (row + 1) * borderSize;
+      const x = whiteBorderSize + outerBorderSize + col * cellSize + (col + 1) * borderSize;
+      const y = whiteBorderSize + outerBorderSize + row * cellSize + (row + 1) * borderSize;
 
       // Check if this is the info box position
       const isInfoBox = !config.hasFooter && config.infoBoxPosition && i === config.infoBoxPosition - 1;
@@ -238,17 +243,17 @@ export default function CollageGenerator({
 
     // Draw footer if needed
     if (config.hasFooter) {
-      const footerY = outerBorderSize + config.rows * cellSize + (config.rows + 1) * borderSize;
+      const footerY = whiteBorderSize + outerBorderSize + config.rows * cellSize + (config.rows + 1) * borderSize;
       
       // Dark background matching site
       ctx.fillStyle = darkBg;
-      ctx.fillRect(outerBorderSize, footerY, innerWidth, footerHeight);
+      ctx.fillRect(whiteBorderSize + outerBorderSize, footerY, innerWidth, footerHeight);
       
       // Logo - wider proportions
       if (logo.complete) {
         const logoWidth = 150;
         const logoHeight = 110;
-        ctx.drawImage(logo, outerBorderSize + (innerWidth - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
+        ctx.drawImage(logo, whiteBorderSize + outerBorderSize + (innerWidth - logoWidth) / 2, footerY + 8, logoWidth, logoHeight);
       }
       
       // Get emoji for adventure type
@@ -264,17 +269,17 @@ export default function CollageGenerator({
       ctx.fillStyle = "#ec4899";
       ctx.font = `bold 18px ${fontStack}`;
       ctx.textAlign = "center";
-      ctx.fillText(`${adventureEmoji} ${adventureName}`, outerBorderSize + innerWidth / 2, footerY + 125);
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, whiteBorderSize + outerBorderSize + innerWidth / 2, footerY + 125);
       
       // All details on one line - white and bold
       ctx.fillStyle = "#ffffff";
       ctx.font = `bold 15px ${fontStack}`;
-      ctx.fillText(`${teamName} • Completed in ${completionTime}`, outerBorderSize + innerWidth / 2, footerY + 142);
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, whiteBorderSize + outerBorderSize + innerWidth / 2, footerY + 142);
       
       // Website URL - bigger and red to match branding
       ctx.font = `bold 16px ${fontStack}`;
       ctx.fillStyle = "#dc2626";
-      ctx.fillText("RIDDLECITY.CO.UK", outerBorderSize + innerWidth / 2, footerY + 160);
+      ctx.fillText("RIDDLECITY.CO.UK", whiteBorderSize + outerBorderSize + innerWidth / 2, footerY + 160);
     }
 
     // Convert to downloadable URL
