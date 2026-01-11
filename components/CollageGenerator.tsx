@@ -49,59 +49,40 @@ export default function CollageGenerator({
     // Randomize photo order for variety
     const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
 
-    // Define custom layouts for different photo counts
-    const getLayout = (count: number): number[] => {
+    // Define layouts based on photo count
+    interface LayoutConfig {
+      cols: number;
+      rows: number;
+      hasFooter: boolean;
+      infoBoxPosition?: number; // Which cell position for info (if no footer)
+    }
+
+    const getLayoutConfig = (count: number): LayoutConfig => {
       switch (count) {
-        case 1: return [1]; // 1 centered
-        case 2: return [2]; // 2 side by side
-        case 3: return [1, 2]; // Triangle: 1 on top, 2 on bottom
-        case 4: return [2, 2]; // Square
-        case 5: return [2, 1, 2]; // Diamond: 2-1-2
-        case 6: return [2, 2, 2]; // 2x3 grid
-        case 7: return [2, 3, 2]; // Cross: 2-3-2
-        case 8: return [2, 3, 3]; // 2-3-3
-        default: {
-          // For 9+ photos, use standard 3-column grid
-          const rows = Math.ceil(count / 3);
-          const layout: number[] = [];
-          for (let i = 0; i < rows; i++) {
-            const remaining = count - i * 3;
-            layout.push(Math.min(3, remaining));
-          }
-          return layout;
-        }
+        case 1: return { cols: 1, rows: 1, hasFooter: true };
+        case 2: return { cols: 1, rows: 2, hasFooter: true };
+        case 3: return { cols: 1, rows: 3, hasFooter: true };
+        case 4: return { cols: 2, rows: 2, hasFooter: true };
+        case 5: return { cols: 2, rows: 3, hasFooter: false, infoBoxPosition: 5 }; // Last position
+        case 6: return { cols: 2, rows: 3, hasFooter: true };
+        case 7: return { cols: 2, rows: 4, hasFooter: false, infoBoxPosition: 7 }; // Last position
+        case 8: return { cols: 2, rows: 4, hasFooter: true };
+        case 9: return { cols: 3, rows: 3, hasFooter: true };
+        case 10: return { cols: 3, rows: 4, hasFooter: false, infoBoxPosition: 11 }; // Position 11-12 (takes 2 boxes)
+        default: return { cols: 3, rows: 4, hasFooter: true };
       }
     };
 
-    const layout = getLayout(photoCount);
-    const rows = layout.length;
-    const maxCols = Math.max(...layout);
-    
-    const cellWidth = 450;
-    const cellHeight = 450;
-    const padding = 12;
-    const borderWidth = 40; // Decorative border
-    const footerHeight = 80;
+    const config = getLayoutConfig(photoCount);
+    const cellSize = 400;
+    const footerHeight = config.hasFooter ? 150 : 0;
 
-    canvas.width = maxCols * cellWidth + (maxCols + 1) * padding + (borderWidth * 2);
-    canvas.height = rows * cellHeight + (rows + 1) * padding + footerHeight + (borderWidth * 2);
+    canvas.width = config.cols * cellSize;
+    canvas.height = config.rows * cellSize + footerHeight;
 
     // Background - Black
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Decorative red border
-    const borderGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    borderGradient.addColorStop(0, "#dc2626");
-    borderGradient.addColorStop(0.5, "#991b1b");
-    borderGradient.addColorStop(1, "#dc2626");
-    ctx.strokeStyle = borderGradient;
-    ctx.lineWidth = borderWidth;
-    ctx.strokeRect(borderWidth / 2, borderWidth / 2, canvas.width - borderWidth, canvas.height - borderWidth);
-    
-    // Inner black background for photos
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(borderWidth, borderWidth, canvas.width - (borderWidth * 2), canvas.height - (borderWidth * 2));
 
     // Load logo first
     const logo = new Image();
@@ -112,59 +93,97 @@ export default function CollageGenerator({
     });
     await logoLoaded;
 
-    // Load and draw photos with proper aspect ratio
+    // Draw photos and info box
     let photoIndex = 0;
-    const imagePromises = layout.flatMap((colsInRow, rowIndex) => {
-      return Array.from({ length: colsInRow }, (_, colIndex) => {
-        const currentPhotoIndex = photoIndex++;
-        if (currentPhotoIndex >= photoEntries.length) return Promise.resolve();
+    const totalCells = config.cols * config.rows;
+    const imagePromises: Promise<void>[] = [];
+
+    for (let i = 0; i < totalCells; i++) {
+      const col = i % config.cols;
+      const row = Math.floor(i / config.cols);
+      const x = col * cellSize;
+      const y = row * cellSize;
+
+      // Check if this is the info box position
+      const isInfoBox = !config.hasFooter && config.infoBoxPosition && i >= config.infoBoxPosition - 1;
+      const isDoubleWideInfo = photoCount === 10 && i === 10; // For 10 photos, info takes 2 boxes
+
+      if (isInfoBox) {
+        // Draw info box
+        const infoWidth = isDoubleWideInfo ? cellSize * 2 : cellSize;
         
-        const [, dataUrl] = photoEntries[currentPhotoIndex];
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(x, y, infoWidth, cellSize);
         
-        return new Promise<void>((resolve, reject) => {
+        // Logo
+        if (logo.complete) {
+          const logoSize = 80;
+          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 40, logoSize, logoSize);
+        }
+        
+        // Adventure name
+        ctx.fillStyle = "white";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(adventureName, x + infoWidth / 2, y + 160);
+        
+        // Team name
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#dc2626";
+        ctx.fillText(teamName, x + infoWidth / 2, y + 195);
+        
+        // Completion time
+        ctx.font = "18px Arial";
+        ctx.fillStyle = "#999";
+        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 240);
+        
+        // Hashtag
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#dc2626";
+        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 275);
+        
+        if (isDoubleWideInfo) break; // Skip next cell
+        continue;
+      }
+
+      // Draw photo
+      if (photoIndex < photoEntries.length) {
+        const [, dataUrl] = photoEntries[photoIndex++];
+        
+        imagePromises.push(new Promise<void>((resolve, reject) => {
           const img = new Image();
           
           const timeout = setTimeout(() => {
-            reject(new Error(`Image ${currentPhotoIndex + 1} failed to load`));
+            reject(new Error(`Image failed to load`));
           }, 5000);
           
           img.onload = () => {
             clearTimeout(timeout);
             
-            // Calculate position with centering for the row
-            const totalRowWidth = colsInRow * cellWidth + (colsInRow - 1) * padding;
-            const canvasContentWidth = maxCols * cellWidth + (maxCols - 1) * padding;
-            const rowOffsetX = (canvasContentWidth - totalRowWidth) / 2;
-            
-            const x = colIndex * cellWidth + (colIndex + 1) * padding + rowOffsetX + borderWidth;
-            const y = rowIndex * cellHeight + (rowIndex + 1) * padding + borderWidth;
-
-            // Calculate dimensions to fill and crop image to fit cell (cover behavior)
+            // Calculate dimensions to fill cell (cover behavior)
             const imgAspect = img.width / img.height;
-            const cellAspect = cellWidth / cellHeight;
+            const cellAspect = 1; // Square cells
             
-            let drawWidth, drawHeight, imgOffsetX, imgOffsetY;
+            let drawWidth, drawHeight, offsetX, offsetY;
             
             if (imgAspect > cellAspect) {
-              // Image is wider - fit to height and crop sides
-              drawHeight = cellHeight;
-              drawWidth = cellHeight * imgAspect;
-              imgOffsetX = (cellWidth - drawWidth) / 2;
-              imgOffsetY = 0;
+              drawHeight = cellSize;
+              drawWidth = cellSize * imgAspect;
+              offsetX = (cellSize - drawWidth) / 2;
+              offsetY = 0;
             } else {
-              // Image is taller - fit to width and crop top/bottom
-              drawWidth = cellWidth;
-              drawHeight = cellWidth / imgAspect;
-              imgOffsetX = 0;
-              imgOffsetY = (cellHeight - drawHeight) / 2;
+              drawWidth = cellSize;
+              drawHeight = cellSize / imgAspect;
+              offsetX = 0;
+              offsetY = (cellSize - drawHeight) / 2;
             }
             
-            // Clip to cell bounds and draw
+            // Clip and draw
             ctx.save();
             ctx.beginPath();
-            ctx.rect(x, y, cellWidth, cellHeight);
+            ctx.rect(x, y, cellSize, cellSize);
             ctx.clip();
-            ctx.drawImage(img, x + imgOffsetX, y + imgOffsetY, drawWidth, drawHeight);
+            ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
             ctx.restore();
             
             resolve();
@@ -172,13 +191,13 @@ export default function CollageGenerator({
           
           img.onerror = () => {
             clearTimeout(timeout);
-            reject(new Error(`Image ${currentPhotoIndex + 1} failed to load`));
+            reject(new Error(`Image failed to load`));
           };
           
           img.src = dataUrl;
-        });
-      });
-    });
+        }));
+      }
+    }
 
     try {
       await Promise.all(imagePromises);
@@ -189,62 +208,34 @@ export default function CollageGenerator({
       return;
     }
 
-    // Center decorative label overlay
-    const labelWidth = 500;
-    const labelHeight = 140;
-    const labelX = (canvas.width - labelWidth) / 2;
-    const labelY = (canvas.height - labelHeight) / 2;
-    
-    // White decorative background
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 20);
-    ctx.fill();
-    
-    // Red inner border
-    ctx.strokeStyle = "#dc2626";
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.roundRect(labelX + 10, labelY + 10, labelWidth - 20, labelHeight - 20, 15);
-    ctx.stroke();
-    
-    // Logo in center of label
-    if (logo.complete) {
-      const logoSize = 50;
-      ctx.drawImage(logo, labelX + (labelWidth - logoSize) / 2, labelY + 20, logoSize, logoSize);
+    // Draw footer if needed
+    if (config.hasFooter) {
+      const footerY = config.rows * cellSize;
+      
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(0, footerY, canvas.width, footerHeight);
+      
+      // Logo
+      if (logo.complete) {
+        const logoSize = 60;
+        ctx.drawImage(logo, (canvas.width - logoSize) / 2, footerY + 15, logoSize, logoSize);
+      }
+      
+      // Adventure name
+      ctx.fillStyle = "white";
+      ctx.font = "bold 20px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(adventureName, canvas.width / 2, footerY + 95);
+      
+      // Team name and time
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#999";
+      ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 120);
+      
+      // Hashtag
+      ctx.fillStyle = "#dc2626";
+      ctx.fillText("#RiddleCity", canvas.width / 2, footerY + 140);
     }
-    
-    // Adventure name
-    ctx.fillStyle = "#000000";
-    ctx.font = "bold 32px Arial";
-    ctx.textAlign = "center";
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
-    ctx.fillText(adventureName, canvas.width / 2, labelY + 95);
-    
-    // Team name
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "#dc2626";
-    ctx.fillText(teamName, canvas.width / 2, labelY + 122);
-
-    // Footer - Red gradient
-    const footerGradient = ctx.createLinearGradient(0, canvas.height - footerHeight - borderWidth, 0, canvas.height - borderWidth);
-    footerGradient.addColorStop(0, "#000000");
-    footerGradient.addColorStop(1, "#991b1b");
-    ctx.fillStyle = footerGradient;
-    ctx.fillRect(borderWidth, canvas.height - footerHeight - borderWidth, canvas.width - (borderWidth * 2), footerHeight);
-    
-    ctx.fillStyle = "white";
-    ctx.font = "bold 24px Arial";
-    ctx.textAlign = "center";
-    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-    ctx.shadowBlur = 8;
-    ctx.fillText(`⏱️ Completed in ${completionTime}`, canvas.width / 2, canvas.height - footerHeight / 2 - borderWidth + 5);
-    ctx.font = "20px Arial";
-    ctx.fillStyle = "#fca5a5";
-    ctx.fillText("#RiddleCity", canvas.width / 2, canvas.height - footerHeight / 2 - borderWidth + 35);
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
 
     // Convert to downloadable URL
     const url = canvas.toDataURL("image/jpeg", 0.9);
