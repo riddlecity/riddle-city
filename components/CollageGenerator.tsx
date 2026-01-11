@@ -123,7 +123,7 @@ export default function CollageGenerator({
   };
 
   // Get layout based on photo count
-  const getLayout = (count: number): Tile[] => {
+  const getLayout = (count: number): { tiles: Tile[], overlayBadge?: { x: number, y: number, width: number, height: number } } => {
     const tiles: Tile[] = [];
     const contentWidth = CANVAS_WIDTH - (GUTTER * 2);
     const contentHeight = CANVAS_HEIGHT - (GUTTER * 3) - 80;
@@ -134,14 +134,26 @@ export default function CollageGenerator({
       const badgeHeight = contentHeight - photoHeight - GUTTER;
       tiles.push({ x: GUTTER, y: GUTTER, width: contentWidth, height: photoHeight, type: 'photo' });
       tiles.push({ x: GUTTER, y: GUTTER + photoHeight + GUTTER, width: contentWidth, height: badgeHeight, type: 'badge' });
+      return { tiles };
     } 
     else if (count === 2) {
-      // 2 photos: badge in center between them
-      const photoHeight = Math.floor((contentHeight - GUTTER) * 0.42);
-      const badgeHeight = contentHeight - (photoHeight * 2) - (GUTTER * 2);
+      // 2 photos: full height, badge overlays center
+      const photoHeight = Math.floor((contentHeight - GUTTER) / 2);
       tiles.push({ x: GUTTER, y: GUTTER, width: contentWidth, height: photoHeight, type: 'photo' });
-      tiles.push({ x: GUTTER, y: GUTTER + photoHeight + GUTTER, width: contentWidth, height: badgeHeight, type: 'badge' });
-      tiles.push({ x: GUTTER, y: GUTTER + photoHeight + GUTTER + badgeHeight + GUTTER, width: contentWidth, height: photoHeight, type: 'photo' });
+      tiles.push({ x: GUTTER, y: GUTTER + photoHeight + GUTTER, width: contentWidth, height: photoHeight, type: 'photo' });
+      
+      // Badge overlays center
+      const badgeWidth = Math.floor(contentWidth * 0.7);
+      const badgeHeight = Math.floor(contentHeight * 0.25);
+      return { 
+        tiles,
+        overlayBadge: {
+          x: GUTTER + (contentWidth - badgeWidth) / 2,
+          y: GUTTER + (contentHeight - badgeHeight) / 2,
+          width: badgeWidth,
+          height: badgeHeight
+        }
+      };
     }
     else if (count === 3) {
       // 3 photos: 2 top, 1 bottom left, badge bottom right
@@ -154,27 +166,37 @@ export default function CollageGenerator({
       tiles.push({ x: GUTTER + col1Width + GUTTER, y: GUTTER, width: col2Width, height: row1Height, type: 'photo' });
       tiles.push({ x: GUTTER, y: GUTTER + row1Height + GUTTER, width: col1Width, height: row2Height, type: 'photo' });
       tiles.push({ x: GUTTER + col1Width + GUTTER, y: GUTTER + row1Height + GUTTER, width: col2Width, height: row2Height, type: 'badge' });
+      return { tiles };
     }
     else if (count === 4) {
-      // 4 photos: badge in center (2 photos, badge, 2 photos vertically)
-      const photoRowHeight = Math.floor((contentHeight - GUTTER) * 0.36);
-      const badgeHeight = contentHeight - (photoRowHeight * 2) - (GUTTER * 2);
+      // 4 photos: 2x2 grid, badge overlays center
+      const photoRowHeight = Math.floor((contentHeight - GUTTER) / 2);
       const col1Width = Math.floor(contentWidth * 0.48);
       const col2Width = contentWidth - col1Width - GUTTER;
       
-      // Top row
+      // 2x2 grid
       tiles.push({ x: GUTTER, y: GUTTER, width: col1Width, height: photoRowHeight, type: 'photo' });
       tiles.push({ x: GUTTER + col1Width + GUTTER, y: GUTTER, width: col2Width, height: photoRowHeight, type: 'photo' });
-      // Center badge
-      tiles.push({ x: GUTTER, y: GUTTER + photoRowHeight + GUTTER, width: contentWidth, height: badgeHeight, type: 'badge' });
-      // Bottom row
-      tiles.push({ x: GUTTER, y: GUTTER + photoRowHeight + GUTTER + badgeHeight + GUTTER, width: col1Width, height: photoRowHeight, type: 'photo' });
-      tiles.push({ x: GUTTER + col1Width + GUTTER, y: GUTTER + photoRowHeight + GUTTER + badgeHeight + GUTTER, width: col2Width, height: photoRowHeight, type: 'photo' });
+      tiles.push({ x: GUTTER, y: GUTTER + photoRowHeight + GUTTER, width: col1Width, height: photoRowHeight, type: 'photo' });
+      tiles.push({ x: GUTTER + col1Width + GUTTER, y: GUTTER + photoRowHeight + GUTTER, width: col2Width, height: photoRowHeight, type: 'photo' });
+      
+      // Badge overlays center
+      const badgeWidth = Math.floor(contentWidth * 0.65);
+      const badgeHeight = Math.floor(contentHeight * 0.22);
+      return { 
+        tiles,
+        overlayBadge: {
+          x: GUTTER + (contentWidth - badgeWidth) / 2,
+          y: GUTTER + (contentHeight - badgeHeight) / 2,
+          width: badgeWidth,
+          height: badgeHeight
+        }
+      };
     }
     else {
-      // 5+ photos: simple grid + badge at end
+      // 5+ photos: simple grid
       const isEven = count % 2 === 0;
-      const rows = Math.ceil(count / 2) + 1; // +1 for badge
+      const rows = Math.ceil(count / 2);
       const rowHeight = Math.floor((contentHeight - (GUTTER * (rows - 1))) / rows);
       const col1Width = Math.floor(contentWidth * 0.52);
       const col2Width = contentWidth - col1Width - GUTTER;
@@ -183,15 +205,7 @@ export default function CollageGenerator({
       for (let row = 0; row < rows; row++) {
         const y = GUTTER + (row * (rowHeight + GUTTER));
         
-        // Check if this is badge row
-        if (isEven && row === Math.floor(rows / 2)) {
-          // Center badge for even counts
-          tiles.push({ x: GUTTER, y, width: contentWidth, height: rowHeight, type: 'badge' });
-        } else if (!isEven && row === rows - 1) {
-          // End badge for odd counts
-          tiles.push({ x: GUTTER, y, width: contentWidth, height: rowHeight, type: 'badge' });
-        } else if (photoIndex < count) {
-          // Photo tiles
+        if (photoIndex < count) {
           if (photoIndex + 1 < count) {
             tiles.push({ x: GUTTER, y, width: col1Width, height: rowHeight, type: 'photo' });
             tiles.push({ x: GUTTER + col1Width + GUTTER, y, width: col2Width, height: rowHeight, type: 'photo' });
@@ -202,9 +216,27 @@ export default function CollageGenerator({
           }
         }
       }
+      
+      if (isEven) {
+        // Badge overlays center for even counts
+        const badgeWidth = Math.floor(contentWidth * 0.70);
+        const badgeHeight = Math.floor(contentHeight * 0.20);
+        return { 
+          tiles,
+          overlayBadge: {
+            x: GUTTER + (contentWidth - badgeWidth) / 2,
+            y: GUTTER + (contentHeight - badgeHeight) / 2,
+            width: badgeWidth,
+            height: badgeHeight
+          }
+        };
+      } else {
+        // Badge at end for odd counts
+        const lastY = GUTTER + (rows * (rowHeight + GUTTER));
+        tiles.push({ x: GUTTER, y: lastY, width: contentWidth, height: rowHeight, type: 'badge' });
+        return { tiles };
+      }
     }
-
-    return tiles;
   };
 
   const generateCollage = async () => {
@@ -234,7 +266,7 @@ export default function CollageGenerator({
     await logoLoaded;
 
     // Get layout and photos
-    const layout = getLayout(photoCount);
+    const { tiles, overlayBadge } = getLayout(photoCount);
     const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
     
     // Analyze brightness
@@ -245,7 +277,7 @@ export default function CollageGenerator({
     let photoIndex = 0;
     const imagePromises: Promise<void>[] = [];
 
-    for (const tile of layout) {
+    for (const tile of tiles) {
       if (tile.type === 'badge') {
         // Draw completion badge
         ctx.fillStyle = badgeColors.bg;
@@ -361,6 +393,61 @@ export default function CollageGenerator({
       setIsGenerating(false);
       alert("Some photos couldn't be loaded. Please try capturing them again.");
       return;
+    }
+
+    // Draw overlay badge if needed
+    if (overlayBadge) {
+      const tile = overlayBadge;
+      
+      // No background - transparent overlay
+      // Draw logo
+      if (logo.complete) {
+        const logoScale = 0.60;
+        const logoMaxWidth = tile.width * logoScale;
+        const logoMaxHeight = tile.height * logoScale * 0.65;
+        
+        const logoAspect = logo.width / logo.height;
+        let logoWidth, logoHeight;
+        
+        if (logoMaxWidth / logoAspect < logoMaxHeight) {
+          logoWidth = logoMaxWidth;
+          logoHeight = logoMaxWidth / logoAspect;
+        } else {
+          logoHeight = logoMaxHeight;
+          logoWidth = logoMaxHeight * logoAspect;
+        }
+        
+        const logoX = tile.x + (tile.width - logoWidth) / 2;
+        const logoY = tile.y + (tile.height - logoHeight) / 2 - 25;
+        
+        // Colorize logo
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = logoWidth;
+        tempCanvas.height = logoHeight;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        if (tempCtx) {
+          tempCtx.drawImage(logo, 0, 0, logoWidth, logoHeight);
+          tempCtx.globalCompositeOperation = 'source-in';
+          tempCtx.fillStyle = "#dc2626";
+          tempCtx.fillRect(0, 0, logoWidth, logoHeight);
+          
+          ctx.drawImage(tempCanvas, logoX, logoY);
+        }
+      }
+      
+      // Draw text
+      const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+      ctx.fillStyle = "#dc2626";
+      ctx.textAlign = "center";
+      
+      const primarySize = Math.max(18, Math.floor(tile.height * 0.09));
+      ctx.font = `bold ${primarySize}px ${fontStack}`;
+      ctx.fillText("COMPLETED", tile.x + tile.width / 2, tile.y + tile.height - 42);
+      
+      const secondarySize = Math.max(13, Math.floor(tile.height * 0.065));
+      ctx.font = `${secondarySize}px ${fontStack}`;
+      ctx.fillText(completionTime, tile.x + tile.width / 2, tile.y + tile.height - 20);
     }
 
     // Draw footer
