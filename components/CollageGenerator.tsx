@@ -133,7 +133,7 @@ export default function CollageGenerator({
     const badgeSizeMultiplier = 1.10;
     
     // Helper to split area into columns
-    const splitCols = (x: number, y: number, width: number, height: number, widths: number[]): Tile[] => {
+    const splitCols = (x: number, y: number, _width: number, height: number, widths: number[]): Tile[] => {
       const result: Tile[] = [];
       let currentX = x;
       widths.forEach((w) => {
@@ -144,7 +144,7 @@ export default function CollageGenerator({
     };
 
     // Helper to split area into rows
-    const splitRows = (x: number, y: number, width: number, height: number, heights: number[]): Tile[] => {
+    const splitRows = (x: number, y: number, width: number, _height: number, heights: number[]): Tile[] => {
       const result: Tile[] = [];
       let currentY = y;
       heights.forEach((h) => {
