@@ -49,17 +49,41 @@ export default function CollageGenerator({
     // Randomize photo order for variety
     const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
 
-    // Calculate grid layout - dynamic to avoid gaps
-    const cols = 3;
-    const rows = Math.ceil(photoCount / cols);
-    const lastRowCount = photoCount % cols || cols; // How many photos in last row
+    // Define custom layouts for different photo counts
+    const getLayout = (count: number): number[] => {
+      switch (count) {
+        case 1: return [1]; // 1 centered
+        case 2: return [2]; // 2 side by side
+        case 3: return [1, 2]; // Triangle: 1 on top, 2 on bottom
+        case 4: return [2, 2]; // Square
+        case 5: return [2, 1, 2]; // Diamond: 2-1-2
+        case 6: return [2, 2, 2]; // 2x3 grid
+        case 7: return [2, 3, 2]; // Cross: 2-3-2
+        case 8: return [2, 3, 3]; // 2-3-3
+        default: {
+          // For 9+ photos, use standard 3-column grid
+          const rows = Math.ceil(count / 3);
+          const layout: number[] = [];
+          for (let i = 0; i < rows; i++) {
+            const remaining = count - i * 3;
+            layout.push(Math.min(3, remaining));
+          }
+          return layout;
+        }
+      }
+    };
+
+    const layout = getLayout(photoCount);
+    const rows = layout.length;
+    const maxCols = Math.max(...layout);
+    
     const cellWidth = 450;
     const cellHeight = 450;
     const padding = 15;
     const headerHeight = 200;
     const footerHeight = 100;
 
-    canvas.width = cols * cellWidth + (cols + 1) * padding;
+    canvas.width = maxCols * cellWidth + (maxCols + 1) * padding;
     canvas.height = rows * cellHeight + (rows + 1) * padding + headerHeight + footerHeight;
 
     // Background - Dark neutral
@@ -100,70 +124,72 @@ export default function CollageGenerator({
     ctx.fillText(teamName, canvas.width / 2, 195);
 
     // Load and draw photos with proper aspect ratio
-    const imagePromises = photoEntries.map(([, dataUrl], index) => {
-      return new Promise<void>((resolve, reject) => {
-        const img = new Image();
+    let photoIndex = 0;
+    const imagePromises = layout.flatMap((colsInRow, rowIndex) => {
+      return Array.from({ length: colsInRow }, (_, colIndex) => {
+        const currentPhotoIndex = photoIndex++;
+        if (currentPhotoIndex >= photoEntries.length) return Promise.resolve();
         
-        const timeout = setTimeout(() => {
-          reject(new Error(`Image ${index + 1} failed to load`));
-        }, 5000);
+        const [, dataUrl] = photoEntries[currentPhotoIndex];
         
-        img.onload = () => {
-          clearTimeout(timeout);
-          const row = Math.floor(index / cols);
-          const isLastRow = row === rows - 1;
+        return new Promise<void>((resolve, reject) => {
+          const img = new Image();
           
-          // Center the last row if it's incomplete
-          let col = index % cols;
-          let rowOffsetX = 0;
-          if (isLastRow && lastRowCount < cols) {
-            const totalLastRowWidth = lastRowCount * cellWidth + (lastRowCount - 1) * padding;
-            const canvasContentWidth = cols * cellWidth + (cols - 1) * padding;
-            rowOffsetX = (canvasContentWidth - totalLastRowWidth) / 2;
-          }
+          const timeout = setTimeout(() => {
+            reject(new Error(`Image ${currentPhotoIndex + 1} failed to load`));
+          }, 5000);
           
-          const x = col * cellWidth + (col + 1) * padding + rowOffsetX;
-          const y = row * cellHeight + (row + 1) * padding + headerHeight;
+          img.onload = () => {
+            clearTimeout(timeout);
+            
+            // Calculate position with centering for the row
+            const totalRowWidth = colsInRow * cellWidth + (colsInRow - 1) * padding;
+            const canvasContentWidth = maxCols * cellWidth + (maxCols - 1) * padding;
+            const rowOffsetX = (canvasContentWidth - totalRowWidth) / 2;
+            
+            const x = colIndex * cellWidth + (colIndex + 1) * padding + rowOffsetX;
+            const y = rowIndex * cellHeight + (rowIndex + 1) * padding + headerHeight;
 
-          // Draw red border
-          ctx.fillStyle = "#dc2626";
-          ctx.fillRect(x - 8, y - 8, cellWidth + 16, cellHeight + 16);
+            // Draw red border
+            ctx.fillStyle = "#dc2626";
+            ctx.fillRect(x - 8, y - 8, cellWidth + 16, cellHeight + 16);
+            
+            // Draw dark background
+            ctx.fillStyle = "#171717";
+            ctx.fillRect(x, y, cellWidth, cellHeight);
+            
+            // Calculate dimensions to fit image while maintaining aspect ratio
+            const imgAspect = img.width / img.height;
+            const cellAspect = cellWidth / cellHeight;
+            
+            let drawWidth, drawHeight, imgOffsetX, imgOffsetY;
+            
+            if (imgAspect > cellAspect) {
+              // Image is wider - fit to width
+              drawWidth = cellWidth;
+              drawHeight = cellWidth / imgAspect;
+              imgOffsetX = 0;
+              imgOffsetY = (cellHeight - drawHeight) / 2;
+            } else {
+              // Image is taller - fit to height
+              drawHeight = cellHeight;
+              drawWidth = cellHeight * imgAspect;
+              imgOffsetX = (cellWidth - drawWidth) / 2;
+              imgOffsetY = 0;
+            }
+            
+            ctx.drawImage(img, x + imgOffsetX, y + imgOffsetY, drawWidth, drawHeight);
+            
+            resolve();
+          };
           
-          // Draw dark background
-          ctx.fillStyle = "#171717";
-          ctx.fillRect(x, y, cellWidth, cellHeight);
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error(`Image ${currentPhotoIndex + 1} failed to load`));
+          };
           
-          // Calculate dimensions to fit image while maintaining aspect ratio
-          const imgAspect = img.width / img.height;
-          const cellAspect = cellWidth / cellHeight;
-          
-          let drawWidth, drawHeight, imgOffsetX, imgOffsetY;
-          
-          if (imgAspect > cellAspect) {
-            // Image is wider - fit to width
-            drawWidth = cellWidth;
-            drawHeight = cellWidth / imgAspect;
-            imgOffsetX = 0;
-            imgOffsetY = (cellHeight - drawHeight) / 2;
-          } else {
-            // Image is taller - fit to height
-            drawHeight = cellHeight;
-            drawWidth = cellHeight * imgAspect;
-            imgOffsetX = (cellWidth - drawWidth) / 2;
-            imgOffsetY = 0;
-          }
-          
-          ctx.drawImage(img, x + imgOffsetX, y + imgOffsetY, drawWidth, drawHeight);
-          
-          resolve();
-        };
-        
-        img.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error(`Image ${index + 1} failed to load`));
-        };
-        
-        img.src = dataUrl;
+          img.src = dataUrl;
+        });
       });
     });
 
