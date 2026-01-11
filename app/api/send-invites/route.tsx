@@ -5,16 +5,6 @@ import nodemailer from 'nodemailer';
 // Email templates
 function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, location: string, mode: string, players: number, groupId: string) {
   const adventureType = mode === 'date' ? 'Date Day Adventure' : 'Adventure';
-  const joinLink = `${process.env.NEXT_PUBLIC_BASE_URL}/join/${groupId}`;
-  
-  // WhatsApp share message
-  const whatsappMessage = encodeURIComponent(
-    `🎮 Join our Riddle City adventure in ${location.charAt(0).toUpperCase() + location.slice(1)}!\n\n` +
-    `Team: ${teamName}\n` +
-    `Adventure: ${adventureType}\n\n` +
-    `Click here to join: ${joinLink}`
-  );
-  const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
   
   return {
     subject: `Payment confirmed - Your Riddle City adventure awaits!`,
