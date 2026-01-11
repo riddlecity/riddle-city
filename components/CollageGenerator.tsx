@@ -153,10 +153,10 @@ export default function CollageGenerator({
         ctx.font = `bold 16px ${fontStack}`;
         ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 355);
         
-        // Website URL at bottom - light gray
-        ctx.font = `14px ${fontStack}`;
-        ctx.fillStyle = "#d1d5db";
-        ctx.fillText("riddlecity.co.uk", x + infoWidth / 2, y + 380);
+        // Website URL at bottom - bigger and red to match branding
+        ctx.font = `bold 17px ${fontStack}`;
+        ctx.fillStyle = "#dc2626";
+        ctx.fillText("riddlecity.co.uk", x + infoWidth / 2, y + 382);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -259,7 +259,12 @@ export default function CollageGenerator({
       // All details on one line - white and bold
       ctx.fillStyle = "#ffffff";
       ctx.font = `bold 15px ${fontStack}`;
-      ctx.fillText(`${teamName} • Completed in ${completionTime}`, outerBorderSize + innerWidth / 2, footerY + 145);
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, outerBorderSize + innerWidth / 2, footerY + 142);
+      
+      // Website URL - bigger and red to match branding
+      ctx.font = `bold 16px ${fontStack}`;
+      ctx.fillStyle = "#dc2626";
+      ctx.fillText("riddlecity.co.uk", outerBorderSize + innerWidth / 2, footerY + 160);
     }
 
     // Convert to downloadable URL
