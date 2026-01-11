@@ -1,0 +1,361 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Download, Image as ImageIcon, Instagram } from "lucide-react";
+
+interface CollageGeneratorProps {
+  groupId: string;
+  teamName: string;
+  adventureName: string;
+  completionTime: string;
+  riddleIds: string[];
+}
+
+export default function CollageGenerator({ 
+  groupId, 
+  teamName,
+  adventureName,
+  completionTime, 
+  riddleIds 
+}: CollageGeneratorProps) {
+  const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [collageUrl, setCollageUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    // Load all photos from localStorage
+    const loadedPhotos: { [key: string]: string } = {};
+    riddleIds.forEach(riddleId => {
+      const photo = localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`);
+      if (photo) {
+        loadedPhotos[riddleId] = photo;
+      }
+    });
+    setPhotos(loadedPhotos);
+  }, [groupId, riddleIds]);
+
+  const photoCount = Object.keys(photos).length;
+
+  const generateCollage = async () => {
+    if (photoCount === 0 || !canvasRef.current) return;
+    
+    setIsGenerating(true);
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Randomize photo order for variety
+    const photoEntries = Object.entries(photos).sort(() => Math.random() - 0.5);
+
+    // Define layouts based on photo count
+    interface LayoutConfig {
+      cols: number;
+      rows: number;
+      hasFooter: boolean;
+      infoBoxPosition?: number; // Which cell position for info (if no footer)
+    }
+
+    const getLayoutConfig = (count: number): LayoutConfig => {
+      switch (count) {
+        case 1: return { cols: 1, rows: 1, hasFooter: true };
+        case 2: return { cols: 1, rows: 2, hasFooter: true };
+        case 3: return { cols: 1, rows: 3, hasFooter: true };
+        case 4: return { cols: 2, rows: 2, hasFooter: true };
+        case 5: return { cols: 2, rows: 3, hasFooter: false, infoBoxPosition: 5 }; // Last position
+        case 6: return { cols: 2, rows: 3, hasFooter: true };
+        case 7: return { cols: 2, rows: 4, hasFooter: false, infoBoxPosition: 7 }; // Last position
+        case 8: return { cols: 2, rows: 4, hasFooter: true };
+        case 9: return { cols: 3, rows: 3, hasFooter: true };
+        case 10: return { cols: 3, rows: 4, hasFooter: false, infoBoxPosition: 11 }; // Position 11-12 (takes 2 boxes)
+        default: return { cols: 3, rows: 4, hasFooter: true };
+      }
+    };
+
+    const config = getLayoutConfig(photoCount);
+    const cellSize = 400;
+    const borderSize = 12; // Uniform border thickness everywhere
+    const whiteBorderSize = 16; // White border around entire collage
+    const footerHeight = config.hasFooter ? 150 : 0;
+    const darkBg = "#121212"; // Off-black from home page
+
+    const innerWidth = config.cols * cellSize + (config.cols + 1) * borderSize;
+    const innerHeight = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
+    
+    canvas.width = innerWidth + (whiteBorderSize * 2);
+    canvas.height = innerHeight + (whiteBorderSize * 2);
+
+    // Outermost white border
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Inner dark background (creates uniform dark borders everywhere)
+    ctx.fillStyle = darkBg;
+    ctx.fillRect(whiteBorderSize, whiteBorderSize, innerWidth, innerHeight);
+
+    // Load collage-specific logo
+    const logo = new Image();
+    const logoLoaded = new Promise<void>((resolve) => {
+      logo.onload = () => resolve();
+      logo.onerror = () => resolve();
+      logo.src = "/collagelogo.png";
+    });
+    await logoLoaded;
+
+    // Draw photos and info box
+    let photoIndex = 0;
+    const totalCells = config.cols * config.rows;
+    const imagePromises: Promise<void>[] = [];
+
+    for (let i = 0; i < totalCells; i++) {
+      const col = i % config.cols;
+      const row = Math.floor(i / config.cols);
+      const x = whiteBorderSize + col * cellSize + (col + 1) * borderSize;
+      const y = whiteBorderSize + row * cellSize + (row + 1) * borderSize;
+
+      // Check if this is the info box position
+      const isInfoBox = !config.hasFooter && config.infoBoxPosition && i === config.infoBoxPosition - 1;
+      const isDoubleWideInfo = photoCount === 10 && i === 10; // For 10 photos, info takes 2 boxes
+
+      if (isInfoBox) {
+        // Draw info box with website style
+        const infoWidth = isDoubleWideInfo ? cellSize * 2 + borderSize : cellSize;
+        
+        // White background for info box
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x, y, infoWidth, cellSize);
+        
+        // Get emoji and color for adventure type
+        let adventureEmoji = "🎉";
+        let adventureColor = "#ec4899"; // Default pink
+        if (adventureName.toLowerCase().includes("date")) {
+          adventureEmoji = "💕";
+          adventureColor = "#ec4899"; // Pink for date
+        } else if (adventureName.toLowerCase().includes("pub")) {
+          adventureEmoji = "🍺";
+          adventureColor = "#f59e0b"; // Amber for pub
+        } else if (adventureName.toLowerCase().includes("mystery")) {
+          adventureEmoji = "🔍";
+          adventureColor = "#8b5cf6"; // Purple for mystery
+        }
+        
+        // Professional font stack matching website
+        const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+        
+        // Adventure name at TOP - color varies by type
+        ctx.fillStyle = adventureColor;
+        ctx.font = `bold 19px ${fontStack}`;
+        ctx.textAlign = "center";
+        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 30);
+        
+        // Logo in CENTER - MUCH bigger to fill space
+        if (logo.complete) {
+          const logoWidth = 395;
+          const logoHeight = 330;
+          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 45, logoWidth, logoHeight);
+        }
+        
+        // Team name and completion BELOW logo - dark gray and bold
+        ctx.fillStyle = "#1f2937";
+        ctx.font = `bold 15px ${fontStack}`;
+        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 380);
+        
+        // Website URL at BOTTOM - moved up from border
+        ctx.font = `bold 16px ${fontStack}`;
+        ctx.fillStyle = "#dc2626";
+        ctx.fillText("RIDDLECITY.CO.UK", x + infoWidth / 2, y + 398);
+        
+        if (isDoubleWideInfo) {
+          i++; // Skip next cell
+        }
+        continue;
+      }
+
+      // Draw photo
+      if (photoIndex < photoEntries.length) {
+        const [, dataUrl] = photoEntries[photoIndex++];
+        
+        imagePromises.push(new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          
+          const timeout = setTimeout(() => {
+            reject(new Error(`Image failed to load`));
+          }, 5000);
+          
+          img.onload = () => {
+            clearTimeout(timeout);
+            
+            // Calculate dimensions to fill cell (cover behavior)
+            const imgAspect = img.width / img.height;
+            const cellAspect = 1; // Square cells
+            
+            let drawWidth, drawHeight, offsetX, offsetY;
+            
+            if (imgAspect > cellAspect) {
+              drawHeight = cellSize;
+              drawWidth = cellSize * imgAspect;
+              offsetX = (cellSize - drawWidth) / 2;
+              offsetY = 0;
+            } else {
+              drawWidth = cellSize;
+              drawHeight = cellSize / imgAspect;
+              offsetX = 0;
+              offsetY = (cellSize - drawHeight) / 2;
+            }
+            
+            // Clip and draw
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, cellSize, cellSize);
+            ctx.clip();
+            ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
+            ctx.restore();
+            
+            resolve();
+          };
+          
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error(`Image failed to load`));
+          };
+          
+          img.src = dataUrl;
+        }));
+      }
+    }
+
+    try {
+      await Promise.all(imagePromises);
+    } catch (error) {
+      console.error("Error loading images:", error);
+      setIsGenerating(false);
+      alert("Some photos couldn't be loaded. Please try capturing them again.");
+      return;
+    }
+
+    // Draw footer if needed
+    if (config.hasFooter) {
+      const footerY = whiteBorderSize + config.rows * cellSize + (config.rows + 1) * borderSize;
+      
+      // White background for footer
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(whiteBorderSize, footerY, innerWidth, footerHeight);
+      
+      // LEFT COLUMN: Logo - bigger
+      if (logo.complete) {
+        const logoWidth = 180;
+        const logoHeight = 140;
+        ctx.drawImage(logo, whiteBorderSize + 15, footerY + 5, logoWidth, logoHeight);
+      }
+      
+      // Get emoji and color for adventure type
+      let adventureEmoji = "🎉";
+      let adventureColor = "#ec4899"; // Default pink
+      if (adventureName.toLowerCase().includes("date")) {
+        adventureEmoji = "💕";
+        adventureColor = "#ec4899"; // Pink for date
+      } else if (adventureName.toLowerCase().includes("pub")) {
+        adventureEmoji = "🍺";
+        adventureColor = "#f59e0b"; // Amber for pub
+      } else if (adventureName.toLowerCase().includes("mystery")) {
+        adventureEmoji = "🔍";
+        adventureColor = "#8b5cf6"; // Purple for mystery
+      }
+      
+      // Professional font stack
+      const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+      
+      // RIGHT COLUMN: Info stacked vertically
+      const rightColumnX = whiteBorderSize + 220; // Start after logo
+      
+      // Adventure name at top
+      ctx.fillStyle = adventureColor;
+      ctx.font = `bold 18px ${fontStack}`;
+      ctx.textAlign = "left";
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, rightColumnX, footerY + 40);
+      
+      // Team and time in middle
+      ctx.fillStyle = "#1f2937";
+      ctx.font = `bold 15px ${fontStack}`;
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, rightColumnX, footerY + 70);
+      
+      // Website URL at bottom
+      ctx.font = `bold 16px ${fontStack}`;
+      ctx.fillStyle = "#dc2626";
+      ctx.fillText("RIDDLECITY.CO.UK", rightColumnX, footerY + 100);
+    }
+
+    // Convert to downloadable URL
+    const url = canvas.toDataURL("image/jpeg", 0.9);
+    setCollageUrl(url);
+    setIsGenerating(false);
+  };
+
+  const downloadCollage = () => {
+    if (!collageUrl) return;
+    
+    const link = document.createElement("a");
+    link.download = `riddlecity-${teamName.replace(/\s+/g, "-")}-collage.png`;
+    link.href = collageUrl;
+    link.click();
+  };
+
+  if (photoCount === 0) {
+    return (
+      <div className="bg-gray-50 rounded-xl p-6 text-center border-2 border-gray-200">
+        <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <p className="text-gray-600">No team photos were taken during this adventure</p>
+        <p className="text-xs text-gray-500 mt-2">Leaders can capture photos at each riddle location</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-neutral-900 rounded-xl p-6 border-2 border-neutral-700">
+      <div className="flex items-center gap-2 mb-4">
+        <ImageIcon className="w-6 h-6 text-purple-600" />
+        <h2 className="text-xl font-bold text-white">Your Team Collage</h2>
+      </div>
+
+      <p className="text-gray-300 mb-4">
+        📸 You captured <strong>{photoCount}</strong> photo{photoCount !== 1 ? "s" : ""} during your adventure!
+      </p>
+
+      {!collageUrl ? (
+        <button
+          onClick={generateCollage}
+          disabled={isGenerating}
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+        >
+          {isGenerating ? "⏳ Creating Your Collage..." : "🎨 Generate Collage"}
+        </button>
+      ) : (
+        <div className="space-y-4">
+          <div className="bg-white p-2 rounded-xl border-2 border-pink-300 shadow-2xl">
+            <img src={collageUrl} alt="Team collage" className="w-full h-auto rounded-lg" />
+          </div>
+          
+          <button
+            onClick={() => {
+              downloadCollage();
+              alert("📱 Collage downloaded! Share it on Instagram and tag riddlecity.co.uk with #RiddleCity");
+            }}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg"
+          >
+            <Download className="w-5 h-5" />
+            <Instagram className="w-5 h-5" />
+            Download and Share to Instagram
+          </button>
+
+          <p className="text-sm text-center text-gray-400">
+            💜 Tag <strong>riddlecity.co.uk</strong> and use <strong>#RiddleCity</strong> when you post!
+          </p>
+        </div>
+      )}
+
+      {/* Hidden canvas for generation */}
+      <canvas ref={canvasRef} className="hidden" />
+    </div>
+  );
+}
