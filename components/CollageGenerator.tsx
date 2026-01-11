@@ -75,9 +75,10 @@ export default function CollageGenerator({
 
     const config = getLayoutConfig(photoCount);
     const cellSize = 400;
-    const borderSize = 8; // White border between photos
-    const outerBorderSize = 16; // Thick black border around entire collage
+    const borderSize = 8; // Dark border between photos
+    const outerBorderSize = 16; // Thick dark border around entire collage
     const footerHeight = config.hasFooter ? 150 : 0;
+    const darkBg = "#121212"; // Off-black from home page
 
     const innerWidth = config.cols * cellSize + (config.cols + 1) * borderSize;
     const innerHeight = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
@@ -85,12 +86,12 @@ export default function CollageGenerator({
     canvas.width = innerWidth + (outerBorderSize * 2);
     canvas.height = innerHeight + (outerBorderSize * 2);
 
-    // Outer black border (frame)
-    ctx.fillStyle = "#000000";
+    // Outer dark border (frame)
+    ctx.fillStyle = darkBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Inner white background
-    ctx.fillStyle = "#ffffff";
+    // Inner dark background
+    ctx.fillStyle = darkBg;
     ctx.fillRect(outerBorderSize, outerBorderSize, innerWidth, innerHeight);
 
     // Load collage-specific logo
@@ -121,8 +122,8 @@ export default function CollageGenerator({
         // Draw info box with website style
         const infoWidth = isDoubleWideInfo ? cellSize * 2 + borderSize : cellSize;
         
-        // White background
-        ctx.fillStyle = "#ffffff";
+        // Dark background matching site
+        ctx.fillStyle = darkBg;
         ctx.fillRect(x, y, infoWidth, cellSize);
         
         // Logo dominates the space - very wide to prevent squishing
@@ -141,20 +142,20 @@ export default function CollageGenerator({
         // Professional font stack matching website
         const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
         
-        // Adventure name with emoji - clean and bold
-        ctx.fillStyle = "#db2777";
-        ctx.font = `bold 19px ${fontStack}`;
+        // Adventure name with emoji - bright pink, bolder
+        ctx.fillStyle = "#ec4899";
+        ctx.font = `bold 20px ${fontStack}`;
         ctx.textAlign = "center";
         ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 325);
         
-        // All details on one line - compact
-        ctx.fillStyle = "#000000";
-        ctx.font = `15px ${fontStack}`;
+        // All details on one line - white and bold
+        ctx.fillStyle = "#ffffff";
+        ctx.font = `bold 16px ${fontStack}`;
         ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 355);
         
-        // Website URL at bottom
-        ctx.font = `13px ${fontStack}`;
-        ctx.fillStyle = "#666";
+        // Website URL at bottom - light gray
+        ctx.font = `14px ${fontStack}`;
+        ctx.fillStyle = "#d1d5db";
         ctx.fillText("riddlecity.co.uk", x + infoWidth / 2, y + 380);
         
         if (isDoubleWideInfo) {
@@ -229,9 +230,9 @@ export default function CollageGenerator({
     if (config.hasFooter) {
       const footerY = outerBorderSize + config.rows * cellSize + (config.rows + 1) * borderSize;
       
-      // White background
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, footerY, canvas.width, footerHeight);
+      // Dark background matching site
+      ctx.fillStyle = darkBg;
+      ctx.fillRect(outerBorderSize, footerY, innerWidth, footerHeight);
       
       // Logo - wider proportions
       if (logo.complete) {
@@ -249,15 +250,15 @@ export default function CollageGenerator({
       // Professional font stack
       const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
       
-      // Adventure name with emoji
-      ctx.fillStyle = "#db2777";
-      ctx.font = `bold 17px ${fontStack}`;
+      // Adventure name with emoji - bright pink
+      ctx.fillStyle = "#ec4899";
+      ctx.font = `bold 18px ${fontStack}`;
       ctx.textAlign = "center";
       ctx.fillText(`${adventureEmoji} ${adventureName}`, outerBorderSize + innerWidth / 2, footerY + 125);
       
-      // All details on one line
-      ctx.fillStyle = "#000000";
-      ctx.font = `14px ${fontStack}`;
+      // All details on one line - white and bold
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold 15px ${fontStack}`;
       ctx.fillText(`${teamName} • Completed in ${completionTime}`, outerBorderSize + innerWidth / 2, footerY + 145);
     }
 
