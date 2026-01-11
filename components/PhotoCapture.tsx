@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, Image as ImageIcon, X } from "lucide-react";
+import { Camera, X } from "lucide-react";
 
 interface PhotoCaptureProps {
   riddleId: string;
