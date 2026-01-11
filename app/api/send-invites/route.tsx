@@ -56,7 +56,6 @@ Booking Details:
 • Booking ID: ${groupId}
 
 Start your adventure: ${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/${groupId}
-Share with your team: ${joinLink}
 
 Ready to unlock ${location.charAt(0).toUpperCase() + location.slice(1)}'s mysteries?
 
