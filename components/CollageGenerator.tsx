@@ -138,25 +138,15 @@ export default function CollageGenerator({
         ctx.textAlign = "center";
         ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 325);
         
-        // Completed message
+        // All details on one line - compact
         ctx.fillStyle = "#000000";
-        ctx.font = `bold 17px ${fontStack}`;
-        ctx.fillText("COMPLETED!", x + infoWidth / 2, y + 350);
-        
-        // Team name - lighter weight
         ctx.font = `15px ${fontStack}`;
-        ctx.fillStyle = "#666";
-        ctx.fillText(teamName, x + infoWidth / 2, y + 370);
+        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 355);
         
-        // Time - clean and simple
-        ctx.font = `600 15px ${fontStack}`;
-        ctx.fillStyle = "#000000";
-        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 388);
-        
-        // Hashtag - subtle
+        // Website URL at bottom
         ctx.font = `13px ${fontStack}`;
-        ctx.fillStyle = "#db2777";
-        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 406);
+        ctx.fillStyle = "#666";
+        ctx.fillText("riddlecity.co.uk", x + infoWidth / 2, y + 380);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -253,12 +243,12 @@ export default function CollageGenerator({
       ctx.fillStyle = "#db2777";
       ctx.font = `bold 17px ${fontStack}`;
       ctx.textAlign = "center";
-      ctx.fillText(`${adventureEmoji} ${adventureName}`, canvas.width / 2, footerY + 128);
+      ctx.fillText(`${adventureEmoji} ${adventureName}`, canvas.width / 2, footerY + 125);
       
-      // Team name and time - clean layout
+      // All details on one line
       ctx.fillStyle = "#000000";
-      ctx.font = `600 14px ${fontStack}`;
-      ctx.fillText(`${teamName} • ⏱️ ${completionTime}`, canvas.width / 2, footerY + 145);
+      ctx.font = `14px ${fontStack}`;
+      ctx.fillText(`${teamName} • Completed in ${completionTime}`, canvas.width / 2, footerY + 145);
     }
 
     // Convert to downloadable URL
