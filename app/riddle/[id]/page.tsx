@@ -322,6 +322,7 @@ export default async function RiddlePage({ params }: Props) {
             </div>
           )}
         </div>
+      </div>
 
       {/* Photo Capture - Only for Leaders - Fixed Position */}
       {groupId && isLeader && (
