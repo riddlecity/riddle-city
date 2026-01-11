@@ -117,20 +117,17 @@ export default function CollageGenerator({
         ctx.fillStyle = "#000000";
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo at top - MUCH BIGGER
+        // Logo at top - better proportioned
         if (logo.complete) {
-          const logoSize = 140;
-          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 20, logoSize, logoSize);
+          const logoSize = 100;
+          ctx.drawImage(logo, x + (infoWidth - logoSize) / 2, y + 35, logoSize, logoSize);
         }
         
-        // "Your Mystery Awaits" text - styled like website
+        // "Your Mystery Awaits" text - better spacing
         ctx.fillStyle = "white";
-        ctx.font = "bold 26px Arial";
+        ctx.font = "bold 22px Arial";
         ctx.textAlign = "center";
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 4;
-        ctx.strokeText("Your Mystery Awaits", x + infoWidth / 2, y + 180);
-        ctx.fillText("Your Mystery Awaits", x + infoWidth / 2, y + 180);
+        ctx.fillText("Your Mystery Awaits", x + infoWidth / 2, y + 160);
         
         // Get emoji for adventure type
         let adventureEmoji = "🎉";
@@ -138,40 +135,42 @@ export default function CollageGenerator({
         else if (adventureName.toLowerCase().includes("pub")) adventureEmoji = "🍺";
         else if (adventureName.toLowerCase().includes("mystery")) adventureEmoji = "🔍";
         
-        // Colored adventure name box
-        const boxY = y + 200;
-        const boxHeight = 50;
-        const boxPadding = 15;
+        // Colored adventure name box with rounded corners
+        const boxY = y + 180;
+        const boxHeight = 45;
+        const boxPadding = 25;
         const gradient = ctx.createLinearGradient(x + boxPadding, boxY, x + infoWidth - boxPadding, boxY);
         gradient.addColorStop(0, "#db2777");
         gradient.addColorStop(1, "#be185d");
         ctx.fillStyle = gradient;
-        ctx.fillRect(x + boxPadding, boxY, infoWidth - (boxPadding * 2), boxHeight);
+        ctx.beginPath();
+        ctx.roundRect(x + boxPadding, boxY, infoWidth - (boxPadding * 2), boxHeight, 8);
+        ctx.fill();
         
-        // Adventure name with emoji in white on colored box
-        ctx.fillStyle = "white";
-        ctx.font = "bold 20px Arial";
-        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, boxY + 32);
-        
-        // Congratulations message
+        // Adventure name with emoji
         ctx.fillStyle = "white";
         ctx.font = "bold 18px Arial";
-        ctx.fillText("COMPLETED!", x + infoWidth / 2, y + 280);
+        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, boxY + 29);
         
-        // Team name below
-        ctx.font = "16px Arial";
-        ctx.fillStyle = "#cccccc";
-        ctx.fillText(teamName, x + infoWidth / 2, y + 305);
-        
-        // Time
-        ctx.font = "bold 16px Arial";
+        // Completed message
         ctx.fillStyle = "white";
-        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 330);
+        ctx.font = "bold 20px Arial";
+        ctx.fillText("COMPLETED!", x + infoWidth / 2, y + 260);
+        
+        // Team name
+        ctx.font = "17px Arial";
+        ctx.fillStyle = "#aaaaaa";
+        ctx.fillText(teamName, x + infoWidth / 2, y + 290);
+        
+        // Time with better styling
+        ctx.font = "bold 17px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText(`⏱️ ${completionTime}`, x + infoWidth / 2, y + 320);
         
         // Hashtag
-        ctx.font = "14px Arial";
+        ctx.font = "15px Arial";
         ctx.fillStyle = "#db2777";
-        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 355);
+        ctx.fillText("#RiddleCity", x + infoWidth / 2, y + 350);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
