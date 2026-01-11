@@ -183,7 +183,8 @@ export default function LocationPage({ params }: Props) {
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 text-center tracking-tight leading-tight">
           Riddle City {location}
         </h1>
-        <p className="text-lg text-white/80 mb-12">Choose Your Adventure</p>
+        <p className="text-lg text-white/80 mb-2">Choose Your Adventure</p>
+        <p className="text-sm text-white/60 mb-12">📍 Head to your start point before you begin!</p>
 
         <div className="w-full max-w-md mx-auto space-y-6">
           {/* Date Day Adventure */}
@@ -249,8 +250,6 @@ export default function LocationPage({ params }: Props) {
                   <span className="text-sm font-semibold">{dateStartTime}</span>
                 </div>
               )}
-              <div className="text-xs text-white/60 mt-1">
-              </div>
             </div>
           </button>
 
@@ -305,11 +304,11 @@ export default function LocationPage({ params }: Props) {
               {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
             </div>
 
-            {/* Starting location */}
+            {/* Start Point */}
             {(pubStartLabel || trackMetadataLoading) && (
               <div className="mt-3 pt-3 border-t border-white/20">
                 <span className="text-xs uppercase tracking-wide text-white/70">
-                  Starting location:
+                  Start Point:
                 </span>{" "}
                 <span className="text-sm font-semibold">
                   {trackMetadataLoading ? 'Loading...' : pubStartLabel}
@@ -322,11 +321,6 @@ export default function LocationPage({ params }: Props) {
                     <span className="text-sm font-semibold text-yellow-200">{pubStartTime}</span>
                   </div>
                 )}
-                <div className="text-xs text-white/60 mt-1">
-                  {!trackMetadataLoading && pubStartLabel && (
-                    <>Head to <strong>{pubStartLabel}</strong> to be ready for your adventure</>
-                  )}
-                </div>
               </div>
             )}
           </div>
