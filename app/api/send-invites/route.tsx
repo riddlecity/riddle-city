@@ -16,12 +16,11 @@ function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, l
         </div>
         
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
-          <h3 style="color: #333; margin-top: 0;">📋 Booking Details:</h3>
           <ul style="list-style: none; padding: 0;">
-            <li style="margin-bottom: 8px;"><strong>Adventure:</strong> ${adventureType} - ${location.charAt(0).toUpperCase() + location.slice(1)}</li>
-            <li style="margin-bottom: 8px;"><strong>Team:</strong> ${teamName}</li>
-            <li style="margin-bottom: 8px;"><strong>Players:</strong> ${players} people</li>
-            <li style="margin-bottom: 8px;"><strong>Booking ID:</strong> ${groupId}</li>
+            <li style="margin-bottom: 8px;"><strong>🎮 Adventure:</strong> ${adventureType}</li>
+            <li style="margin-bottom: 8px;"><strong>👥 Team:</strong> ${teamName}</li>
+            <li style="margin-bottom: 8px;"><strong>📍 Location:</strong> ${location.charAt(0).toUpperCase() + location.slice(1)}</li>
+            <li style="margin-bottom: 8px;"><strong>🎟️ Players:</strong> ${players} people</li>
           </ul>
         </div>
         
@@ -36,7 +35,7 @@ function getPaymentConfirmationEmail(teamLeaderName: string, teamName: string, l
         
         <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; color: #666; font-size: 14px;">
           <p>Best regards,<br>
-          <strong>Joe @ Riddle City</strong></p>
+          <strong>Cyril @ Riddle City</strong></p>
           <p>🕵️‍♀️ Puzzle-based adventures through your city<br>
           📍 riddlecity.co.uk</p>
         </div>
@@ -49,11 +48,10 @@ Hi ${teamLeaderName}! 🎉
 
 Your payment has been confirmed and your Riddle City adventure is ready to begin!
 
-Booking Details:
-• Adventure: ${adventureType} - ${location.charAt(0).toUpperCase() + location.slice(1)}
-• Team: ${teamName}
-• Players: ${players} people
-• Booking ID: ${groupId}
+🎮 Adventure: ${adventureType}
+👥 Team: ${teamName}
+📍 Location: ${location.charAt(0).toUpperCase() + location.slice(1)}
+🎟️ Players: ${players} people
 
 Start your adventure: ${process.env.NEXT_PUBLIC_BASE_URL}/${location}/${mode}/start/${groupId}
 
