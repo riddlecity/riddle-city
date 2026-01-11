@@ -75,11 +75,10 @@ export default function CollageGenerator({
 
     const config = getLayoutConfig(photoCount);
     const cellSize = 400;
-    const borderSize = 8; // Red border between photos
-    const outerBorderSize = 16; // Thick red border around entire collage
+    const borderSize = 12; // Slightly thicker uniform borders
+    const outerBorderSize = 12; // Same thickness as inner borders
     const footerHeight = config.hasFooter ? 150 : 0;
     const darkBg = "#121212"; // Off-black from home page
-    const redBorder = "#dc2626"; // Red matching site branding
 
     const innerWidth = config.cols * cellSize + (config.cols + 1) * borderSize;
     const innerHeight = config.rows * cellSize + (config.rows + 1) * borderSize + footerHeight;
@@ -87,12 +86,12 @@ export default function CollageGenerator({
     canvas.width = innerWidth + (outerBorderSize * 2);
     canvas.height = innerHeight + (outerBorderSize * 2);
 
-    // Outer red border (frame)
-    ctx.fillStyle = redBorder;
+    // Outer dark border (frame)
+    ctx.fillStyle = darkBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Inner red background (creates red borders between photos)
-    ctx.fillStyle = redBorder;
+    // Inner dark background (creates dark borders between photos)
+    ctx.fillStyle = darkBg;
     ctx.fillRect(outerBorderSize, outerBorderSize, innerWidth, innerHeight);
 
     // Load collage-specific logo
@@ -127,13 +126,6 @@ export default function CollageGenerator({
         ctx.fillStyle = darkBg;
         ctx.fillRect(x, y, infoWidth, cellSize);
         
-        // Logo dominates the space - very wide to prevent squishing
-        if (logo.complete) {
-          const logoWidth = 380;
-          const logoHeight = 290;
-          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 15, logoWidth, logoHeight);
-        }
-        
         // Get emoji for adventure type
         let adventureEmoji = "🎉";
         if (adventureName.toLowerCase().includes("date")) adventureEmoji = "💕";
@@ -143,21 +135,28 @@ export default function CollageGenerator({
         // Professional font stack matching website
         const fontStack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
         
-        // Adventure name with emoji - bright pink, bolder
+        // Adventure name at TOP - bright pink, bolder
         ctx.fillStyle = "#ec4899";
         ctx.font = `bold 20px ${fontStack}`;
         ctx.textAlign = "center";
-        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 325);
+        ctx.fillText(`${adventureEmoji} ${adventureName}`, x + infoWidth / 2, y + 30);
         
-        // All details on one line - white and bold
+        // Logo in CENTER - bigger and wider
+        if (logo.complete) {
+          const logoWidth = 390;
+          const logoHeight = 310;
+          ctx.drawImage(logo, x + (infoWidth - logoWidth) / 2, y + 50, logoWidth, logoHeight);
+        }
+        
+        // Team name and completion BELOW logo - white and bold
         ctx.fillStyle = "#ffffff";
         ctx.font = `bold 16px ${fontStack}`;
-        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 355);
+        ctx.fillText(`${teamName} • Completed in ${completionTime}`, x + infoWidth / 2, y + 375);
         
-        // Website URL at bottom - bigger and red to match branding
+        // Website URL at BOTTOM - bigger, red, and ALL CAPS
         ctx.font = `bold 17px ${fontStack}`;
         ctx.fillStyle = "#dc2626";
-        ctx.fillText("riddlecity.co.uk", x + infoWidth / 2, y + 382);
+        ctx.fillText("RIDDLECITY.CO.UK", x + infoWidth / 2, y + 395);
         
         if (isDoubleWideInfo) {
           i++; // Skip next cell
@@ -265,7 +264,7 @@ export default function CollageGenerator({
       // Website URL - bigger and red to match branding
       ctx.font = `bold 16px ${fontStack}`;
       ctx.fillStyle = "#dc2626";
-      ctx.fillText("riddlecity.co.uk", outerBorderSize + innerWidth / 2, footerY + 160);
+      ctx.fillText("RIDDLECITY.CO.UK", outerBorderSize + innerWidth / 2, footerY + 160);
     }
 
     // Convert to downloadable URL
