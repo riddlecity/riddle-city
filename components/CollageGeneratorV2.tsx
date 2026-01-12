@@ -17,12 +17,6 @@ const CANVAS_HEIGHT = 1350;
 const PADDING = 12;
 const CORNER_RADIUS = 12;
 
-// Badge styling
-const BADGE_STYLES = {
-  light: { bg: "#f5f5f0", text: "#1a1a1a", logo: "#1a1a1a" },
-  dark: { bg: "#2d3436", text: "#ffffff", logo: "#ffffff" }
-};
-
 interface PhotoTile {
   x: number;
   y: number;
@@ -384,7 +378,7 @@ export default function CollageGeneratorV2({
                 className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-3 shadow-lg"
               >
                 <Download className="w-5 h-5" />
-                Download Collage
+                Download & Tag @riddlecity.co.uk
               </button>
             </div>
           )}
