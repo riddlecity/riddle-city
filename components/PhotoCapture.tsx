@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, X, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Camera, Check } from "lucide-react";
 
 interface PhotoCaptureProps {
   riddleId: string;
@@ -11,8 +11,7 @@ interface PhotoCaptureProps {
 
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
   const [photo, setPhoto] = useState<string | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showLandscapeTip, setShowLandscapeTip] = useState(true);
+  const [showTipModal, setShowTipModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check if photo already exists for this riddle
@@ -72,7 +71,6 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         
         localStorage.setItem(`riddlecity_photo_${groupId}_${riddleId}`, compressedPhoto);
         setPhoto(compressedPhoto);
-        setIsCollapsed(true); // Auto-collapse after photo taken
         
         if (onPhotoTaken) onPhotoTaken();
       };
@@ -81,89 +79,90 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
     reader.readAsDataURL(file);
   };
 
-  const deletePhoto = () => {
-    localStorage.removeItem(`riddlecity_photo_${groupId}_${riddleId}`);
-    setPhoto(null);
-  };
-
   const currentPhoto = photo || existingPhoto;
   const hasPhoto = !!currentPhoto;
 
+  const handleButtonClick = () => {
+    if (hasPhoto) {
+      // If photo exists, directly open camera to retake
+      fileInputRef.current?.click();
+    } else {
+      // If no photo, show tip modal first
+      setShowTipModal(true);
+    }
+  };
+
+  const handleProceedToCamera = () => {
+    setShowTipModal(false);
+    fileInputRef.current?.click();
+  };
+
   return (
     <>
-      {/* Compact button at top-right */}
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`${
-            hasPhoto 
-              ? 'bg-green-600 hover:bg-green-700' 
-              : 'bg-purple-600 hover:bg-purple-700'
-          } text-white text-sm font-semibold py-2 px-3 rounded-lg flex items-center gap-2 transition-colors focus:outline-none shadow-lg`}
-        >
-          {hasPhoto ? (
-            <>
-              <Check className="w-4 h-4" />
-              <span className="hidden sm:inline">Photo taken</span>
-            </>
-          ) : (
-            <>
-              <Camera className="w-4 h-4" />
-              <span className="hidden sm:inline">Take photo</span>
-            </>
-          )}
-          {isCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
-        </button>
-        
-        {!isCollapsed && (
-          <div className="absolute top-full right-0 mt-2 bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 p-3 min-w-[280px]">
-            {showLandscapeTip && !hasPhoto && (
-              <div className="mb-3 p-2 bg-blue-500/20 border border-blue-500/50 rounded text-xs text-blue-300 flex items-start gap-2">
-                <span className="text-sm">�</span>
-                <div className="flex-1">
-                  <p className="font-medium">Photos auto-crop to landscape</p>
-                  <p className="text-blue-200/80 mt-0.5">Portrait photos will be center-cropped to 16:9. Turn phone sideways for best results!</p>
-                </div>
-                <button 
-                  onClick={() => setShowLandscapeTip(false)}
-                  className="text-blue-300 hover:text-blue-100"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition-colors focus:outline-none"
-              >
-                <Camera className="w-4 h-4" />
-                {hasPhoto ? 'Retake' : 'Capture'}
-              </button>
-              
-              {hasPhoto && (
-                <>
-                  <div className="relative">
-                    <img src={currentPhoto} alt="Team photo" className="w-12 h-12 rounded object-cover" />
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deletePhoto();
-                    }}
-                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors focus:outline-none"
-                    title="Delete photo"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </>
-              )}
+      {/* Tip Modal */}
+      {showTipModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-purple-900 to-purple-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl border-2 border-purple-500/30">
+            <div className="text-center mb-4">
+              <Camera className="w-12 h-12 text-purple-300 mx-auto mb-3" />
+              <h3 className="text-xl font-bold text-white mb-2">Team Photo Time! 📸</h3>
+              <p className="text-purple-200 text-sm">Capture memories at each venue for your collage</p>
             </div>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex items-start gap-3 bg-white/10 rounded-lg p-3">
+                <span className="text-2xl">🌄</span>
+                <div>
+                  <p className="text-white font-medium text-sm">Landscape works best</p>
+                  <p className="text-purple-200 text-xs">Turn your phone sideways</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 bg-white/10 rounded-lg p-3">
+                <span className="text-2xl">🤳</span>
+                <div>
+                  <p className="text-white font-medium text-sm">Team selfies encouraged!</p>
+                  <p className="text-purple-200 text-xs">Get everyone in the shot</p>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleProceedToCamera}
+              className="w-full bg-white hover:bg-purple-50 text-purple-900 font-bold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <Camera className="w-5 h-5" />
+              Open Camera
+            </button>
+            
+            <button
+              onClick={() => setShowTipModal(false)}
+              className="w-full text-purple-300 hover:text-white text-sm mt-3 transition-colors"
+            >
+              Maybe later
+            </button>
           </div>
+        </div>
+      )}
+
+      {/* Compact floating button - bottom right */}
+      <div className="fixed bottom-20 right-4 z-40">
+        {hasPhoto ? (
+          <button
+            onClick={handleButtonClick}
+            className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 px-3 rounded-full flex items-center gap-1.5 transition-colors focus:outline-none shadow-lg"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>Team selfie ✓</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleButtonClick}
+            className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2 px-3 rounded-full flex items-center gap-1.5 transition-colors focus:outline-none shadow-lg animate-pulse"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>Snap team selfie</span>
+          </button>
         )}
       </div>
 
