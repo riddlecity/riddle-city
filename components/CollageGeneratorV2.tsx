@@ -87,14 +87,21 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 3) {
-      // 1 large top + 2 below
-      const topH = Math.floor(h * 0.52);
-      const botH = h - topH - gap;
-      const botW = (w - gap) / 2;
-      photoTiles.push({ x: PADDING, y: PADDING, width: w, height: topH });
-      photoTiles.push({ x: PADDING, y: PADDING + topH + gap, width: botW, height: botH });
-      photoTiles.push({ x: PADDING + botW + gap, y: PADDING + topH + gap, width: botW, height: botH });
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
+      // 2x2 grid with badge in bottom-right spot
+      const row1H = Math.floor(h * 0.56);
+      const row2H = h - row1H - gap;
+      const col1W = Math.floor(w * 0.52);
+      const col2W = w - col1W - gap;
+      
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      
+      return {
+        photoTiles,
+        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap, width: col2W, height: row2H },
+        badgeOverlay: false
+      };
     }
 
     if (count === 4) {
@@ -111,7 +118,7 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 5) {
-      // 3 rows of 2 with varied dimensions (showing 5 photos)
+      // 3 rows of 2 with badge in 6th spot
       const row1H = Math.floor(h * 0.32);
       const row2H = Math.floor(h * 0.36);
       const row3H = h - row1H - row2H - gap * 2;
@@ -126,10 +133,14 @@ export default function CollageGeneratorV2({
       photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
       photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
       
-      // Row 3: One photo taking first column spot
+      // Row 3: Photo on left, badge on right
       photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
       
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
+      return {
+        photoTiles,
+        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H },
+        badgeOverlay: false
+      };
     }
 
     if (count === 6) {
@@ -153,7 +164,7 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 7) {
-      // 4 rows of 2 with varied dimensions (showing 7 photos)
+      // 4 rows of 2 with badge in 8th spot
       const row1H = Math.floor(h * 0.28);
       const row2H = Math.floor(h * 0.26);
       const row3H = Math.floor(h * 0.24);
@@ -173,10 +184,14 @@ export default function CollageGeneratorV2({
       photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
       photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
       
-      // Row 4: One photo taking first column spot
+      // Row 4: Photo on left, badge on right
       photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
       
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
+      return {
+        photoTiles,
+        badgeArea: { x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H },
+        badgeOverlay: false
+      };
     }
 
     if (count === 8) {
@@ -205,17 +220,39 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 9) {
-      // 1 large top + 4 rows of 2
-      const topH = Math.floor(h * 0.26);
-      const rowH = (h - topH - gap * 4) / 4;
-      const halfW = (w - gap) / 2;
-      photoTiles.push({ x: PADDING, y: PADDING, width: w, height: topH });
-      for (let row = 0; row < 4; row++) {
-        const y = PADDING + topH + gap + (rowH + gap) * row;
-        photoTiles.push({ x: PADDING, y, width: halfW, height: rowH });
-        photoTiles.push({ x: PADDING + halfW + gap, y, width: halfW, height: rowH });
-      }
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: Math.floor(h * 0.14) }, badgeOverlay: true };
+      // 5 rows of 2 with badge in 10th spot
+      const row1H = Math.floor(h * 0.22);
+      const row2H = Math.floor(h * 0.20);
+      const row3H = Math.floor(h * 0.21);
+      const row4H = Math.floor(h * 0.19);
+      const row5H = h - row1H - row2H - row3H - row4H - gap * 4;
+      const col1W = Math.floor(w * 0.52);
+      const col2W = w - col1W - gap;
+      
+      // Row 1
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      
+      // Row 2
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      
+      // Row 3
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
+      
+      // Row 4
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H });
+      
+      // Row 5: Photo on left, badge on right
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col1W, height: row5H });
+      
+      return {
+        photoTiles,
+        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col2W, height: row5H },
+        badgeOverlay: false
+      };
     }
 
     // 10+ photos: 5 rows of 2
