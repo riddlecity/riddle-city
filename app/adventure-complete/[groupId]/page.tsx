@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import CollageGenerator from "@/components/CollageGenerator";
+import CollageGenerator from "@/components/CollageGeneratorV2";
 
 interface Props {
   params: Promise<{ groupId: string }>;
