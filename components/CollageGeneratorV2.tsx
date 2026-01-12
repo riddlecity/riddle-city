@@ -87,17 +87,21 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 3) {
-      // 2 landscape photos on top, 1 on bottom with centered badge overlay
-      const topH = Math.floor(h * 0.22); // Reduced height to make top tiles landscape
-      const botH = h - topH - gap;
-      const topLeftW = Math.floor(w * 0.54);
-      const topRightW = w - topLeftW - gap;
+      // 2x2 grid with badge in smaller 4th spot
+      const row1H = Math.floor(h * 0.58); // Top row larger
+      const row2H = h - row1H - gap; // Bottom row smaller
+      const col1W = Math.floor(w * 0.52);
+      const col2W = w - col1W - gap;
       
-      photoTiles.push({ x: PADDING, y: PADDING, width: topLeftW, height: topH });
-      photoTiles.push({ x: PADDING + topLeftW + gap, y: PADDING, width: topRightW, height: topH });
-      photoTiles.push({ x: PADDING, y: PADDING + topH + gap, width: w, height: botH });
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col1W, height: row2H });
       
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
+      return {
+        photoTiles,
+        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap, width: col2W, height: row2H },
+        badgeOverlay: false
+      };
     }
 
     if (count === 4) {
@@ -160,10 +164,10 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 7) {
-      // 4 rows of 2 with badge in 8th spot
-      const row1H = Math.floor(h * 0.28);
-      const row2H = Math.floor(h * 0.26);
-      const row3H = Math.floor(h * 0.24);
+      // 4 rows of 2 with badge in 8th spot - largest rows in middle
+      const row1H = Math.floor(h * 0.22);
+      const row2H = Math.floor(h * 0.30);
+      const row3H = Math.floor(h * 0.26);
       const row4H = h - row1H - row2H - row3H - gap * 3;
       const col1W = Math.floor(w * 0.54);
       const col2W = w - col1W - gap;
@@ -191,10 +195,10 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 8) {
-      // 4 rows of 2 with varied dimensions
-      const row1H = Math.floor(h * 0.26);
-      const row2H = Math.floor(h * 0.28);
-      const row3H = Math.floor(h * 0.24);
+      // 4 rows of 2 with varied dimensions - largest rows in middle
+      const row1H = Math.floor(h * 0.22);
+      const row2H = Math.floor(h * 0.30);
+      const row3H = Math.floor(h * 0.26);
       const row4H = h - row1H - row2H - row3H - gap * 3;
       const col1W = Math.floor(w * 0.54);
       const col2W = w - col1W - gap;
@@ -431,8 +435,8 @@ export default function CollageGeneratorV2({
       });
     }
 
-    // Draw badge (larger for 5-photo layout)
-    const badgeScale = photoCount === 5 ? 0.70 : 0.50;
+    // Draw badge (larger for 5-photo layout, and 3-photo layout)
+    const badgeScale = photoCount === 5 ? 0.70 : photoCount === 3 ? 0.65 : 0.50;
     drawBadge(ctx, layout.badgeArea, stamp, useDarkBadge, badgeScale);
 
     // Convert to blob

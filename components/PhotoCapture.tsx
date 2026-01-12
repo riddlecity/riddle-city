@@ -178,10 +178,10 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         {hasPhoto ? (
           <button
             onClick={handleButtonClick}
-            className="inline-flex flex-col items-center justify-center gap-1 w-[110px] h-[110px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl p-2"
+            className="inline-flex flex-row items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-full transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            <Check className="w-5 h-5" />
-            <span className="text-xs text-center leading-tight">Checked in</span>
+            <Check className="w-4 h-4" />
+            <span className="text-sm">Checked in</span>
           </button>
         ) : (
           <button
