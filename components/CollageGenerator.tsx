@@ -14,7 +14,7 @@ interface CollageGeneratorProps {
 // Instagram-first canvas dimensions (4:5 aspect ratio)
 const CANVAS_WIDTH = 1080;
 const CANVAS_HEIGHT = 1350;
-const GUTTER = 16;
+const GUTTER = 8;
 const CORNER_RADIUS = 14;
 
 // Completion badge color options
@@ -496,19 +496,19 @@ export default function CollageGenerator({
             
             let drawWidth, drawHeight, offsetX, offsetY;
             
-            // Use "contain" style - fit entire image within tile (better for team photos)
+            // Use "cover" style - fill tile completely but minimize cropping
             if (imgAspect > tileAspect) {
-              // Image is wider - fit to width
+              // Image is wider than tile - fit to height, center horizontally
+              drawHeight = tile.height;
+              drawWidth = tile.height * imgAspect;
+              offsetX = (tile.width - drawWidth) / 2; // Center the crop
+              offsetY = 0;
+            } else {
+              // Image is taller than tile - fit to width, center vertically  
               drawWidth = tile.width;
               drawHeight = tile.width / imgAspect;
               offsetX = 0;
-              offsetY = (tile.height - drawHeight) / 2;
-            } else {
-              // Image is taller - fit to height
-              drawHeight = tile.height;
-              drawWidth = tile.height * imgAspect;
-              offsetX = (tile.width - drawWidth) / 2;
-              offsetY = 0;
+              offsetY = (tile.height - drawHeight) / 2; // Center the crop
             }
             
             ctx.save();
