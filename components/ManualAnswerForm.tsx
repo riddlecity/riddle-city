@@ -123,8 +123,8 @@ export default function ManualAnswerForm({
   return (
     <div className="max-w-md mx-auto">
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="bg-gradient-to-br from-purple-900/50 via-blue-900/40 to-indigo-900/50 backdrop-blur-sm border-2 border-purple-400/30 rounded-xl p-4 sm:p-5 shadow-xl">
-          <h3 className="text-base sm:text-lg font-bold text-white mb-3.5 text-center bg-gradient-to-r from-purple-200 via-blue-200 to-cyan-200 bg-clip-text text-transparent">
+        <div className="bg-gradient-to-br from-red-900/50 via-pink-900/40 to-rose-900/50 backdrop-blur-sm border-2 border-red-400/30 rounded-xl p-4 sm:p-5 shadow-xl">
+          <h3 className="text-base sm:text-lg font-bold text-white mb-3.5 text-center bg-gradient-to-r from-red-200 via-pink-200 to-rose-200 bg-clip-text text-transparent">
             🔍 Enter Your Answer
           </h3>
           
@@ -134,7 +134,7 @@ export default function ManualAnswerForm({
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="Type your answer here..."
-              className="w-full px-4 py-3 bg-white/15 border-2 border-purple-300/30 rounded-lg text-white text-sm placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400/50 focus:bg-white/20 transition-all shadow-inner"
+              className="w-full px-4 py-3 bg-white/15 border-2 border-red-300/30 rounded-lg text-white text-sm placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400/50 focus:bg-white/20 transition-all shadow-inner"
               disabled={isSubmitting}
               autoComplete="off"
               autoCapitalize="off"
@@ -150,7 +150,7 @@ export default function ManualAnswerForm({
             <button
               type="submit"
               disabled={isSubmitting || !answer.trim()}
-              className="w-full min-h-[46px] bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 active:scale-[0.98] disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-3 px-5 rounded-lg transition-all duration-200 shadow-lg hover:shadow-2xl disabled:cursor-not-allowed text-sm"
+              className="w-full min-h-[46px] bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 active:scale-[0.98] disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-3 px-5 rounded-lg transition-all duration-200 shadow-lg hover:shadow-2xl disabled:cursor-not-allowed text-sm"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center gap-2">

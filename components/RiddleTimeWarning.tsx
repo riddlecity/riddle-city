@@ -91,13 +91,13 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   const getWarningStyles = () => {
     switch (warning.severity) {
       case 'high':
-        return 'bg-gradient-to-r from-red-900/95 to-red-950/95 border-red-500/50 backdrop-blur-sm';
+        return 'bg-gradient-to-r from-red-950/80 to-purple-950/80 border-red-400/20 backdrop-blur-sm';
       case 'medium':
-        return 'bg-gradient-to-r from-yellow-900/95 to-orange-950/95 border-yellow-500/50 backdrop-blur-sm';
+        return 'bg-gradient-to-r from-yellow-950/80 to-purple-950/80 border-yellow-400/20 backdrop-blur-sm';
       case 'low':
-        return 'bg-gradient-to-r from-blue-900/95 to-blue-950/95 border-blue-500/50 backdrop-blur-sm';
+        return 'bg-gradient-to-r from-blue-950/80 to-purple-950/80 border-blue-400/20 backdrop-blur-sm';
       default:
-        return 'bg-gradient-to-r from-gray-900/95 to-gray-950/95 border-gray-500/50 backdrop-blur-sm';
+        return 'bg-gradient-to-r from-gray-950/80 to-purple-950/80 border-gray-400/20 backdrop-blur-sm';
     }
   };
 
