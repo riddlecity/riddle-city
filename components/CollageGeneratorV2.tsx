@@ -111,15 +111,23 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 5) {
-      // 2 + 2 + 1 pattern
-      const rowH = Math.floor(h * 0.31);
-      const botH = h - rowH * 2 - gap * 2;
-      const halfW = (w - gap) / 2;
-      photoTiles.push({ x: PADDING, y: PADDING, width: halfW, height: rowH });
-      photoTiles.push({ x: PADDING + halfW + gap, y: PADDING, width: halfW, height: rowH });
-      photoTiles.push({ x: PADDING, y: PADDING + rowH + gap, width: halfW, height: rowH });
-      photoTiles.push({ x: PADDING + halfW + gap, y: PADDING + rowH + gap, width: halfW, height: rowH });
-      photoTiles.push({ x: PADDING, y: PADDING + rowH * 2 + gap * 2, width: w, height: botH });
+      // 2 + 2 + 1 pattern with varied dimensions
+      const row1H = Math.floor(h * 0.28);
+      const row2H = Math.floor(h * 0.34);
+      const botH = h - row1H - row2H - gap * 2;
+      const col1W = Math.floor(w * 0.56);
+      const col2W = w - col1W - gap;
+      
+      // Row 1: 56/44 split
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      
+      // Row 2: 44/56 split (alternated)
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      
+      // Bottom: full width
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: w, height: botH });
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
@@ -144,16 +152,28 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 7) {
-      // 1 large top + 3 rows of 2
+      // 1 large top + 3 rows of 2 with varied dimensions
       const topH = Math.floor(h * 0.30);
-      const rowH = (h - topH - gap * 3) / 3;
-      const halfW = (w - gap) / 2;
+      const row1H = Math.floor((h - topH - gap * 3) * 0.36);
+      const row2H = Math.floor((h - topH - gap * 3) * 0.34);
+      const row3H = h - topH - row1H - row2H - gap * 3;
+      const col1W = Math.floor(w * 0.52);
+      const col2W = w - col1W - gap;
+      
       photoTiles.push({ x: PADDING, y: PADDING, width: w, height: topH });
-      for (let row = 0; row < 3; row++) {
-        const y = PADDING + topH + gap + (rowH + gap) * row;
-        photoTiles.push({ x: PADDING, y, width: halfW, height: rowH });
-        photoTiles.push({ x: PADDING + halfW + gap, y, width: halfW, height: rowH });
-      }
+      
+      // Row 1: 52/48 split
+      photoTiles.push({ x: PADDING, y: PADDING + topH + gap, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + topH + gap, width: col2W, height: row1H });
+      
+      // Row 2: 48/52 split (alternated)
+      photoTiles.push({ x: PADDING, y: PADDING + topH + gap + row1H + gap, width: col2W, height: row2H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + topH + gap + row1H + gap, width: col1W, height: row2H });
+      
+      // Row 3: 52/48 split
+      photoTiles.push({ x: PADDING, y: PADDING + topH + gap + row1H + gap + row2H + gap, width: col1W, height: row3H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + topH + gap + row1H + gap + row2H + gap, width: col2W, height: row3H });
+      
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
@@ -288,9 +308,9 @@ export default function CollageGeneratorV2({
   ) => {
     // Just draw the stamp logo - moderate size, slightly stretched
     if (stamp.complete) {
-      // Make logo 70% of tile width and stretch vertically 1.3x
-      const logoWidth = Math.floor(tile.width * 0.70);
-      const logoHeight = Math.floor(logoWidth * 1.3); // Slightly taller
+      // Make logo 55% of tile width and stretch vertically 1.1x
+      const logoWidth = Math.floor(tile.width * 0.55);
+      const logoHeight = Math.floor(logoWidth * 1.1); // Slightly taller
       const logoX = tile.x + (tile.width - logoWidth) / 2;
       const logoY = tile.y + (tile.height - logoHeight) / 2;
       
