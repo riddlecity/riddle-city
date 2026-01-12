@@ -456,6 +456,71 @@ export default function CollageGeneratorV2({
     link.click();
   };
 
+  const downloadAllPhotos = async () => {
+    const photoEntries = Object.entries(photos);
+    if (photoEntries.length === 0) return;
+
+    // Load stamp
+    const stamp = new Image();
+    const stampLoaded = new Promise<void>((resolve) => {
+      stamp.onload = () => resolve();
+      stamp.onerror = () => resolve();
+      stamp.src = "/riddlecity-collage-logo.png";
+    });
+    await stampLoaded;
+
+    // Create temporary canvas for watermarking
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+
+    for (let i = 0; i < photoEntries.length; i++) {
+      const [riddleId, dataUrl] = photoEntries[i];
+      
+      // Load photo
+      const img = new Image();
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          // Set canvas to image size
+          tempCanvas.width = img.width;
+          tempCanvas.height = img.height;
+          
+          // Draw original photo
+          tempCtx.drawImage(img, 0, 0);
+          
+          // Add watermark in bottom-right corner (15% of image width)
+          if (stamp.complete) {
+            const watermarkWidth = Math.floor(img.width * 0.15);
+            const watermarkHeight = Math.floor(watermarkWidth * 1.015);
+            const padding = Math.floor(img.width * 0.03); // 3% padding
+            const x = img.width - watermarkWidth - padding;
+            const y = img.height - watermarkHeight - padding;
+            
+            tempCtx.drawImage(stamp, x, y, watermarkWidth, watermarkHeight);
+          }
+          
+          // Download
+          tempCanvas.toBlob((blob) => {
+            if (blob) {
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-photo-${i + 1}.png`;
+              link.click();
+            }
+            resolve();
+          }, "image/png");
+        };
+        img.onerror = () => resolve();
+        img.src = dataUrl;
+      });
+      
+      // Stagger downloads
+      if (i < photoEntries.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+  };
+
   return (
     <div className="w-full space-y-6">
       {photoCount > 0 && (
@@ -484,6 +549,13 @@ export default function CollageGeneratorV2({
               >
                 <Download className="w-5 h-5" />
                 Download & Tag @riddlecity.co.uk
+              </button>
+              <button
+                onClick={downloadAllPhotos}
+                className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2 border border-white/20"
+              >
+                <Download className="w-4 h-4" />
+                Download All Photos
               </button>
             </div>
           )}
