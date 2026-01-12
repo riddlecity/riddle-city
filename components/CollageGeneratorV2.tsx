@@ -347,9 +347,9 @@ export default function CollageGeneratorV2({
   ) => {
     // Just draw the stamp logo - moderate size, slightly stretched
     if (stamp.complete) {
-      // Make logo 55% of tile width and stretch vertically 1.025x
-      const logoWidth = Math.floor(tile.width * 0.55);
-      const logoHeight = Math.floor(logoWidth * 1.025); // Very slightly taller
+      // Make logo 50% of tile width and stretch vertically 1.015x
+      const logoWidth = Math.floor(tile.width * 0.50);
+      const logoHeight = Math.floor(logoWidth * 1.015); // Very slightly taller
       const logoX = tile.x + (tile.width - logoWidth) / 2;
       const logoY = tile.y + (tile.height - logoHeight) / 2;
       
