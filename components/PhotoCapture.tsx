@@ -181,7 +181,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
             className="inline-flex flex-col items-center justify-center gap-1 w-[110px] h-[110px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl p-2"
           >
             <Check className="w-5 h-5" />
-            <span className="text-xs text-center leading-tight">Checked in ✓</span>
+            <span className="text-xs text-center leading-tight">Checked in</span>
           </button>
         ) : (
           <button
@@ -190,7 +190,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
           >
             <Camera className="w-5 h-5" />
             <span className="text-xs text-center leading-tight">Check in with a team selfie</span>
-            <span className="text-[9px] font-normal text-white/80 text-center leading-tight">Photos added to completion collage</span>
+            <span className="text-[9px] font-normal text-white/80 text-center leading-tight">For your adventure collage</span>
           </button>
         )}
       </div>
