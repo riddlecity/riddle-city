@@ -251,14 +251,35 @@ export default function CollageGeneratorV2({
       };
     }
 
-    // 10+ photos: 5 rows of 2
-    const photoH = (h - gap * 4) / 5;
-    const photoW = (w - gap) / 2;
-    for (let row = 0; row < 5; row++) {
-      const y = PADDING + (photoH + gap) * row;
-      photoTiles.push({ x: PADDING, y, width: photoW, height: photoH });
-      photoTiles.push({ x: PADDING + photoW + gap, y, width: photoW, height: photoH });
-    }
+    // 10+ photos: 5 rows of 2 with varied dimensions
+    const row1H = Math.floor(h * 0.22);
+    const row2H = Math.floor(h * 0.19);
+    const row3H = Math.floor(h * 0.21);
+    const row4H = Math.floor(h * 0.18);
+    const row5H = h - row1H - row2H - row3H - row4H - gap * 4;
+    const col1W = Math.floor(w * 0.54);
+    const col2W = w - col1W - gap;
+    
+    // Row 1
+    photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+    photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+    
+    // Row 2
+    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
+    photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
+    
+    // Row 3
+    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
+    photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
+    
+    // Row 4
+    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
+    photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H });
+    
+    // Row 5
+    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col1W, height: row5H });
+    photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col2W, height: row5H });
+    
     return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: Math.floor(h * 0.13) }, badgeOverlay: true };
   };
 
