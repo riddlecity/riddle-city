@@ -443,19 +443,22 @@ export default function CollageGenerator({
         
         // Draw stamp - fills entire tile
         if (stamp.complete) {
-          const stampScale = 0.90;
+          const stampScale = 0.95;
           const stampMaxWidth = tile.width * stampScale;
           const stampMaxHeight = tile.height * stampScale;
           
+          // Make stamp taller by using height-first approach
           const stampAspect = stamp.width / stamp.height;
           let stampWidth, stampHeight;
           
-          if (stampMaxWidth / stampAspect < stampMaxHeight) {
+          // Always prioritize height to make it taller/less squished
+          stampHeight = stampMaxHeight;
+          stampWidth = stampMaxHeight * stampAspect;
+          
+          // If too wide, constrain by width
+          if (stampWidth > stampMaxWidth) {
             stampWidth = stampMaxWidth;
             stampHeight = stampMaxWidth / stampAspect;
-          } else {
-            stampHeight = stampMaxHeight;
-            stampWidth = stampMaxHeight * stampAspect;
           }
           
           const stampX = tile.x + (tile.width - stampWidth) / 2;
@@ -531,19 +534,22 @@ export default function CollageGenerator({
       
       // No background - transparent overlay with big stamp
       if (stamp.complete) {
-        const stampScale = 0.95;
+        const stampScale = 0.98;
         const stampMaxWidth = tile.width * stampScale;
         const stampMaxHeight = tile.height * stampScale;
         
+        // Make stamp taller by using height-first approach
         const stampAspect = stamp.width / stamp.height;
         let stampWidth, stampHeight;
         
-        if (stampMaxWidth / stampAspect < stampMaxHeight) {
+        // Always prioritize height to make it taller/less squished
+        stampHeight = stampMaxHeight;
+        stampWidth = stampMaxHeight * stampAspect;
+        
+        // If too wide, constrain by width
+        if (stampWidth > stampMaxWidth) {
           stampWidth = stampMaxWidth;
           stampHeight = stampMaxWidth / stampAspect;
-        } else {
-          stampHeight = stampMaxHeight;
-          stampWidth = stampMaxHeight * stampAspect;
         }
         
         const stampX = tile.x + (tile.width - stampWidth) / 2;

@@ -178,23 +178,19 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         {hasPhoto ? (
           <button
             onClick={handleButtonClick}
-            className="inline-flex flex-col items-center justify-center gap-1 min-h-[52px] px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-flex flex-col items-center justify-center gap-1 w-[110px] h-[110px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl p-2"
           >
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4" />
-              <span className="text-sm">Checked in ✓</span>
-            </div>
+            <Check className="w-5 h-5" />
+            <span className="text-xs text-center leading-tight">Checked in ✓</span>
           </button>
         ) : (
           <button
             onClick={handleButtonClick}
-            className="inline-flex flex-col items-center justify-center gap-1 min-h-[52px] px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl animate-pulse"
+            className="inline-flex flex-col items-center justify-center gap-1.5 w-[110px] h-[110px] bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl animate-pulse p-2"
           >
-            <div className="flex items-center gap-2">
-              <Camera className="w-4 h-4" />
-              <span className="text-sm">Check in with a team selfie</span>
-            </div>
-            <span className="text-[10px] font-normal text-white/80">Photos added to completion collage</span>
+            <Camera className="w-5 h-5" />
+            <span className="text-xs text-center leading-tight">Check in with a team selfie</span>
+            <span className="text-[9px] font-normal text-white/80 text-center leading-tight">Photos added to completion collage</span>
           </button>
         )}
       </div>
