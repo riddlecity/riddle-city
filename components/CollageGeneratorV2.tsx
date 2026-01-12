@@ -87,8 +87,8 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 3) {
-      // 2 on top, 1 on bottom with centered badge overlay
-      const topH = Math.floor(h * 0.52);
+      // 2 landscape photos on top, 1 on bottom with centered badge overlay
+      const topH = Math.floor(h * 0.22); // Reduced height to make top tiles landscape
       const botH = h - topH - gap;
       const topLeftW = Math.floor(w * 0.54);
       const topRightW = w - topLeftW - gap;
@@ -339,12 +339,13 @@ export default function CollageGeneratorV2({
     ctx: CanvasRenderingContext2D,
     tile: PhotoTile,
     stamp: HTMLImageElement,
-    _useDarkBadge: boolean
+    _useDarkBadge: boolean,
+    scale: number = 0.50 // Default 50% width, can be overridden
   ) => {
     // Just draw the stamp logo - moderate size, slightly stretched
     if (stamp.complete) {
-      // Make logo 50% of tile width and stretch vertically 1.015x
-      const logoWidth = Math.floor(tile.width * 0.50);
+      // Make logo scale% of tile width and stretch vertically 1.015x
+      const logoWidth = Math.floor(tile.width * scale);
       const logoHeight = Math.floor(logoWidth * 1.015); // Very slightly taller
       const logoX = tile.x + (tile.width - logoWidth) / 2;
       const logoY = tile.y + (tile.height - logoHeight) / 2;
@@ -409,8 +410,9 @@ export default function CollageGeneratorV2({
       });
     }
 
-    // Draw badge
-    drawBadge(ctx, layout.badgeArea, stamp, useDarkBadge);
+    // Draw badge (larger for 5-photo layout)
+    const badgeScale = photoCount === 5 ? 0.70 : 0.50;
+    drawBadge(ctx, layout.badgeArea, stamp, useDarkBadge, badgeScale);
 
     // Convert to blob
     canvas.toBlob((blob) => {
