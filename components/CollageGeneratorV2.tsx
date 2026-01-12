@@ -98,13 +98,15 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 4) {
-      // 2x2 grid
-      const photoH = (h - gap) / 2;
-      const photoW = (w - gap) / 2;
-      photoTiles.push({ x: PADDING, y: PADDING, width: photoW, height: photoH });
-      photoTiles.push({ x: PADDING + photoW + gap, y: PADDING, width: photoW, height: photoH });
-      photoTiles.push({ x: PADDING, y: PADDING + photoH + gap, width: photoW, height: photoH });
-      photoTiles.push({ x: PADDING + photoW + gap, y: PADDING + photoH + gap, width: photoW, height: photoH });
+      // 2x2 grid with varied dimensions
+      const row1H = Math.floor(h * 0.54);
+      const row2H = h - row1H - gap;
+      const col1W = Math.floor(w * 0.52);
+      const col2W = w - col1W - gap;
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap, width: col2W, height: row2H });
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
@@ -122,14 +124,22 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 6) {
-      // 3 rows of 2
-      const photoH = (h - gap * 2) / 3;
-      const photoW = (w - gap) / 2;
-      for (let row = 0; row < 3; row++) {
-        const y = PADDING + (photoH + gap) * row;
-        photoTiles.push({ x: PADDING, y, width: photoW, height: photoH });
-        photoTiles.push({ x: PADDING + photoW + gap, y, width: photoW, height: photoH });
-      }
+      // 3 rows of 2 with varied heights
+      const row1H = Math.floor(h * 0.30);
+      const row2H = Math.floor(h * 0.38);
+      const row3H = h - row1H - row2H - gap * 2;
+      const col1W = Math.floor(w * 0.48);
+      const col2W = w - col1W - gap;
+      
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
+      
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
@@ -148,14 +158,27 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 8) {
-      // 4 rows of 2
-      const photoH = (h - gap * 3) / 4;
-      const photoW = (w - gap) / 2;
-      for (let row = 0; row < 4; row++) {
-        const y = PADDING + (photoH + gap) * row;
-        photoTiles.push({ x: PADDING, y, width: photoW, height: photoH });
-        photoTiles.push({ x: PADDING + photoW + gap, y, width: photoW, height: photoH });
-      }
+      // 4 rows of 2 with varied dimensions
+      const row1H = Math.floor(h * 0.26);
+      const row2H = Math.floor(h * 0.28);
+      const row3H = Math.floor(h * 0.24);
+      const row4H = h - row1H - row2H - row3H - gap * 3;
+      const col1W = Math.floor(w * 0.54);
+      const col2W = w - col1W - gap;
+      
+      // Alternate column widths for visual interest
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
+      
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
+      
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H });
+      
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: Math.floor(h * 0.14) }, badgeOverlay: true };
     }
 
@@ -263,11 +286,11 @@ export default function CollageGeneratorV2({
     stamp: HTMLImageElement,
     _useDarkBadge: boolean
   ) => {
-    // Just draw the stamp logo - much bigger and stretched taller
+    // Just draw the stamp logo - moderate size, slightly stretched
     if (stamp.complete) {
-      // Make logo fill 90% of tile width and stretch vertically 1.8x
-      const logoWidth = Math.floor(tile.width * 0.90);
-      const logoHeight = Math.floor(logoWidth * 1.8); // Stretch taller
+      // Make logo 70% of tile width and stretch vertically 1.3x
+      const logoWidth = Math.floor(tile.width * 0.70);
+      const logoHeight = Math.floor(logoWidth * 1.3); // Slightly taller
       const logoX = tile.x + (tile.width - logoWidth) / 2;
       const logoY = tile.y + (tile.height - logoHeight) / 2;
       
