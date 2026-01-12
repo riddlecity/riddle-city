@@ -447,11 +447,11 @@ export default function CollageGenerator({
           const stampMaxWidth = tile.width * stampScale;
           const stampMaxHeight = tile.height * stampScale;
           
-          // Make stamp taller by using height-first approach
+          // Make stamp taller by stretching height
           const stampAspect = stamp.width / stamp.height;
           let stampWidth, stampHeight;
           
-          // Always prioritize height to make it taller/less squished
+          // Calculate base dimensions
           stampHeight = stampMaxHeight;
           stampWidth = stampMaxHeight * stampAspect;
           
@@ -459,6 +459,14 @@ export default function CollageGenerator({
           if (stampWidth > stampMaxWidth) {
             stampWidth = stampMaxWidth;
             stampHeight = stampMaxWidth / stampAspect;
+          }
+          
+          // Elongate vertically by 30%
+          stampHeight = stampHeight * 1.3;
+          
+          // Re-check if too tall after stretching
+          if (stampHeight > stampMaxHeight) {
+            stampHeight = stampMaxHeight;
           }
           
           const stampX = tile.x + (tile.width - stampWidth) / 2;
@@ -538,11 +546,11 @@ export default function CollageGenerator({
         const stampMaxWidth = tile.width * stampScale;
         const stampMaxHeight = tile.height * stampScale;
         
-        // Make stamp taller by using height-first approach
+        // Make stamp taller by stretching height
         const stampAspect = stamp.width / stamp.height;
         let stampWidth, stampHeight;
         
-        // Always prioritize height to make it taller/less squished
+        // Calculate base dimensions
         stampHeight = stampMaxHeight;
         stampWidth = stampMaxHeight * stampAspect;
         
@@ -550,6 +558,14 @@ export default function CollageGenerator({
         if (stampWidth > stampMaxWidth) {
           stampWidth = stampMaxWidth;
           stampHeight = stampMaxWidth / stampAspect;
+        }
+        
+        // Elongate vertically by 30%
+        stampHeight = stampHeight * 1.3;
+        
+        // Re-check if too tall after stretching
+        if (stampHeight > stampMaxHeight) {
+          stampHeight = stampMaxHeight;
         }
         
         const stampX = tile.x + (tile.width - stampWidth) / 2;
