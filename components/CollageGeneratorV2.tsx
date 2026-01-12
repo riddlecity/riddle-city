@@ -39,8 +39,8 @@ interface Layout {
 export default function CollageGeneratorV2({ 
   groupId, 
   teamName,
-  adventureName,
-  completionTime, 
+  adventureName: _adventureName,
+  completionTime: _completionTime, 
   riddleIds 
 }: CollageGeneratorProps) {
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
