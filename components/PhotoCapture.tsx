@@ -125,8 +125,8 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
           <div className="bg-gradient-to-br from-purple-900 to-purple-800 rounded-xl p-6 max-w-sm w-full shadow-2xl border border-purple-500/30">
             <div className="text-center mb-4">
               <Camera className="w-12 h-12 text-purple-300 mx-auto mb-3" />
-              <h3 className="text-xl font-bold text-white mb-2">📸 Venue Photo</h3>
-              <p className="text-purple-200 text-sm">Snap a photo at each venue to build your adventure collage!</p>
+              <h3 className="text-xl font-bold text-white mb-2">📸 Team Check-In</h3>
+              <p className="text-purple-200 text-sm">Check in with a team selfie at each stop to build your adventure collage!</p>
             </div>
             
             <div className="space-y-3 mb-6">
@@ -134,7 +134,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
                 <span className="text-2xl">🎨</span>
                 <div>
                   <p className="text-white font-medium text-sm">Generate your collage at the end</p>
-                  <p className="text-purple-200 text-xs">All venue photos combined into one Instagram-ready image</p>
+                  <p className="text-purple-200 text-xs">All team selfies combined into one Instagram-ready image</p>
                 </div>
               </div>
               
@@ -149,8 +149,8 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               <div className="flex items-start gap-3 bg-white/10 rounded-lg p-3">
                 <span className="text-2xl">🤳</span>
                 <div>
-                  <p className="text-white font-medium text-sm">Team selfies encouraged!</p>
-                  <p className="text-purple-200 text-xs">Get everyone in the shot</p>
+                  <p className="text-white font-medium text-sm">Get everyone in the shot!</p>
+                  <p className="text-purple-200 text-xs">Selfie mode recommended</p>
                 </div>
               </div>
             </div>
@@ -178,18 +178,23 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         {hasPhoto ? (
           <button
             onClick={handleButtonClick}
-            className="inline-flex items-center justify-center gap-2 min-h-[52px] px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
+            className="inline-flex flex-col items-center justify-center gap-1 min-h-[52px] px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            <Check className="w-4 h-4" />
-            <span>Venue photo ✓</span>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4" />
+              <span className="text-sm">Checked in ✓</span>
+            </div>
           </button>
         ) : (
           <button
             onClick={handleButtonClick}
-            className="inline-flex items-center justify-center gap-2 min-h-[52px] px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-sm animate-pulse"
+            className="inline-flex flex-col items-center justify-center gap-1 min-h-[52px] px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl animate-pulse"
           >
-            <Camera className="w-4 h-4" />
-            <span>Snap venue photo</span>
+            <div className="flex items-center gap-2">
+              <Camera className="w-4 h-4" />
+              <span className="text-sm">Check in with a team selfie</span>
+            </div>
+            <span className="text-[10px] font-normal text-white/80">Photos added to completion collage</span>
           </button>
         )}
       </div>

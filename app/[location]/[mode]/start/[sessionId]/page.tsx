@@ -332,6 +332,22 @@ export default async function StartPage({ params, searchParams }: Props) {
               </p>
             </div>
 
+            {/* Photo info card */}
+            <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">📸</span>
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold text-sm mb-1">Team Selfie Collage</h3>
+                  <p className="text-white/80 text-xs mb-2">
+                    As team leader, snap a selfie at each venue to create your adventure collage at the end!
+                  </p>
+                  <p className="text-purple-200/60 text-[10px]">
+                    🔒 Photos are stored locally on your device, not on our servers
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Start button card */}
             <div className="bg-white/5 border border-white/15 rounded-2xl p-5 flex items-center justify-between gap-4">
               <div className="text-white/80">
