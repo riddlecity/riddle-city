@@ -475,7 +475,7 @@ export default function CollageGeneratorV2({
     if (!tempCtx) return;
 
     for (let i = 0; i < photoEntries.length; i++) {
-      const [riddleId, dataUrl] = photoEntries[i];
+      const [, dataUrl] = photoEntries[i];
       
       // Load photo
       const img = new Image();
