@@ -337,11 +337,11 @@ export default async function StartPage({ params, searchParams }: Props) {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">📸</span>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold text-sm mb-1">Team Selfie Collage</h3>
-                  <p className="text-white/80 text-xs mb-2">
+                  <h3 className="text-white font-semibold text-base mb-1.5">Team Selfie Collage</h3>
+                  <p className="text-white/80 text-sm mb-2">
                     As team leader, snap a selfie at each venue to create your adventure collage at the end!
                   </p>
-                  <p className="text-purple-200/60 text-[10px]">
+                  <p className="text-purple-200/60 text-xs">
                     🔒 Photos are stored locally on your device, not on our servers
                   </p>
                 </div>
