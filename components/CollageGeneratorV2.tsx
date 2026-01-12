@@ -87,21 +87,17 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 3) {
-      // 2x2 grid with badge in bottom-right spot
-      const row1H = Math.floor(h * 0.56);
-      const row2H = h - row1H - gap;
-      const col1W = Math.floor(w * 0.52);
-      const col2W = w - col1W - gap;
+      // 2 on top, 1 on bottom with centered badge overlay
+      const topH = Math.floor(h * 0.52);
+      const botH = h - topH - gap;
+      const topLeftW = Math.floor(w * 0.54);
+      const topRightW = w - topLeftW - gap;
       
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col1W, height: row2H });
+      photoTiles.push({ x: PADDING, y: PADDING, width: topLeftW, height: topH });
+      photoTiles.push({ x: PADDING + topLeftW + gap, y: PADDING, width: topRightW, height: topH });
+      photoTiles.push({ x: PADDING, y: PADDING + topH + gap, width: w, height: botH });
       
-      return {
-        photoTiles,
-        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap, width: col2W, height: row2H },
-        badgeOverlay: false
-      };
+      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
     if (count === 4) {
