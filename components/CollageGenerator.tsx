@@ -496,16 +496,19 @@ export default function CollageGenerator({
             
             let drawWidth, drawHeight, offsetX, offsetY;
             
+            // Use "contain" style - fit entire image within tile (better for team photos)
             if (imgAspect > tileAspect) {
-              drawHeight = tile.height;
-              drawWidth = tile.height * imgAspect;
-              offsetX = (tile.width - drawWidth) / 2;
-              offsetY = 0;
-            } else {
+              // Image is wider - fit to width
               drawWidth = tile.width;
               drawHeight = tile.width / imgAspect;
               offsetX = 0;
               offsetY = (tile.height - drawHeight) / 2;
+            } else {
+              // Image is taller - fit to height
+              drawHeight = tile.height;
+              drawWidth = tile.height * imgAspect;
+              offsetX = (tile.width - drawWidth) / 2;
+              offsetY = 0;
             }
             
             ctx.save();
