@@ -278,8 +278,8 @@ export default async function RiddlePage({ params }: Props) {
           ) : (
             <h1
               className="font-bold text-white leading-tight drop-shadow-lg mb-8
-                         text-[clamp(1.75rem,6vw,2.5rem)]
-                         md:text-[clamp(2rem,4vw,3rem)]
+                         text-[clamp(1.5rem,5vw,2.25rem)]
+                         md:text-[clamp(1.75rem,3.5vw,2.5rem)]
                          px-2"
               style={{
                 textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
