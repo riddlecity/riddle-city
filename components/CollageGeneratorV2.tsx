@@ -267,52 +267,19 @@ export default function CollageGeneratorV2({
     ctx: CanvasRenderingContext2D,
     tile: PhotoTile,
     stamp: HTMLImageElement,
-    useDarkBadge: boolean
+    _useDarkBadge: boolean
   ) => {
-    const colors = useDarkBadge ? BADGE_STYLES.dark : BADGE_STYLES.light;
-
-    // Badge background with rounded corners
-    ctx.save();
-    ctx.fillStyle = colors.bg;
-    ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetY = 8;
-    
-    const r = CORNER_RADIUS;
-    ctx.beginPath();
-    ctx.moveTo(tile.x + r, tile.y);
-    ctx.lineTo(tile.x + tile.width - r, tile.y);
-    ctx.arcTo(tile.x + tile.width, tile.y, tile.x + tile.width, tile.y + r, r);
-    ctx.lineTo(tile.x + tile.width, tile.y + tile.height - r);
-    ctx.arcTo(tile.x + tile.width, tile.y + tile.height, tile.x + tile.width - r, tile.y + tile.height, r);
-    ctx.lineTo(tile.x + r, tile.y + tile.height);
-    ctx.arcTo(tile.x, tile.y + tile.height, tile.x, tile.y + tile.height - r, r);
-    ctx.lineTo(tile.x, tile.y + r);
-    ctx.arcTo(tile.x, tile.y, tile.x + r, tile.y, r);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    // Logo
+    // Just draw the stamp logo - much bigger and stretched taller
     if (stamp.complete) {
-      const logoSize = Math.floor(tile.height * 0.65);
-      const logoX = tile.x + (tile.width - logoSize) / 2;
-      const logoY = tile.y + (tile.height - logoSize) / 2;
+      // Make logo fill 90% of tile width and stretch vertically 1.8x
+      const logoWidth = Math.floor(tile.width * 0.90);
+      const logoHeight = Math.floor(logoWidth * 1.8); // Stretch taller
+      const logoX = tile.x + (tile.width - logoWidth) / 2;
+      const logoY = tile.y + (tile.height - logoHeight) / 2;
       
-      ctx.save();
-      if (colors.logo === "#ffffff") {
-        ctx.filter = "brightness(0) invert(1)";
-      }
-      ctx.drawImage(stamp, logoX, logoY, logoSize, logoSize);
-      ctx.restore();
+      // Draw stamp directly without any filters or backgrounds
+      ctx.drawImage(stamp, logoX, logoY, logoWidth, logoHeight);
     }
-
-    // Team name
-    ctx.fillStyle = colors.text;
-    ctx.font = `bold ${Math.floor(tile.height * 0.16)}px Arial, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(teamName, tile.x + tile.width / 2, tile.y + tile.height * 0.85);
   };
 
   const generateCollage = async () => {
