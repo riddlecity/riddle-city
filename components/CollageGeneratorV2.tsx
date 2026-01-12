@@ -111,23 +111,24 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 5) {
-      // 2 + 2 + 1 pattern with varied dimensions
-      const row1H = Math.floor(h * 0.28);
-      const row2H = Math.floor(h * 0.34);
-      const botH = h - row1H - row2H - gap * 2;
-      const col1W = Math.floor(w * 0.56);
+      // 3 rows of 2 with varied dimensions (showing 5 photos)
+      const row1H = Math.floor(h * 0.32);
+      const row2H = Math.floor(h * 0.36);
+      const row3H = h - row1H - row2H - gap * 2;
+      const col1W = Math.floor(w * 0.58);
       const col2W = w - col1W - gap;
       
-      // Row 1: 56/44 split
+      // Row 1: 58/42 split
       photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
       photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
       
-      // Row 2: 44/56 split (alternated)
+      // Row 2: 42/58 split (alternated)
       photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
       photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
       
-      // Bottom: full width
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: w, height: botH });
+      // Row 3: One photo taking first column spot
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
+      
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
@@ -152,27 +153,28 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 7) {
-      // 1 large top + 3 rows of 2 with varied dimensions
-      const topH = Math.floor(h * 0.30);
-      const row1H = Math.floor((h - topH - gap * 3) * 0.36);
-      const row2H = Math.floor((h - topH - gap * 3) * 0.34);
-      const row3H = h - topH - row1H - row2H - gap * 3;
-      const col1W = Math.floor(w * 0.52);
+      // 4 rows of 2 with varied dimensions (showing 7 photos)
+      const row1H = Math.floor(h * 0.28);
+      const row2H = Math.floor(h * 0.26);
+      const row3H = Math.floor(h * 0.24);
+      const row4H = h - row1H - row2H - row3H - gap * 3;
+      const col1W = Math.floor(w * 0.54);
       const col2W = w - col1W - gap;
       
-      photoTiles.push({ x: PADDING, y: PADDING, width: w, height: topH });
+      // Row 1: 54/46 split
+      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
       
-      // Row 1: 52/48 split
-      photoTiles.push({ x: PADDING, y: PADDING + topH + gap, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + topH + gap, width: col2W, height: row1H });
+      // Row 2: 46/54 split (alternated)
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
+      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
       
-      // Row 2: 48/52 split (alternated)
-      photoTiles.push({ x: PADDING, y: PADDING + topH + gap + row1H + gap, width: col2W, height: row2H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + topH + gap + row1H + gap, width: col1W, height: row2H });
+      // Row 3: 54/46 split
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
+      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
       
-      // Row 3: 52/48 split
-      photoTiles.push({ x: PADDING, y: PADDING + topH + gap + row1H + gap + row2H + gap, width: col1W, height: row3H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + topH + gap + row1H + gap + row2H + gap, width: col2W, height: row3H });
+      // Row 4: One photo taking first column spot
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
       
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
@@ -308,9 +310,9 @@ export default function CollageGeneratorV2({
   ) => {
     // Just draw the stamp logo - moderate size, slightly stretched
     if (stamp.complete) {
-      // Make logo 55% of tile width and stretch vertically 1.1x
+      // Make logo 55% of tile width and stretch vertically 1.025x
       const logoWidth = Math.floor(tile.width * 0.55);
-      const logoHeight = Math.floor(logoWidth * 1.1); // Slightly taller
+      const logoHeight = Math.floor(logoWidth * 1.025); // Very slightly taller
       const logoX = tile.x + (tile.width - logoWidth) / 2;
       const logoY = tile.y + (tile.height - logoHeight) / 2;
       
