@@ -27,9 +27,9 @@ export default function TimeWarningModal({
     switch (warning.severity) {
       case 'high':
         return {
-          background: 'bg-gradient-to-br from-red-900/95 to-red-950/95',
-          border: 'border-red-500/50',
-          buttonContinue: 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700',
+          background: 'bg-gradient-to-br from-red-900/90 via-red-950/85 to-orange-950/90',
+          border: 'border-red-400/30',
+          buttonContinue: 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700',
           buttonBack: 'bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/40',
           icon: '🚨',
           textColor: 'text-red-100',
@@ -62,13 +62,13 @@ export default function TimeWarningModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-      <div className={`max-w-md w-full ${styles.background} border-2 ${styles.border} rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto backdrop-blur-md`}>
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-3 animate-pulse">{styles.icon}</div>
-          <h3 className={`text-2xl font-bold ${styles.heading} mb-4 tracking-tight`}>
+      <div className={`max-w-md w-full ${styles.background} border-2 ${styles.border} rounded-xl p-5 shadow-2xl max-h-[85vh] overflow-y-auto backdrop-blur-md`}>
+        <div className="text-center mb-4">
+          <div className="text-4xl mb-2 animate-pulse">{styles.icon}</div>
+          <h3 className={`text-xl font-bold ${styles.heading} mb-3 tracking-tight`}>
             Location Hours Notice
           </h3>
-          <p className={`text-lg ${styles.textColor} leading-relaxed font-medium`}>
+          <p className={`text-base ${styles.textColor} leading-relaxed font-medium`}>
             {warning.message}
           </p>
         </div>
