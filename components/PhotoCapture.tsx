@@ -10,14 +10,18 @@ interface PhotoCaptureProps {
 }
 
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
-  const [photo, setPhoto] = useState<string | null>(null);
+  // Initialize photo state from localStorage
+  const [photo, setPhoto] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`);
+    }
+    return null;
+  });
   const [showTipModal, setShowTipModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if photo already exists for this riddle
-  const existingPhoto = typeof window !== "undefined" 
-    ? localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`)
-    : null;
+  // For backwards compatibility
+  const existingPhoto = photo;
 
   // Track how many times user has seen the modal
   const getTipModalCount = () => {

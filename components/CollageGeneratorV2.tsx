@@ -504,11 +504,12 @@ export default function CollageGeneratorV2({
             if (blob) {
               const link = document.createElement("a");
               link.href = URL.createObjectURL(blob);
-              link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-photo-${i + 1}.png`;
+              link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-photo-${i + 1}.jpg`;
               link.click();
+              URL.revokeObjectURL(link.href);
             }
             resolve();
-          }, "image/png");
+          }, "image/jpeg", 0.9);
         };
         img.onerror = () => resolve();
         img.src = dataUrl;
