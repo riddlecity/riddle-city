@@ -113,7 +113,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
                 0, 0, TARGET_WIDTH, TARGET_HEIGHT
               );
               
-              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.5); // Reduced from 0.7 to 0.5
+              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.65); // Increased from 0.5 to 0.65 for better quality
               console.log('Photo compressed, size:', compressedPhoto.length);
               
               const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
