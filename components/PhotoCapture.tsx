@@ -38,12 +38,18 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
 
   const handlePhotoCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    console.log('handlePhotoCapture called, file:', file);
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
+      console.log('FileReader loaded');
       const img = new Image();
       img.onload = () => {
+        console.log('Image loaded, processing...');
         const canvas = document.createElement("canvas");
         const TARGET_WIDTH = 1280;
         const TARGET_HEIGHT = 720;
@@ -58,7 +64,10 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         canvas.height = TARGET_HEIGHT;
         
         const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        if (!ctx) {
+          console.error('Failed to get canvas context');
+          return;
+        }
         
         // Calculate crop dimensions to fit landscape aspect ratio
         let cropWidth, cropHeight, cropX, cropY;
@@ -85,11 +94,19 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         );
         
         const compressedPhoto = canvas.toDataURL("image/jpeg", 0.7);
+        console.log('Photo compressed, size:', compressedPhoto.length);
         
-        localStorage.setItem(`riddlecity_photo_${groupId}_${riddleId}`, compressedPhoto);
+        const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
+        localStorage.setItem(storageKey, compressedPhoto);
+        console.log('Photo saved to localStorage with key:', storageKey);
+        
         setPhoto(compressedPhoto);
+        console.log('Photo state updated');
         
-        if (onPhotoTaken) onPhotoTaken();
+        if (onPhotoTaken) {
+          onPhotoTaken();
+          console.log('onPhotoTaken callback called');
+        }
       };
       img.src = e.target?.result as string;
     };
