@@ -105,15 +105,25 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 4) {
-      // 2x2 grid with varied dimensions - offset rows for visual interest
-      const row1H = Math.floor(h * 0.38);
-      const row2H = Math.floor(h * 0.32);
+      // 2x2 staggered grid - photos criss-cross for visual interest
+      const row1H = Math.floor(h * 0.45);
+      const row2H = Math.floor(h * 0.48);
+      const topGap = gap;
+      const bottomGap = Math.floor(gap * 1.5); // Slightly larger gap for offset
+      
+      // Top row
       const col1W = Math.floor(w * 0.48);
       const col2W = w - col1W - gap;
       photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
       photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap, width: col2W, height: row2H });
+      
+      // Bottom row - wider left (picture 3), narrower right (picture 4), slightly offset down
+      const col3W = Math.floor(w * 0.54); // Picture 3 wider than picture 1
+      const col4W = w - col3W - gap; // Picture 4 narrower than picture 2
+      const row2Y = PADDING + row1H + bottomGap;
+      
+      photoTiles.push({ x: PADDING, y: row2Y, width: col3W, height: row2H });
+      photoTiles.push({ x: PADDING + col3W + gap, y: row2Y, width: col4W, height: row2H });
       return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
     }
 
