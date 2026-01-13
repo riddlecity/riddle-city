@@ -120,23 +120,31 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   const hasPhoto = !!currentPhoto;
 
   const handleButtonClick = () => {
+    console.log('Button clicked. hasPhoto:', hasPhoto, 'groupId:', groupId, 'riddleId:', riddleId);
+    console.log('fileInputRef.current:', fileInputRef.current);
+    
     if (hasPhoto) {
       // If photo exists, directly open camera to retake
+      console.log('Photo exists, opening camera for retake');
       fileInputRef.current?.click();
     } else {
       // If no photo, check if we should show modal (first 2 times only)
       const modalCount = getTipModalCount();
+      console.log('No photo yet, modal count:', modalCount);
       if (modalCount < 2) {
+        console.log('Showing tip modal');
         setShowTipModal(true);
         incrementTipModalCount();
       } else {
         // After 2 times, directly open camera
+        console.log('Opening camera directly (after 2 modals)');
         fileInputRef.current?.click();
       }
     }
   };
 
   const handleProceedToCamera = () => {
+    console.log('Proceed to camera clicked');
     setShowTipModal(false);
     fileInputRef.current?.click();
   };
