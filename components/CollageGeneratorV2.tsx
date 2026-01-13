@@ -549,7 +549,7 @@ export default function CollageGeneratorV2({
             className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 disabled:from-gray-600 disabled:via-gray-600 disabled:to-gray-600 text-white font-semibold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg"
           >
             <Instagram className="w-5 h-5" />
-            {isGenerating ? "Generating Collage..." : collageUrl ? "Regenerate Collage" : "Generate Instagram Collage"}
+            {isGenerating ? "Generating Collage..." : collageUrl ? "Randomize Collage" : "Generate Instagram Collage"}
           </button>
 
           {collageUrl && (
@@ -566,7 +566,7 @@ export default function CollageGeneratorV2({
                 className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-3 shadow-lg"
               >
                 <Download className="w-5 h-5" />
-                Download & Tag @riddlecity.co.uk
+                Download Collage & Tag @riddlecity.co.uk
               </button>
               <button
                 onClick={downloadAllPhotos}
