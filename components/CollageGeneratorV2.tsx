@@ -490,7 +490,7 @@ export default function CollageGeneratorV2({
         console.log('Stamp failed to load, continuing without watermark');
         resolve();
       };
-      stamp.src = "/riddlecity-collage-logo.png";
+      stamp.src = "/collagestamp.png";
     });
     await stampLoaded;
 
