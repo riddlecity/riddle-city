@@ -78,6 +78,10 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               const ctx = canvas.getContext("2d");
               if (!ctx) return;
               
+              // Flip image horizontally to un-mirror selfies
+              ctx.translate(TARGET_WIDTH, 0);
+              ctx.scale(-1, 1);
+              
               let cropWidth, cropHeight, cropX, cropY;
               
               if (sourceAspect > TARGET_ASPECT) {
@@ -230,7 +234,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        capture="user"
         onChange={handlePhotoCapture}
         className="hidden"
       />
