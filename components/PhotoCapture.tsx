@@ -45,83 +45,113 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   };
 
   const handlePhotoCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    console.log('handlePhotoCapture called, file:', file);
-    if (!file) {
-      console.log('No file selected');
-      return;
-    }
+    try {
+      const file = event.target.files?.[0];
+      console.log('handlePhotoCapture called, file:', file);
+      
+      if (!file) {
+        console.log('No file selected');
+        alert('No file selected');
+        return;
+      }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      console.log('FileReader loaded');
-      const img = new Image();
-      img.onload = () => {
-        console.log('Image loaded, processing...');
-        const canvas = document.createElement("canvas");
-        const TARGET_WIDTH = 1280;
-        const TARGET_HEIGHT = 720;
-        const TARGET_ASPECT = TARGET_WIDTH / TARGET_HEIGHT; // 16:9 landscape
-        
-        const sourceWidth = img.width;
-        const sourceHeight = img.height;
-        const sourceAspect = sourceWidth / sourceHeight;
-        
-        // Always output landscape dimensions
-        canvas.width = TARGET_WIDTH;
-        canvas.height = TARGET_HEIGHT;
-        
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          console.error('Failed to get canvas context');
-          return;
-        }
-        
-        // Calculate crop dimensions to fit landscape aspect ratio
-        let cropWidth, cropHeight, cropX, cropY;
-        
-        if (sourceAspect > TARGET_ASPECT) {
-          // Source is wider - crop sides
-          cropHeight = sourceHeight;
-          cropWidth = sourceHeight * TARGET_ASPECT;
-          cropX = (sourceWidth - cropWidth) / 2;
-          cropY = 0;
-        } else {
-          // Source is taller - crop top/bottom
-          cropWidth = sourceWidth;
-          cropHeight = sourceWidth / TARGET_ASPECT;
-          cropX = 0;
-          cropY = (sourceHeight - cropHeight) / 2;
-        }
-        
-        // Draw cropped and scaled image
-        ctx.drawImage(
-          img,
-          cropX, cropY, cropWidth, cropHeight, // source crop
-          0, 0, TARGET_WIDTH, TARGET_HEIGHT // destination
-        );
-        
-        const compressedPhoto = canvas.toDataURL("image/jpeg", 0.7);
-        console.log('Photo compressed, size:', compressedPhoto.length);
-        
-        const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
-        localStorage.setItem(storageKey, compressedPhoto);
-        console.log('Photo saved to localStorage with key:', storageKey);
-        
-        setPhoto(compressedPhoto);
-        console.log('Photo state updated');
-        
-        if (onPhotoTaken) {
-          onPhotoTaken();
-          console.log('onPhotoTaken callback called');
+      const reader = new FileReader();
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        alert('Error reading file: ' + error);
+      };
+      
+      reader.onload = (e) => {
+        try {
+          console.log('FileReader loaded');
+          const img = new Image();
+          
+          img.onerror = (error) => {
+            console.error('Image load error:', error);
+            alert('Error loading image');
+          };
+          
+          img.onload = () => {
+            try {
+              console.log('Image loaded, processing...');
+              const canvas = document.createElement("canvas");
+              const TARGET_WIDTH = 1280;
+              const TARGET_HEIGHT = 720;
+              const TARGET_ASPECT = TARGET_WIDTH / TARGET_HEIGHT;
+              
+              const sourceWidth = img.width;
+              const sourceHeight = img.height;
+              const sourceAspect = sourceWidth / sourceHeight;
+              
+              canvas.width = TARGET_WIDTH;
+              canvas.height = TARGET_HEIGHT;
+              
+              const ctx = canvas.getContext("2d");
+              if (!ctx) {
+                console.error('Failed to get canvas context');
+                alert('Canvas error');
+                return;
+              }
+              
+              let cropWidth, cropHeight, cropX, cropY;
+              
+              if (sourceAspect > TARGET_ASPECT) {
+                cropHeight = sourceHeight;
+                cropWidth = sourceHeight * TARGET_ASPECT;
+                cropX = (sourceWidth - cropWidth) / 2;
+                cropY = 0;
+              } else {
+                cropWidth = sourceWidth;
+                cropHeight = sourceWidth / TARGET_ASPECT;
+                cropX = 0;
+                cropY = (sourceHeight - cropHeight) / 2;
+              }
+              
+              ctx.drawImage(
+                img,
+                cropX, cropY, cropWidth, cropHeight,
+                0, 0, TARGET_WIDTH, TARGET_HEIGHT
+              );
+              
+              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.7);
+              console.log('Photo compressed, size:', compressedPhoto.length);
+              
+              const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
+              localStorage.setItem(storageKey, compressedPhoto);
+              console.log('Photo saved to localStorage with key:', storageKey);
+              
+              setPhoto(compressedPhoto);
+              console.log('Photo state updated');
+              
+              // Force a small delay to ensure state updates
+              setTimeout(() => {
+                alert('Photo saved successfully!');
+                if (onPhotoTaken) {
+                  onPhotoTaken();
+                  console.log('onPhotoTaken callback called');
+                }
+              }, 100);
+              
+            } catch (error) {
+              console.error('Error processing image:', error);
+              alert('Error processing image: ' + error);
+            }
+          };
+          img.src = e.target?.result as string;
+        } catch (error) {
+          console.error('Error in FileReader onload:', error);
+          alert('Error in FileReader: ' + error);
         }
       };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-    
-    // Reset input value to allow selecting the same file again
-    event.target.value = '';
+      reader.readAsDataURL(file);
+      
+      // Reset input value
+      event.target.value = '';
+      
+    } catch (error) {
+      console.error('Error in handlePhotoCapture:', error);
+      alert('Error capturing photo: ' + error);
+    }
   };
 
   const currentPhoto = photo || existingPhoto;
