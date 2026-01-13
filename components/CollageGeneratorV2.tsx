@@ -105,9 +105,9 @@ export default function CollageGeneratorV2({
     }
 
     if (count === 4) {
-      // 2x2 grid with varied dimensions
-      const row1H = Math.floor(h * 0.54);
-      const row2H = h - row1H - gap;
+      // 2x2 grid with shorter rows to create landscape tiles
+      const row1H = Math.floor(h * 0.28);
+      const row2H = Math.floor(h * 0.28);
       const col1W = Math.floor(w * 0.52);
       const col2W = w - col1W - gap;
       photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
