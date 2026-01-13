@@ -75,8 +75,8 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
             try {
               console.log('Image loaded, processing...');
               const canvas = document.createElement("canvas");
-              const TARGET_WIDTH = 1280;
-              const TARGET_HEIGHT = 720;
+              const TARGET_WIDTH = 800;  // Reduced from 1280
+              const TARGET_HEIGHT = 450; // Reduced from 720
               const TARGET_ASPECT = TARGET_WIDTH / TARGET_HEIGHT;
               
               const sourceWidth = img.width;
@@ -113,7 +113,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
                 0, 0, TARGET_WIDTH, TARGET_HEIGHT
               );
               
-              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.7);
+              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.5); // Reduced from 0.7 to 0.5
               console.log('Photo compressed, size:', compressedPhoto.length);
               
               const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
