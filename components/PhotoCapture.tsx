@@ -47,36 +47,25 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   const handlePhotoCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = event.target.files?.[0];
-      console.log('handlePhotoCapture called, file:', file);
-      
-      if (!file) {
-        console.log('No file selected');
-        alert('No file selected');
-        return;
-      }
+      if (!file) return;
 
       const reader = new FileReader();
-      reader.onerror = (error) => {
-        console.error('FileReader error:', error);
-        alert('Error reading file: ' + error);
+      reader.onerror = () => {
+        // Silently handle error
       };
       
       reader.onload = (e) => {
         try {
-          console.log('FileReader loaded');
           const img = new Image();
-          
-          img.onerror = (error) => {
-            console.error('Image load error:', error);
-            alert('Error loading image');
+          img.onerror = () => {
+            // Silently handle error
           };
           
           img.onload = () => {
             try {
-              console.log('Image loaded, processing...');
               const canvas = document.createElement("canvas");
-              const TARGET_WIDTH = 800;  // Reduced from 1280
-              const TARGET_HEIGHT = 450; // Reduced from 720
+              const TARGET_WIDTH = 800;
+              const TARGET_HEIGHT = 450;
               const TARGET_ASPECT = TARGET_WIDTH / TARGET_HEIGHT;
               
               const sourceWidth = img.width;
@@ -87,11 +76,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               canvas.height = TARGET_HEIGHT;
               
               const ctx = canvas.getContext("2d");
-              if (!ctx) {
-                console.error('Failed to get canvas context');
-                alert('Canvas error');
-                return;
-              }
+              if (!ctx) return;
               
               let cropWidth, cropHeight, cropX, cropY;
               
@@ -113,34 +98,21 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
                 0, 0, TARGET_WIDTH, TARGET_HEIGHT
               );
               
-              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.65); // Increased from 0.5 to 0.65 for better quality
-              console.log('Photo compressed, size:', compressedPhoto.length);
-              
+              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.65);
               const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
               localStorage.setItem(storageKey, compressedPhoto);
-              console.log('Photo saved to localStorage with key:', storageKey);
-              
               setPhoto(compressedPhoto);
-              console.log('Photo state updated');
               
-              // Force a small delay to ensure state updates
-              setTimeout(() => {
-                alert('Photo saved successfully!');
-                if (onPhotoTaken) {
-                  onPhotoTaken();
-                  console.log('onPhotoTaken callback called');
-                }
-              }, 100);
-              
+              if (onPhotoTaken) {
+                onPhotoTaken();
+              }
             } catch (error) {
-              console.error('Error processing image:', error);
-              alert('Error processing image: ' + error);
+              // Silently handle error
             }
           };
           img.src = e.target?.result as string;
         } catch (error) {
-          console.error('Error in FileReader onload:', error);
-          alert('Error in FileReader: ' + error);
+          // Silently handle error
         }
       };
       reader.readAsDataURL(file);
@@ -149,8 +121,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
       event.target.value = '';
       
     } catch (error) {
-      console.error('Error in handlePhotoCapture:', error);
-      alert('Error capturing photo: ' + error);
+      // Silently handle error
     }
   };
 
@@ -158,31 +129,20 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   const hasPhoto = !!currentPhoto;
 
   const handleButtonClick = () => {
-    console.log('Button clicked. hasPhoto:', hasPhoto, 'groupId:', groupId, 'riddleId:', riddleId);
-    console.log('fileInputRef.current:', fileInputRef.current);
-    
     if (hasPhoto) {
-      // If photo exists, directly open camera to retake
-      console.log('Photo exists, opening camera for retake');
       fileInputRef.current?.click();
     } else {
-      // If no photo, check if we should show modal (first 2 times only)
       const modalCount = getTipModalCount();
-      console.log('No photo yet, modal count:', modalCount);
       if (modalCount < 2) {
-        console.log('Showing tip modal');
         setShowTipModal(true);
         incrementTipModalCount();
       } else {
-        // After 2 times, directly open camera
-        console.log('Opening camera directly (after 2 modals)');
         fileInputRef.current?.click();
       }
     }
   };
 
   const handleProceedToCamera = () => {
-    console.log('Proceed to camera clicked');
     setShowTipModal(false);
     fileInputRef.current?.click();
   };

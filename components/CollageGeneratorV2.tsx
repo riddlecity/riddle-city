@@ -471,25 +471,14 @@ export default function CollageGeneratorV2({
 
   const downloadAllPhotos = async () => {
     const photoEntries = Object.entries(photos);
-    if (photoEntries.length === 0) {
-      console.log('No photos to download');
-      return;
-    }
-
-    console.log(`Starting download of ${photoEntries.length} photos...`);
+    if (photoEntries.length === 0) return;
 
     // Load stamp
     const stamp = new Image();
     stamp.crossOrigin = "anonymous";
     const stampLoaded = new Promise<void>((resolve) => {
-      stamp.onload = () => {
-        console.log('Stamp loaded successfully');
-        resolve();
-      };
-      stamp.onerror = () => {
-        console.log('Stamp failed to load, continuing without watermark');
-        resolve();
-      };
+      stamp.onload = () => resolve();
+      stamp.onerror = () => resolve();
       stamp.src = "/collagestamp.png";
     });
     await stampLoaded;
@@ -497,15 +486,10 @@ export default function CollageGeneratorV2({
     // Create temporary canvas for watermarking
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
-    if (!tempCtx) {
-      console.error('Failed to get canvas context');
-      return;
-    }
+    if (!tempCtx) return;
 
     for (let i = 0; i < photoEntries.length; i++) {
       const [, dataUrl] = photoEntries[i];
-      
-      console.log(`Processing photo ${i + 1}/${photoEntries.length}`);
       
       // Load photo
       const img = new Image();
@@ -522,12 +506,11 @@ export default function CollageGeneratorV2({
           if (stamp.complete && stamp.width > 0) {
             const watermarkWidth = Math.floor(img.width * 0.15);
             const watermarkHeight = Math.floor(watermarkWidth * 1.015);
-            const padding = Math.floor(img.width * 0.03); // 3% padding
+            const padding = Math.floor(img.width * 0.03);
             const x = img.width - watermarkWidth - padding;
             const y = img.height - watermarkHeight - padding;
             
             tempCtx.drawImage(stamp, x, y, watermarkWidth, watermarkHeight);
-            console.log('Watermark added to photo', i + 1);
           }
           
           // Download
@@ -541,15 +524,11 @@ export default function CollageGeneratorV2({
               link.click();
               document.body.removeChild(link);
               setTimeout(() => URL.revokeObjectURL(url), 100);
-              console.log(`Photo ${i + 1} download triggered`);
             }
             resolve();
           }, "image/jpeg", 0.9);
         };
-        img.onerror = () => {
-          console.error(`Failed to load photo ${i + 1}`);
-          resolve();
-        };
+        img.onerror = () => resolve();
         img.src = dataUrl;
       });
       
