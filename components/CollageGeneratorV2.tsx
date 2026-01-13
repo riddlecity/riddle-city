@@ -172,6 +172,10 @@ export default function CollageGeneratorV2({
       const col1W = Math.floor(w * 0.54);
       const col2W = w - col1W - gap;
       
+      // Bottom row: wider photo on left, more square badge on right
+      const row4PhotoW = Math.floor(w * 0.65);
+      const row4BadgeW = w - row4PhotoW - gap;
+      
       // Row 1: 54/46 split
       photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
       photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
@@ -184,12 +188,12 @@ export default function CollageGeneratorV2({
       photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
       photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
       
-      // Row 4: Photo on left, badge on right
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
+      // Row 4: Wider photo on left (65%), more square badge on right (35%)
+      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: row4PhotoW, height: row4H });
       
       return {
         photoTiles,
-        badgeArea: { x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H },
+        badgeArea: { x: PADDING + row4PhotoW + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: row4BadgeW, height: row4H },
         badgeOverlay: false
       };
     }
