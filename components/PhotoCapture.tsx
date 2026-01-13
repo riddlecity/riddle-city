@@ -94,6 +94,9 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
+    
+    // Reset input value to allow selecting the same file again
+    event.target.value = '';
   };
 
   const currentPhoto = photo || existingPhoto;
