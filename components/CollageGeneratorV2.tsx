@@ -108,7 +108,6 @@ export default function CollageGeneratorV2({
       // 2x2 staggered grid - photos criss-cross for visual interest
       const row1H = Math.floor(h * 0.45);
       const row2H = Math.floor(h * 0.48);
-      const topGap = gap;
       const bottomGap = Math.floor(gap * 1.5); // Slightly larger gap for offset
       
       // Top row
@@ -472,13 +471,25 @@ export default function CollageGeneratorV2({
 
   const downloadAllPhotos = async () => {
     const photoEntries = Object.entries(photos);
-    if (photoEntries.length === 0) return;
+    if (photoEntries.length === 0) {
+      console.log('No photos to download');
+      return;
+    }
+
+    console.log(`Starting download of ${photoEntries.length} photos...`);
 
     // Load stamp
     const stamp = new Image();
+    stamp.crossOrigin = "anonymous";
     const stampLoaded = new Promise<void>((resolve) => {
-      stamp.onload = () => resolve();
-      stamp.onerror = () => resolve();
+      stamp.onload = () => {
+        console.log('Stamp loaded successfully');
+        resolve();
+      };
+      stamp.onerror = () => {
+        console.log('Stamp failed to load, continuing without watermark');
+        resolve();
+      };
       stamp.src = "/riddlecity-collage-logo.png";
     });
     await stampLoaded;
@@ -486,10 +497,15 @@ export default function CollageGeneratorV2({
     // Create temporary canvas for watermarking
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
-    if (!tempCtx) return;
+    if (!tempCtx) {
+      console.error('Failed to get canvas context');
+      return;
+    }
 
     for (let i = 0; i < photoEntries.length; i++) {
       const [, dataUrl] = photoEntries[i];
+      
+      console.log(`Processing photo ${i + 1}/${photoEntries.length}`);
       
       // Load photo
       const img = new Image();
@@ -503,7 +519,7 @@ export default function CollageGeneratorV2({
           tempCtx.drawImage(img, 0, 0);
           
           // Add watermark in bottom-right corner (15% of image width)
-          if (stamp.complete) {
+          if (stamp.complete && stamp.width > 0) {
             const watermarkWidth = Math.floor(img.width * 0.15);
             const watermarkHeight = Math.floor(watermarkWidth * 1.015);
             const padding = Math.floor(img.width * 0.03); // 3% padding
@@ -511,21 +527,29 @@ export default function CollageGeneratorV2({
             const y = img.height - watermarkHeight - padding;
             
             tempCtx.drawImage(stamp, x, y, watermarkWidth, watermarkHeight);
+            console.log('Watermark added to photo', i + 1);
           }
           
           // Download
           tempCanvas.toBlob((blob) => {
             if (blob) {
+              const url = URL.createObjectURL(blob);
               const link = document.createElement("a");
-              link.href = URL.createObjectURL(blob);
+              link.href = url;
               link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-photo-${i + 1}.jpg`;
+              document.body.appendChild(link);
               link.click();
-              URL.revokeObjectURL(link.href);
+              document.body.removeChild(link);
+              setTimeout(() => URL.revokeObjectURL(url), 100);
+              console.log(`Photo ${i + 1} download triggered`);
             }
             resolve();
           }, "image/jpeg", 0.9);
         };
-        img.onerror = () => resolve();
+        img.onerror = () => {
+          console.error(`Failed to load photo ${i + 1}`);
+          resolve();
+        };
         img.src = dataUrl;
       });
       
