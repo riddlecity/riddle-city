@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Camera, Check } from "lucide-react";
 
 interface PhotoCaptureProps {
@@ -19,6 +19,14 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   });
   const [showTipModal, setShowTipModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update photo state when riddleId changes (navigating between riddles)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedPhoto = localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`);
+      setPhoto(storedPhoto);
+    }
+  }, [riddleId, groupId]);
 
   // For backwards compatibility
   const existingPhoto = photo;
