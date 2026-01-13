@@ -563,10 +563,10 @@ export default function CollageGeneratorV2({
               </div>
               <button
                 onClick={downloadCollage}
-                className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-3 shadow-lg"
+                className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-3 shadow-lg whitespace-nowrap"
               >
-                <Download className="w-5 h-5" />
-                Download Collage & Tag @riddlecity.co.uk
+                <Download className="w-5 h-5 flex-shrink-0" />
+                <span className="whitespace-nowrap">Download Collage & Tag @riddlecity.co.uk</span>
               </button>
               <button
                 onClick={downloadAllPhotos}
