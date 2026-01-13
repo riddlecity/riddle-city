@@ -439,8 +439,8 @@ export default function CollageGeneratorV2({
       });
     }
 
-    // Draw badge (larger for 5-photo layout, and 3-photo layout)
-    const badgeScale = photoCount === 5 ? 0.70 : photoCount === 3 ? 0.65 : 0.50;
+    // Draw badge (larger for specific layouts: 5, 7 photos)
+    const badgeScale = photoCount === 5 ? 0.70 : photoCount === 3 ? 0.65 : photoCount === 7 ? 0.85 : 0.50;
     drawBadge(ctx, layout.badgeArea, stamp, useDarkBadge, badgeScale);
 
     // Convert to blob
