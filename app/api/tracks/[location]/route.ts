@@ -16,35 +16,40 @@ export async function GET(
     
     console.log('🔍 Fetching track metadata for location:', location);
     
-    // Fetch both date and pub tracks for the location in a single optimized query
+    // Fetch both date and standard (pub) tracks for the location using location+mode
     const { data: tracks, error } = await supabase
       .from('tracks')
-      .select('id, start_label, start_time')
-      .or(`id.eq.date_${location},id.eq.pub_${location}`);
+      .select('id, start_label, start_time, mode')
+      .eq('location', location)
+      .in('mode', ['date', 'standard']);
 
     if (error) {
       console.error('🔍 Error fetching track metadata:', error);
       return NextResponse.json({ error: 'Failed to fetch track metadata' }, { status: 500 });
     }
 
-    // Get riddle counts for each track
-    const dateTrackId = `date_${location}`;
-    const pubTrackId = `pub_${location}`;
+    // Organize tracks by mode
+    const dateTrack = tracks?.find(track => track.mode === 'date') || null;
+    const pubTrack = tracks?.find(track => track.mode === 'standard') || null;
     
-    const [dateRiddleCount, pubRiddleCount] = await Promise.all([
-      supabase
+    console.log('🔍 Found tracks:', { 
+      dateTrack: dateTrack ? `${dateTrack.id} (${dateTrack.mode})` : 'none',
+      pubTrack: pubTrack ? `${pubTrack.id} (${pubTrack.mode})` : 'none'
+    });
+    
+    // Get riddle counts for each track using actual track IDs from database
+    const riddleCounts = await Promise.all([
+      dateTrack ? supabase
         .from('riddles')
         .select('id', { count: 'exact', head: true })
-        .eq('track_id', dateTrackId),
-      supabase
+        .eq('track_id', dateTrack.id) : Promise.resolve({ count: 0 }),
+      pubTrack ? supabase
         .from('riddles')
         .select('id', { count: 'exact', head: true })
-        .eq('track_id', pubTrackId)
+        .eq('track_id', pubTrack.id) : Promise.resolve({ count: 0 })
     ]);
-
-    // Organize the data by track type
-    const dateTrack = tracks?.find(track => track.id === `date_${location}`) || null;
-    const pubTrack = tracks?.find(track => track.id === `pub_${location}`) || null;
+    
+    const [dateRiddleCount, pubRiddleCount] = riddleCounts;
 
     console.log('🔍 Track metadata loaded successfully:', { 
       dateTrack: !!dateTrack, 

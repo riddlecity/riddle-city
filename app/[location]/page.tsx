@@ -128,7 +128,9 @@ export default function LocationPage({ params }: Props) {
     if (!loadTimeout) {
       try {
         const trackId = mode === 'date' ? dateTrackId : pubTrackId;
-        const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
+        const dbMode = mode === 'date' ? 'date' : 'standard';
+        // Pass location and mode as backup parameters for flexible track lookup
+        const response = await fetch(`/api/track-warnings?trackId=${trackId}&location=${locationSlug}&mode=${dbMode}`);
         
         if (response.ok) {
           const timeWarning = await response.json();

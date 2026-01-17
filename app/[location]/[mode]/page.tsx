@@ -15,8 +15,8 @@ export default function PreferencesPage() {
   const location = (params?.location as string) || "unknown";
   const mode = (params?.mode as string) || "unknown";
   
-  // Map URL mode to database trackId format
-  const getTrackIdMode = (urlMode: string): string => {
+  // Map URL mode to database mode field
+  const getDatabaseMode = (urlMode: string): string => {
     const modeMap: Record<string, string> = {
       'pubcrawl': 'standard',
       'date': 'date'
@@ -24,7 +24,8 @@ export default function PreferencesPage() {
     return modeMap[urlMode] || urlMode;
   };
   
-  const trackId = `${getTrackIdMode(mode)}_${location}`; // e.g., "standard_barnsley" or "date_barnsley"
+  // Construct expected trackId (fallback for legacy code)
+  const trackId = `${getDatabaseMode(mode)}_${location}`; // e.g., "standard_barnsley" or "date_barnsley"
   
   const [players, setPlayers] = useState(2);
   const [teamName, setTeamName] = useState("");
@@ -268,8 +269,10 @@ export default function PreferencesPage() {
 
     // Check time warnings before proceeding
     try {
-      const trackId = `${getTrackIdMode(mode)}_${location.toLowerCase()}`;
-      const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
+      const trackId = `${getDatabaseMode(mode)}_${location.toLowerCase()}`;
+      const dbMode = getDatabaseMode(mode);
+      // Pass location and mode as backup parameters for flexible track lookup
+      const response = await fetch(`/api/track-warnings?trackId=${trackId}&location=${location.toLowerCase()}&mode=${dbMode}`);
       
       if (response.ok) {
         const timeWarning = await response.json();
