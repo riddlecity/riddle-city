@@ -26,6 +26,8 @@ export default function LocationPage({ params }: Props) {
   const [pubStartTime, setPubStartTime] = useState<string | null>(null);
   const [dateRiddleCount, setDateRiddleCount] = useState<number>(0);
   const [pubRiddleCount, setPubRiddleCount] = useState<number>(0);
+  const [dateTrackId, setDateTrackId] = useState<string | null>(null);
+  const [pubTrackId, setPubTrackId] = useState<string | null>(null);
   const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
@@ -48,11 +50,9 @@ export default function LocationPage({ params }: Props) {
     console.log('🔍 [CLIENT] LocationPage component mounted for location:', locationSlug);
   }, []);
 
-  // Load location hours for time warnings IMMEDIATELY when page loads 
-  const dateTrackId = `date_${locationSlug}`;
-  const pubTrackId = `standard_${locationSlug}`;
-  const { locations: dateLocations, loading: dateLoading } = useLocationHours(dateTrackId);
-  const { locations: pubLocations, loading: pubLoading } = useLocationHours(pubTrackId);
+  // Load location hours for time warnings AFTER we know the track IDs
+  const { locations: dateLocations, loading: dateLoading } = useLocationHours(dateTrackId || '');
+  const { locations: pubLocations, loading: pubLoading } = useLocationHours(pubTrackId || '');
 
   // TIMEOUT: If data takes longer than 10 seconds, allow user to proceed anyway
   useEffect(() => {
@@ -94,12 +94,14 @@ export default function LocationPage({ params }: Props) {
         const { dateTrack, pubTrack } = data;
 
         if (dateTrack) {
+          setDateTrackId(dateTrack.id);
           setDateStartLabel(String(dateTrack.start_label || ''));
           setDateStartTime(String(dateTrack.start_time || '') || null);
           setDateRiddleCount(dateTrack.riddle_count || 0);
         }
 
         if (pubTrack) {
+          setPubTrackId(pubTrack.id);
           setPubStartLabel(String(pubTrack.start_label || ''));
           setPubStartTime(String(pubTrack.start_time || '') || null);
           setPubRiddleCount(pubTrack.riddle_count || 0);
@@ -128,18 +130,21 @@ export default function LocationPage({ params }: Props) {
     if (!loadTimeout) {
       try {
         const trackId = mode === 'date' ? dateTrackId : pubTrackId;
-        const dbMode = mode === 'date' ? 'date' : 'standard';
-        // Pass location and mode as backup parameters for flexible track lookup
-        const response = await fetch(`/api/track-warnings?trackId=${trackId}&location=${locationSlug}&mode=${dbMode}`);
         
-        if (response.ok) {
-          const timeWarning = await response.json();
-          
-          if (timeWarning.shouldWarn) {
-            setSelectedMode(mode);
-            setTimeWarningData(timeWarning);
-            setShowTimeWarning(true);
-            return; // Stop here and show warning modal
+        if (!trackId) {
+          console.warn('No track ID available, skipping time warning check');
+        } else {
+          const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
+        
+          if (response.ok) {
+            const timeWarning = await response.json();
+            
+            if (timeWarning.shouldWarn) {
+              setSelectedMode(mode);
+              setTimeWarningData(timeWarning);
+              setShowTimeWarning(true);
+              return; // Stop here and show warning modal
+            }
           }
         }
       } catch (error) {

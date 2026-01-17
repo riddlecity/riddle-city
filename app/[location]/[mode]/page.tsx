@@ -269,10 +269,7 @@ export default function PreferencesPage() {
 
     // Check time warnings before proceeding
     try {
-      const trackId = `${getDatabaseMode(mode)}_${location.toLowerCase()}`;
-      const dbMode = getDatabaseMode(mode);
-      // Pass location and mode as backup parameters for flexible track lookup
-      const response = await fetch(`/api/track-warnings?trackId=${trackId}&location=${location.toLowerCase()}&mode=${dbMode}`);
+      const response = await fetch(`/api/track-warnings?trackId=${trackId}`);
       
       if (response.ok) {
         const timeWarning = await response.json();
@@ -302,11 +299,11 @@ export default function PreferencesPage() {
       
       const payload = {
         location, 
-        mode: getTrackIdMode(mode), // Convert URL mode to database mode
+        mode: getDatabaseMode(mode), // Convert URL mode to database mode
         players, 
         emails, 
         teamName: teamName.trim(),
-        ...(adminParam && { adminKey: adminParam }) // 🔧 Add admin key if present
+        ...(adminParam && { adminParam }) // 🔧 Add admin key if present
       };
 
       const res = await fetch("/api/checkout-session", {

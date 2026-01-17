@@ -60,11 +60,13 @@ export async function GET(
 
     return NextResponse.json({
       dateTrack: dateTrack ? {
+        id: dateTrack.id,
         start_label: dateTrack.start_label,
         start_time: dateTrack.start_time,
         riddle_count: dateRiddleCount.count || 0
       } : null,
       pubTrack: pubTrack ? {
+        id: pubTrack.id,
         start_label: pubTrack.start_label,
         start_time: pubTrack.start_time,
         riddle_count: pubRiddleCount.count || 0

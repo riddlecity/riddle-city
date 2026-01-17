@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '../../../../../lib/supabase/server';
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ trackId: string }> }
 ) {
   try {
@@ -17,42 +17,6 @@ export async function GET(
     
     console.log('🔍 Fetching locations with hours for trackId:', trackId);
     
-    // Try to find the actual track ID if the provided one doesn't exist
-    let actualTrackId = trackId;
-    
-    // Check if this track exists
-    const { data: trackCheck } = await supabase
-      .from('tracks')
-      .select('id')
-      .eq('id', trackId)
-      .single();
-    
-    if (!trackCheck) {
-      console.log(`⚠️ Track ID "${trackId}" not found, attempting flexible lookup...`);
-      
-      // Try to extract location and mode from the trackId
-      if (trackId.includes('_')) {
-        const parts = trackId.split('_');
-        const mode = parts[0]; // e.g., "standard" or "date"
-        const location = parts.slice(1).join('_'); // e.g., "barnsley"
-        
-        // Find track by location and mode
-        const { data: alternativeTrack } = await supabase
-          .from('tracks')
-          .select('id')
-          .eq('location', location)
-          .eq('mode', mode)
-          .single();
-        
-        if (alternativeTrack) {
-          actualTrackId = alternativeTrack.id;
-          console.log(`✅ Found alternative track: ${actualTrackId}`);
-        } else {
-          console.log(`⚠️ No track found for location="${location}", mode="${mode}"`);
-        }
-      }
-    }
-    
     // Get locations for the specified track WITH opening hours in single query
     const { data: locations, error } = await supabase
       .from('riddles')
@@ -62,7 +26,7 @@ export async function GET(
         location_id,
         opening_hours
       `)
-      .eq('track_id', actualTrackId)
+      .eq('track_id', trackId)
       .order('order_index');
 
     if (error) {
