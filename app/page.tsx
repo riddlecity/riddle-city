@@ -142,6 +142,26 @@ export default function Home() {
             </p>
           </div>
         )}
+        
+        {/* FAQ Link Box */}
+        <div className="mt-6">
+          <Link
+            href="/faq"
+            className="block mx-auto max-w-md p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg hover:border-purple-500/50 transition-all duration-200 text-center group"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">❓</span>
+              <div>
+                <p className="text-white font-semibold group-hover:text-purple-300 transition-colors">
+                  Have questions?
+                </p>
+                <p className="text-white/60 text-sm">
+                  Check our FAQ for answers
+                </p>
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
     </main>
   );
