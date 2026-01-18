@@ -26,9 +26,13 @@ export function addRiddleCompletion(
 ): RiddleProgress {
   const progress = currentProgress || {};
   
+  // Format timestamp without milliseconds (YYYY-MM-DDTHH:MM:SSZ)
+  const now = new Date();
+  const timestamp = now.toISOString().split('.')[0] + 'Z';
+  
   progress[riddleOrder.toString()] = {
     type: completionType,
-    time: new Date().toISOString()
+    time: timestamp
   };
   
   return progress;
