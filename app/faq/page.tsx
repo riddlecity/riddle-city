@@ -11,7 +11,7 @@ interface FAQItem {
 const faqs: FAQItem[] = [
   {
     question: "How does Riddle City work?",
-    answer: "Riddle City is a self-guided outdoor adventure where you solve riddles to discover locations around your chosen city. At each location, you'll either scan a QR code or submit a manual answer to unlock the next clue. It's part treasure hunt, part city exploration!"
+    answer: "Riddle City is a self-guided adventure that takes you around local businesses in your chosen city. You solve riddles to discover your next destination - each riddle leads you to a pub, cafe, landmark, or hidden gem. Once there, you'll either scan a QR code or submit a manual answer to unlock the next clue. It's not your standard outdoor QR hunt - it's a unique way to explore and support local businesses!"
   },
   {
     question: "How long does an adventure take?",
@@ -19,7 +19,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: "What if we get stuck on a riddle?",
-    answer: "No worries! The group leader can skip any riddle at any time to keep the adventure moving. There's also the option to manually enter an answer if you know the location but can't solve the exact riddle."
+    answer: "No worries! The group leader can skip any riddle at any time to keep the adventure moving. Each riddle is answered by either scanning a QR code at the location or submitting a manual answer - the riddle will tell you which method to use."
   },
   {
     question: "How many people can play?",
