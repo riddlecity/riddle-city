@@ -8,10 +8,11 @@ export async function GET() {
     
     console.log('🔍 Fetching all locations with tracks');
     
-    // Get distinct locations that have at least one track
+    // Get all tracks with their location field
     const { data: tracks, error } = await supabase
       .from('tracks')
-      .select('location')
+      .select('location, id')
+      .not('location', 'is', null)
       .order('location');
 
     if (error) {
@@ -19,8 +20,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
     }
 
-    // Get unique locations
-    const uniqueLocations = [...new Set(tracks?.map(t => t.location) || [])];
+    console.log('🔍 Raw tracks data:', tracks);
+
+    // Get unique locations, filtering out empty strings
+    const uniqueLocations = [...new Set(
+      tracks
+        ?.map(t => t.location)
+        .filter(loc => loc && loc.trim() !== '' && loc.toLowerCase() !== 'null') || []
+    )];
     
     console.log('🔍 Found locations:', uniqueLocations);
 
