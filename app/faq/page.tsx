@@ -11,7 +11,7 @@ interface FAQItem {
 const faqs: FAQItem[] = [
   {
     question: "How does Riddle City work?",
-    answer: "Riddle City is a self-guided outdoor adventure where you solve riddles to discover locations around your chosen city. Each riddle leads you to a new location where you'll scan a QR code to unlock the next clue. It's part treasure hunt, part city exploration!"
+    answer: "Riddle City is a self-guided outdoor adventure where you solve riddles to discover locations around your chosen city. At each location, you'll either scan a QR code or submit a manual answer to unlock the next clue. It's part treasure hunt, part city exploration!"
   },
   {
     question: "How long does an adventure take?",
@@ -19,7 +19,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: "What if we get stuck on a riddle?",
-    answer: "No worries! You can skip any riddle at any time to keep the adventure moving. There's also the option to manually enter an answer if you know the location but can't solve the exact riddle."
+    answer: "No worries! The group leader can skip any riddle at any time to keep the adventure moving. There's also the option to manually enter an answer if you know the location but can't solve the exact riddle."
   },
   {
     question: "How many people can play?",
@@ -27,47 +27,43 @@ const faqs: FAQItem[] = [
   },
   {
     question: "Do I need to print anything?",
-    answer: "No! Everything runs on your phone. Just make sure your device is charged (we recommend bringing a portable charger) and you have mobile data or can connect to WiFi along the route."
+    answer: "No! Everything runs on your phone. Just make sure your device is charged and you have mobile data or can connect to WiFi along the route."
   },
   {
     question: "What happens if it rains?",
-    answer: "The adventure is outdoors, so dress appropriately for the weather. Most locations are accessible in light rain, but if conditions are severe, you can pause your adventure and resume it later."
+    answer: "Most locations are indoors anyway, so you'll mainly just be walking between places. Bring an umbrella for the walks between locations and you'll be fine!"
   },
   {
     question: "When can we start the adventure?",
-    answer: "Each track has a recommended start time (shown on the booking page), usually when most locations are open. However, you can start whenever you like - just be aware some locations may be closed outside their normal hours."
+    answer: "Each track has a recommended start time (shown on the adventure page), usually when most locations are open. However, you can start whenever you like - just be aware some locations may be closed outside their normal hours."
   },
   {
     question: "Is the adventure suitable for children?",
-    answer: "Yes! Families are welcome. The riddles vary in difficulty, but working together makes it fun for all ages. Children should be supervised by adults throughout."
+    answer: "Not really - many of our adventures take you through bars and pubs, so they're designed more for adults. We recommend leaving the kids at home for this one!"
   },
   {
     question: "Can we take breaks during the adventure?",
-    answer: "Absolutely! Take breaks whenever you like. Stop for coffee, grab lunch, or just rest. Your progress is saved automatically and you can continue at your own pace."
+    answer: "Absolutely! Buying refreshments and food en route is encouraged. All tracks have places where you can grab food or drinks, and your progress is saved automatically so you can continue at your own pace."
   },
   {
     question: "What should we bring?",
-    answer: "Just bring a fully charged phone (or portable charger), comfortable walking shoes, and appropriate clothing for the weather. Some adventures pass pubs and cafes, so bring money if you want to stop for refreshments."
+    answer: "Just bring a fully charged phone, comfortable walking shoes, and appropriate clothing for the weather."
   },
   {
     question: "How do we book?",
-    answer: "Choose your city and adventure type, enter your team name and number of players, then complete the payment. You'll receive instant access to start your adventure."
+    answer: "You don't need to book in advance! Just choose your city and adventure type, then start playing when you're ready. Note that outside of recommended start times, some locations might be closed."
   },
   {
     question: "Can we do the adventure more than once?",
-    answer: "You can book multiple times, but knowing the answers from a previous playthrough would spoil the fun! We recommend trying different adventure types in the same city or exploring new cities instead."
-  },
-  {
-    question: "Are the adventures wheelchair accessible?",
-    answer: "Routes use public streets and pavements. While we aim to keep routes accessible, some locations may have steps or uneven surfaces. Contact us if you have specific accessibility questions."
+    answer: "You can play multiple times, but knowing the answers from a previous playthrough would spoil the fun! We recommend trying different adventure types in the same city or exploring new cities instead."
   },
   {
     question: "What if we can't find a QR code?",
-    answer: "Each location has a QR code to scan. If you can't locate it, you can use the manual answer option to progress. If QR codes are missing or damaged, please let us know so we can replace them."
+    answer: "Not all locations have a QR code - some require manual answers. But if it is a QR code question and the code is missing or damaged, please let us know so we can replace it."
   },
   {
     question: "Do we need an internet connection?",
-    answer: "Yes, you'll need mobile data or WiFi to load riddles and verify QR codes. Make sure you have a data plan or can access WiFi at various locations along the route."
+    answer: "Yes, you'll need mobile data or WiFi to load riddles and verify your answers. Make sure you have a data plan or can access WiFi at various locations along the route."
   }
 ];
 

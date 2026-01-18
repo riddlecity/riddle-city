@@ -108,6 +108,13 @@ export default function Home() {
           See Locations →
         </Link>
         
+        <Link
+          href="/faq"
+          className="bg-neutral-700 hover:bg-neutral-600 transition-colors duration-200 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl"
+        >
+          FAQ
+        </Link>
+        
         {/* WhatsApp Share - Subtle and compact */}
         <button
           onClick={shareOnWhatsApp}
