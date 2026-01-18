@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
-import { addRiddleCompletion, type RiddleProgress } from '@/lib/riddleProgress';
+import { addRiddleCompletion } from '@/lib/riddleProgress';
 
 // Generate QR validation token
 function generateQRToken(locationId: string, timestamp: number): string {
