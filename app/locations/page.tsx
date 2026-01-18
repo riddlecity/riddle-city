@@ -1,8 +1,35 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
+interface Location {
+  slug: string;
+  name: string;
+}
 
 export default function LocationsPage() {
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('/api/locations');
+        if (response.ok) {
+          const data = await response.json();
+          setLocations(data.locations || []);
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
   return (
     <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
       {/* Logo in consistent top-left position */}
@@ -38,25 +65,21 @@ export default function LocationsPage() {
         </h1>
         
         <div className="w-full max-w-md mx-auto space-y-4">
-          {/* Available city */}
-          <Link
-            href="/barnsley"
-            className="block w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
-          >
-            Barnsley
-          </Link>
-          
-          {/* Coming soon cities */}
-          <div className="space-y-3">
-            {['Nottingham', 'Sheffield', 'Leeds'].map((city) => (
-              <div
-                key={city}
-                className="w-full bg-gray-600/30 text-gray-400 font-medium py-4 px-6 rounded-xl border border-gray-500/30 text-lg cursor-not-allowed"
+          {loading ? (
+            <div className="text-gray-400 py-8">Loading locations...</div>
+          ) : locations.length === 0 ? (
+            <div className="text-gray-400 py-8">No locations available yet</div>
+          ) : (
+            locations.map((location) => (
+              <Link
+                key={location.slug}
+                href={`/${location.slug}`}
+                className="block w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
               >
-                {city} (Coming Soon)
-              </div>
-            ))}
-          </div>
+                {location.name}
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </main>

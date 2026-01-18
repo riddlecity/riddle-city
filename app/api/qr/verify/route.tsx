@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
+import { addRiddleCompletion, type RiddleProgress } from '@/lib/riddleProgress';
 
 // Generate QR validation token
 function generateQRToken(locationId: string, timestamp: number): string {
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
     // Get group info
     const { data: group, error: groupError } = await supabase
       .from("groups")
-      .select("current_riddle_id, track_id, finished")
+      .select("current_riddle_id, track_id, finished, riddle_progress")
       .eq("id", groupId)
       .single();
     
@@ -142,11 +143,18 @@ export async function GET(request: NextRequest) {
     // Correct location! Check if there's a next riddle
     if (!currentRiddle.next_riddle_id) {
       // Final riddle completed
+      // Track this scan in riddle progress
+      const riddleOrder = currentRiddle.order_index;
+      const updatedProgress = riddleOrder 
+        ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'scan')
+        : group.riddle_progress;
+      
       const { error: finishError } = await supabase
         .from("groups")
         .update({ 
           finished: true,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          riddle_progress: updatedProgress
         })
         .eq("id", groupId);
       
@@ -165,9 +173,18 @@ export async function GET(request: NextRequest) {
     }
     
     // Progress to the next riddle
+    // Track this scan in riddle progress
+    const riddleOrder = currentRiddle.order_index;
+    const updatedProgress = riddleOrder 
+      ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'scan')
+      : group.riddle_progress;
+    
     const { error: updateError } = await supabase
       .from("groups")
-      .update({ current_riddle_id: currentRiddle.next_riddle_id })
+      .update({ 
+        current_riddle_id: currentRiddle.next_riddle_id,
+        riddle_progress: updatedProgress
+      })
       .eq("id", groupId);
     
     if (updateError) {

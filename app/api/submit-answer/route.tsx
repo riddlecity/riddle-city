@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { addRiddleCompletion, type RiddleProgress } from '@/lib/riddleProgress';
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     // 🔒 SECURITY: Get current group state from database (not client)
     const { data: group, error: groupError } = await supabase
       .from('groups')
-      .select('current_riddle_id, finished')
+      .select('current_riddle_id, finished, riddle_progress')
       .eq('id', groupId)
       .single();
 
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     // 🔒 SECURITY: Get correct answer and next riddle from database (not client)
     const { data: riddle, error: riddleError } = await supabase
       .from('riddles')
-      .select('answer, next_riddle_id, has_manual_answer')
+      .select('answer, next_riddle_id, has_manual_answer, order_index')
       .eq('id', group.current_riddle_id)
       .single();
 
@@ -137,11 +138,18 @@ export async function POST(request: NextRequest) {
       // Complete the adventure
       const now = new Date().toISOString();
       
+      // Track this manual answer in riddle progress
+      const riddleOrder = riddle.order_index;
+      const updatedProgress = riddleOrder 
+        ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'manual_answer')
+        : group.riddle_progress;
+      
       const { error: completeError } = await supabase
         .from('groups')
         .update({ 
           finished: true,
-          completed_at: now
+          completed_at: now,
+          riddle_progress: updatedProgress
         })
         .eq('id', groupId);
 
@@ -158,9 +166,18 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Progress to next riddle
+      // Track this manual answer in riddle progress
+      const riddleOrder = riddle.order_index;
+      const updatedProgress = riddleOrder 
+        ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'manual_answer')
+        : group.riddle_progress;
+      
       const { error: progressError } = await supabase
         .from('groups')
-        .update({ current_riddle_id: riddle.next_riddle_id })
+        .update({ 
+          current_riddle_id: riddle.next_riddle_id,
+          riddle_progress: updatedProgress
+        })
         .eq('id', groupId);
 
       if (progressError) {

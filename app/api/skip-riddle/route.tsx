@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { addRiddleCompletion, type RiddleProgress } from "@/lib/riddleProgress";
 
 interface GroupUpdate {
   current_riddle_id: string;
   riddles_skipped: number;
+  riddle_progress?: RiddleProgress;
   finished?: boolean;
   completed_at?: string;
 }
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
     // Get current group riddle
     const { data: group, error: groupError } = await supabase
       .from("groups")
-      .select("current_riddle_id, riddles_skipped, track_id")
+      .select("current_riddle_id, riddles_skipped, track_id, riddle_progress")
       .eq("id", groupId)
       .single();
 
@@ -93,10 +95,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    // Get current riddle to check if it has a next riddle
+    // Get current riddle to check if it has a next riddle and get its order
     const { data: currentRiddle, error: riddleError } = await supabase
       .from("riddles")
-      .select("next_riddle_id")
+      .select("next_riddle_id, order_index")
       .eq("id", group.current_riddle_id)
       .single();
 
@@ -112,9 +114,17 @@ export async function POST(request: Request) {
     if (isSkippingFromFinalRiddle) {
       // Complete the adventure
       const completionTime = new Date().toISOString();
+      
+      // Track this skip in riddle progress
+      const riddleOrder = currentRiddle.order_index;
+      const updatedProgress = riddleOrder 
+        ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'skip')
+        : group.riddle_progress;
+      
       const updates: GroupUpdate = {
         current_riddle_id: group.current_riddle_id, // Stay on current riddle
         riddles_skipped: (group.riddles_skipped || 0) + 1,
+        riddle_progress: updatedProgress,
         finished: true,
         completed_at: completionTime
       };
@@ -146,10 +156,17 @@ export async function POST(request: Request) {
     // Not on final riddle, so move to next riddle
     const nextRiddleId = currentRiddle.next_riddle_id;
 
+    // Track this skip in riddle progress
+    const riddleOrder = currentRiddle.order_index;
+    const updatedProgress = riddleOrder 
+      ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'skip')
+      : group.riddle_progress;
+
     // Prepare update data
     const updates: GroupUpdate = {
       current_riddle_id: nextRiddleId,
-      riddles_skipped: (group.riddles_skipped || 0) + 1
+      riddles_skipped: (group.riddles_skipped || 0) + 1,
+      riddle_progress: updatedProgress
     };
 
     // Don't mark as complete - just moving to next riddle
