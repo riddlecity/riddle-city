@@ -57,9 +57,9 @@ export default function Home() {
       <Image
         src="/riddle-city-logo.png"
         alt="Riddle City Logo"
-        width={300}
-        height={300}
-        className="mb-8 drop-shadow-xl sm:w-[350px] sm:h-[350px] md:w-[400px] md:h-[400px]"
+        width={350}
+        height={350}
+        className="mb-8 drop-shadow-xl sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] lg:w-[550px] lg:h-[550px]"
         priority
       />
 
