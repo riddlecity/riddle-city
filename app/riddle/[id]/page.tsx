@@ -116,7 +116,7 @@ export default async function RiddlePage({ params }: Props) {
   const { data, error } = await supabase
     .from("riddles")
     .select(
-      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id, alt_message, alt_riddle"
+      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id, alt_message, alt_riddle, start_location"
     )
     .eq("id", id)
     .single();
@@ -135,6 +135,7 @@ export default async function RiddlePage({ params }: Props) {
     next_riddle_id,
     alt_message,
     alt_riddle,
+    start_location,
   } = data;
 
   // Get user info from cookies with retry logic
@@ -222,6 +223,24 @@ export default async function RiddlePage({ params }: Props) {
     isLeader = memberData?.is_leader || false;
   }
 
+  // Check if previous riddle was skipped (to show start_location)
+  let showStartLocation = false;
+  if (groupId && order_index > 1 && start_location) {
+    const { data: groupData } = await supabase
+      .from("groups")
+      .select("riddle_progress")
+      .eq("id", groupId)
+      .single();
+
+    if (groupData?.riddle_progress) {
+      const previousRiddleKey = (order_index - 1).toString();
+      const previousRiddle = groupData.riddle_progress[previousRiddleKey];
+      if (previousRiddle?.type === 'skip') {
+        showStartLocation = true;
+      }
+    }
+  }
+
   // If this is the last riddle and group finished, go to completion
   if (isLastRiddle && groupId) {
     const { data: groupStatus } = await supabase
@@ -268,6 +287,14 @@ export default async function RiddlePage({ params }: Props) {
       {/* Main content area - riddle centered in logo */}
       <div className="flex-1 flex items-center justify-center px-4 z-10">
         <div className="w-full max-w-4xl text-center">
+          {/* Show start location if previous riddle was skipped */}
+          {showStartLocation && start_location && (
+            <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/30 rounded-lg">
+              <p className="text-blue-200 text-sm mb-1">📍 Start from:</p>
+              <p className="text-white font-semibold">{start_location}</p>
+            </div>
+          )}
+
           {/* Alternative Riddle Toggle if available */}
           {alt_message && alt_riddle ? (
             <AlternativeRiddleToggle
