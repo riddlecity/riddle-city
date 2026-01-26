@@ -58,8 +58,10 @@ export async function GET(
 
   } catch (error) {
     console.error('🔍 Unexpected error in track metadata API:', error);
+    console.error('🔍 Error details:', JSON.stringify(error, null, 2));
     return NextResponse.json({ 
-      error: 'Internal server error' 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
