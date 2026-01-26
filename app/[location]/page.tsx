@@ -98,7 +98,7 @@ export default function LocationPage({ params }: Props) {
         if (dateTrack) {
           setDateTrackId(dateTrack.id);
           setDateTrackName(String(dateTrack.name || 'Date Day Adventure'));
-          setDateStartLabel(String(dateTrack.start_label || ''));
+          setDateStartLabel(dateTrack.start_label ? String(dateTrack.start_label) : null);
           setDateStartTime(String(dateTrack.start_time || '') || null);
           setDateRiddleCount(dateTrack.riddle_count || 0);
         }
@@ -106,7 +106,7 @@ export default function LocationPage({ params }: Props) {
         if (pubTrack) {
           setPubTrackId(pubTrack.id);
           setPubTrackName(String(pubTrack.name || 'Pub Crawl Adventure'));
-          setPubStartLabel(String(pubTrack.start_label || ''));
+          setPubStartLabel(pubTrack.start_label ? String(pubTrack.start_label) : null);
           setPubStartTime(String(pubTrack.start_time || '') || null);
           setPubRiddleCount(pubTrack.riddle_count || 0);
         }
@@ -199,10 +199,10 @@ export default function LocationPage({ params }: Props) {
 
         <div className="w-full max-w-md mx-auto space-y-6">
           {/* Date Day Adventure */}
-          {(dateStartLabel || dateLoading || trackMetadataLoading) && (
+          {(dateTrackId || dateLoading || trackMetadataLoading) && (
             <button
-              onClick={() => handleModeSelect("date")}
-              disabled={dateLoading && !loadTimeout}
+              onClick={() => dateStartLabel ? handleModeSelect("date") : null}
+              disabled={dateLoading && !loadTimeout || !dateStartLabel}
               className={`w-full ${
                 dateLoading && !loadTimeout
                   ? 'bg-gray-600/50 cursor-wait opacity-70' 
@@ -283,7 +283,7 @@ export default function LocationPage({ params }: Props) {
           )}
 
           {/* Pub Crawl Adventure */}
-          {(pubStartLabel || pubLoading || trackMetadataLoading) && (
+          {(pubTrackId || pubLoading || trackMetadataLoading) && (
           <div
             className={`w-full ${
               pubStartLabel && !pubLoading
