@@ -277,8 +277,8 @@ export default function LocationPage({ params }: Props) {
                   <span className="text-sm font-semibold">{dateStartTime}</span>
                 </div>
               )}
-            )}
             </div>
+            )}
           </button>
           )}
 
