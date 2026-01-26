@@ -28,6 +28,8 @@ export default function LocationPage({ params }: Props) {
   const [pubRiddleCount, setPubRiddleCount] = useState<number>(0);
   const [dateTrackId, setDateTrackId] = useState<string | null>(null);
   const [pubTrackId, setPubTrackId] = useState<string | null>(null);
+  const [dateTrackName, setDateTrackName] = useState<string | null>(null);
+  const [pubTrackName, setPubTrackName] = useState<string | null>(null);
   const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
@@ -95,6 +97,7 @@ export default function LocationPage({ params }: Props) {
 
         if (dateTrack) {
           setDateTrackId(dateTrack.id);
+          setDateTrackName(String(dateTrack.name || 'Date Day Adventure'));
           setDateStartLabel(String(dateTrack.start_label || ''));
           setDateStartTime(String(dateTrack.start_time || '') || null);
           setDateRiddleCount(dateTrack.riddle_count || 0);
@@ -102,6 +105,7 @@ export default function LocationPage({ params }: Props) {
 
         if (pubTrack) {
           setPubTrackId(pubTrack.id);
+          setPubTrackName(String(pubTrack.name || 'Pub Crawl Adventure'));
           setPubStartLabel(String(pubTrack.start_label || ''));
           setPubStartTime(String(pubTrack.start_time || '') || null);
           setPubRiddleCount(pubTrack.riddle_count || 0);
@@ -208,7 +212,7 @@ export default function LocationPage({ params }: Props) {
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="text-lg font-bold flex items-center gap-2 mb-2">
-                  💘 Date Day Adventure
+                  {dateTrackName || '💘 Date Day Adventure'}
                   {dateLoading && !loadTimeout && <span className="text-sm">⏳</span>}
                   {loadTimeout && <span className="text-sm">⚡</span>}
                 </div>
@@ -277,7 +281,7 @@ export default function LocationPage({ params }: Props) {
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="text-lg font-bold flex items-center gap-2 mb-2">
-                  🍻 Pub Crawl Adventure
+                  {pubTrackName || '🍻 Pub Crawl Adventure'}
                   {pubLoading && <span className="text-sm">⏳</span>}
                 </div>
                 {pubRiddleCount > 0 && !pubLoading && (

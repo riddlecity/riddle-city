@@ -89,11 +89,13 @@ export default async function LeaderboardsPage() {
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   {locationTracks.map((track: any) => {
-                    const adventureType = track.mode === 'date' 
-                      ? 'Date Day Adventure' 
-                      : track.mode === 'standard' || track.mode === 'pub'
-                      ? 'Pub Crawl Adventure' 
-                      : 'Adventure';
+                    // Use the track name from database, with fallback to computed name
+                    const adventureType = track.name || 
+                      (track.mode === 'date' 
+                        ? 'Date Day Adventure' 
+                        : track.mode === 'standard' || track.mode === 'pub'
+                        ? 'Pub Crawl Adventure' 
+                        : 'Adventure');
                     
                     const icon = track.mode === 'date' ? '💘' : (track.mode === 'standard' || track.mode === 'pub') ? '🍻' : '🎮';
                     

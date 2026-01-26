@@ -45,6 +45,13 @@ export default async function AdventureCompletePage({ params }: Props) {
     notFound();
   }
 
+  // Fetch track info to get the actual name
+  const { data: track } = await supabase
+    .from("tracks")
+    .select("name, location, mode")
+    .eq("id", group.track_id)
+    .single();
+
   // Check if group should be auto-closed (15 minutes after completion)
   const now = new Date();
   const completionTime = group.completed_at ? new Date(group.completed_at) : null;
@@ -117,11 +124,11 @@ export default async function AdventureCompletePage({ params }: Props) {
 
   // Get track info to show adventure type
   const trackParts = group.track_id?.split("_") || [];
-  const adventureType =
-    trackParts[0] === "date" ? "Date Day Adventure" : trackParts[0] === "pub" ? "Pub Crawl Adventure" : "Adventure";
-  const cityName = trackParts[1]
-    ? trackParts[1].charAt(0).toUpperCase() + trackParts[1].slice(1)
-    : "Unknown";
+  const adventureType = track?.name || 
+    (trackParts[0] === "date" ? "Date Day Adventure" : trackParts[0] === "pub" ? "Pub Crawl Adventure" : "Adventure");
+  const cityName = track?.location ? 
+    track.location.charAt(0).toUpperCase() + track.location.slice(1) :
+    (trackParts[1] ? trackParts[1].charAt(0).toUpperCase() + trackParts[1].slice(1) : "Unknown");
 
   const memberCount = group.group_members?.length || 0;
 
