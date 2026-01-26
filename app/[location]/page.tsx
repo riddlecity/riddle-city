@@ -20,16 +20,15 @@ export default function LocationPage({ params }: Props) {
   const location =
     locationSlug.charAt(0).toUpperCase() + locationSlug.slice(1);
 
-  const [dateStartLabel, setDateStartLabel] = useState<string | null>(null);
-  const [pubStartLabel, setPubStartLabel] = useState<string | null>(null);
-  const [dateStartTime, setDateStartTime] = useState<string | null>(null);
-  const [pubStartTime, setPubStartTime] = useState<string | null>(null);
-  const [dateRiddleCount, setDateRiddleCount] = useState<number>(0);
-  const [pubRiddleCount, setPubRiddleCount] = useState<number>(0);
-  const [dateTrackId, setDateTrackId] = useState<string | null>(null);
-  const [pubTrackId, setPubTrackId] = useState<string | null>(null);
-  const [dateTrackName, setDateTrackName] = useState<string | null>(null);
-  const [pubTrackName, setPubTrackName] = useState<string | null>(null);
+  const [tracks, setTracks] = useState<Array<{
+    id: string;
+    name: string;
+    start_label: string | null;
+    start_time: string | null;
+    mode: string;
+    color: string;
+    riddle_count: number;
+  }>>([]);
   const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
@@ -50,27 +49,27 @@ export default function LocationPage({ params }: Props) {
   // DEBUG: Log when component mounts
   useEffect(() => {
     console.log('🔍 [CLIENT] LocationPage component mounted for location:', locationSlug);
-  }, []);
+  }, [locationSlug]);
 
-  // Load location hours for time warnings AFTER we know the track IDs
-  const { locations: dateLocations, loading: dateLoading } = useLocationHours(dateTrackId || '');
-  const { locations: pubLocations, loading: pubLoading } = useLocationHours(pubTrackId || '');
+  // Load location hours for time warnings - we'll check per track when user clicks
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const { locations, loading: locationsLoading } = useLocationHours(selectedTrackId || '');
 
   // TIMEOUT: If data takes longer than 10 seconds, allow user to proceed anyway
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (dateLoading || pubLoading) {
+      if (locationsLoading) {
         setLoadTimeout(true);
       }
     }, 10000); // 10 second timeout
 
     return () => clearTimeout(timer);
-  }, [dateLoading, pubLoading]);
+  }, [locationsLoading]);
 
   // PRELOAD: Start loading both tracks immediately for faster response
   useEffect(() => {
     // Preload location hours data for faster selection
-  }, [dateLoading, pubLoading, dateLocations.length, pubLocations.length]);
+  }, [locationsLoading, locations.length]);
 
   // OPTIMIZATION: Load track metadata immediately alongside location hours
   useEffect(() => {
@@ -93,23 +92,9 @@ export default function LocationPage({ params }: Props) {
         }
 
         const data = await response.json();
-        const { dateTrack, pubTrack } = data;
+        const { tracks: fetchedTracks } = data;
 
-        if (dateTrack) {
-          setDateTrackId(dateTrack.id);
-          setDateTrackName(String(dateTrack.name || 'Date Day Adventure'));
-          setDateStartLabel(dateTrack.start_label ? String(dateTrack.start_label) : null);
-          setDateStartTime(String(dateTrack.start_time || '') || null);
-          setDateRiddleCount(dateTrack.riddle_count || 0);
-        }
-
-        if (pubTrack) {
-          setPubTrackId(pubTrack.id);
-          setPubTrackName(String(pubTrack.name || 'Pub Crawl Adventure'));
-          setPubStartLabel(pubTrack.start_label ? String(pubTrack.start_label) : null);
-          setPubStartTime(String(pubTrack.start_time || '') || null);
-          setPubRiddleCount(pubTrack.riddle_count || 0);
-        }
+        setTracks(fetchedTracks || []);
 
       } catch (error) {
         console.error('Error loading track metadata:', error);
@@ -121,9 +106,7 @@ export default function LocationPage({ params }: Props) {
     fetchLabels();
   }, [locationSlug]);
 
-  const handleModeSelect = async (mode: string) => {
-    // Determine which locations to check based on mode
-    const isLoading = mode === 'date' ? dateLoading : pubLoading;
+  const handleModeSelect = async (trackId: string, mode: string) => {
 
     // PREVENT PROCEEDING IF STILL LOADING DATA (unless timeout occurred)
     if (isLoading && !loadTimeout) {
@@ -157,8 +140,26 @@ export default function LocationPage({ params }: Props) {
       }
     }
 
-    // Proceed to adventure setup page
-    router.push(`/${resolvedParams.location}/${mode}`);
+    // Proceed to adventure setup page - use mode from URL mapping
+    const urlMode = mode === 'standard' ? 'pubcrawl' : mode;
+    router.push(`/${resolvedParams.location}/${urlMode}`);
+  };
+
+  // Helper to get color classes
+  const getColorClasses = (color: string, hasStartLabel: boolean) => {
+    if (!hasStartLabel) {
+      return 'bg-gray-600/30 cursor-not-allowed';
+    }
+    
+    const colorMap: Record<string, string> = {
+      pink: 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer',
+      yellow: 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 cursor-pointer',
+      blue: 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 cursor-pointer',
+      green: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 cursor-pointer',
+      purple: 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 cursor-pointer',
+    };
+    
+    return colorMap[color] || colorMap['pink'];
   };
 
   return (
@@ -198,144 +199,96 @@ export default function LocationPage({ params }: Props) {
         <p className="text-sm text-white/60 mb-12">📍 Head to your start point before you begin!</p>
 
         <div className="w-full max-w-md mx-auto space-y-6">
-          {/* Date Day Adventure - only show if track exists */}
-          {dateTrackId && (
-            <button
-              onClick={() => dateStartLabel ? handleModeSelect("date") : null}
-              disabled={!dateStartLabel}
-              className={`w-full ${
-                dateStartLabel
-                  ? 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer'
-                  : 'bg-gray-600/30 cursor-not-allowed'
-              } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
-            >
-            {/* Header row with title and price */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <div className="text-lg font-bold flex items-center gap-2 mb-2">
-                  {dateTrackName || '💘 Date Day Adventure'}
-                  {dateLoading && !loadTimeout && <span className="text-sm">⏳</span>}
-                  {loadTimeout && <span className="text-sm">⚡</span>}
-                </div>
-                {dateRiddleCount > 0 && !dateLoading && (
-                  <div className="bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold inline-block">
-                    {dateRiddleCount} Riddles
-                  </div>
-                )}
-              </div>
-              <div className="text-right ml-4">
-                {dateStartLabel ? (
-                  <>
-                    <div className="text-xl font-bold">£12.99</div>
-                    <div className="text-xs font-normal text-pink-100">
-                      per person
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-lg font-bold text-gray-500">
-                    Coming Soon
-                  </div>
-                )}
-              </div>
-            </div>
+          {/* Dynamic Track Display */}
+          {tracks.map((track) => {
+            const hasStartLabel = !!track.start_label;
+            const colorClasses = getColorClasses(track.color || (track.mode === 'date' ? 'pink' : 'yellow'), hasStartLabel);
             
-            {/* Description */}
-            <div className="text-sm font-normal text-pink-100">
-              {dateStartLabel
-                ? 'Perfect for couples on a romantic adventure'
-                : 'Coming soon to this location'
-              }
-            </div>
-
-            {/* Start Point */}
-            {dateStartLabel && (
-            <div className="mt-3 pt-3 border-t border-white/20">
-              <span className="text-xs uppercase tracking-wide text-white/70">
-                Start Point:
-              </span>{" "}
-              <span className="text-sm font-semibold">
-                {trackMetadataLoading 
-                  ? 'Loading...' 
-                 dateStartLabel}
-              </span>
-              {dateStartTimetracking-wide text-white/70">
-                    Recommended Start Time:
-                  </span>{" "}
-                  <span className="text-sm font-semibold">{dateStartTime}</span>
-                </div>
-              )}
-            </div>
-            )}
-          </button>
-          )}
-
-          {/* Pub Crawl Adventure */}
-          {(trackMetadataLoading || pubTrackId) && (
-          <div
-            className={`w-full ${
-              pubStartLabel && !pubLoading
-                ? "bg-gradient-to-- only show if track exists */}
-          {pubTrackId && (
-          <div
-            className={`w-full ${
-              pubStartLabel
-                ? "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 cursor-pointer"
-                : "bg-gray-600/30 cursor-not-allowed"
-            } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-left`}
-            onClick={() =>
-              pubStartLabel
-                <div className="text-lg font-bold flex items-center gap-2 mb-2">
-                  {pubTrackName || '🍻 Pub Crawl Adventure'}
-                  {pubLoading && <span className="text-sm">⏳</span>}
-                </div>
-                {pubRiddleCount > 0 && !pubLoading && (
-                  <div className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm font-bold inline-block">
-                    {pubRiddleCount} Riddles
-                  </div>
-                )}
-              </div>
-              <div className="text-right ml-4">
-                {pubStartLabel && !pubLoading ? (
-                  <>
-                    <div classN? (
-                  <>
-                    <div className="text-xl font-bold">£12.99</div>
-                    <div className="text-xs font-normal text-yellow-100">
-                      per person
-                    </div>
-                  </className="text-lg font-bold text-gray-500">
-                    Coming Soon
-                  </div>
-                )}
-              </div>
-            </div>
+            // Determine colors based on track color
+            const badgeColor = track.color === 'pink' ? 'bg-pink-500' : 
+                              track.color === 'yellow' ? 'bg-yellow-500 text-black' :
+                              track.color === 'blue' ? 'bg-blue-500' :
+                              track.color === 'green' ? 'bg-green-500' :
+                              track.color === 'purple' ? 'bg-purple-500' :
+                              'bg-pink-500';
             
-            {/* Description */}
-            <div className="text-sm font-normal text-yellow-100">
-              {pubLoading ? 'Loading location data...' : pubStartLabel ? 'Explore local pubs and bars' : 'Coming soon to this location'}
-            </div>
+            const textAccent = track.color === 'pink' ? 'text-pink-100' :
+                             track.color === 'yellow' ? 'text-yellow-100' :
+                             track.color === 'blue' ? 'text-blue-100' :
+                             track.color === 'green' ? 'text-green-100' :
+                             track.color === 'purple' ? 'text-purple-100' :
+                             'text-pink-100';
+            
+            const description = track.mode === 'date' 
+              ? 'Perfect for couples on a romantic adventure'
+              : 'Explore local pubs and bars';
+            
+            return (
+              <button
+                key={track.id}
+                onClick={() => hasStartLabel ? handleModeSelect(track.id, track.mode) : null}
+                disabled={!hasStartLabel}
+                className={`w-full ${colorClasses} text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
+              >
+                {/* Header row with title and price */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="text-lg font-bold flex items-center gap-2 mb-2">
+                      {track.name || (track.mode === 'date' ? '💘 Date Day Adventure' : '🍻 Pub Crawl Adventure')}
+                      {trackMetadataLoading && !loadTimeout && <span className="text-sm">⏳</span>}
+                      {loadTimeout && <span className="text-sm">⚡</span>}
+                    </div>
+                    {track.riddle_count > 0 && !trackMetadataLoading && (
+                      <div className={`${badgeColor} text-white px-3 py-1 rounded-full text-sm font-bold inline-block`}>
+                        {track.riddle_count} Riddles
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right ml-4">
+                    {hasStartLabel ? (
+                      <>
+                        <div className="text-xl font-bold">£12.99</div>
+                        <div className={`text-xs font-normal ${textAccent}`}>
+                          per person
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-lg font-bold text-gray-500">
+                        Coming Soon
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Description */}
+                <div className={`text-sm font-normal ${textAccent}`}>
+                  {hasStartLabel ? description : 'Coming soon to this location'}
+                </div>
 
-            {/* Start Point */}
-            {(pubSStartLabel ? 'Explore local pubs and bars' : 'Coming soon to this location'}
-            </div>
-
-            {/* Start Point */}
-            {pubStartLabel
-                <span className="text-sm font-semibold">
-                  {pubStartLabel}
-                </span>
-                {pubStartTime && (
-                  <div className="mt-2">
+                {/* Start Point */}
+                {hasStartLabel && (
+                  <div className="mt-3 pt-3 border-t border-white/20">
                     <span className="text-xs uppercase tracking-wide text-white/70">
-                      Recommended Start Time:
+                      Start Point:
                     </span>{" "}
-                    <span className="text-sm font-semibold text-yellow-200">{pubStartTime}</span>
+                    <span className="text-sm font-semibold">
+                      {trackMetadataLoading ? 'Loading...' : track.start_label}
+                    </span>
+                    {track.start_time && (
+                      <div className="mt-2">
+                        <span className="text-xs uppercase tracking-wide text-white/70">
+                          Recommended Start Time:
+                        </span>{" "}
+                        <span className={`text-sm font-semibold ${textAccent}`}>
+                          {track.start_time}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-          )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Extra info */}
