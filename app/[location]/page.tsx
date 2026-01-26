@@ -206,9 +206,6 @@ export default function LocationPage({ params }: Props) {
         <p className="text-sm text-white/60 mb-12">📍 Head to your start point before you begin!</p>
 
         <div className="w-full max-w-md mx-auto space-y-6">
-          {/* Debug info */}
-          {console.log('🎨 Rendering with tracks:', tracks, 'loading:', trackMetadataLoading)}
-          
           {/* Dynamic Track Display */}
           {tracks.length === 0 && !trackMetadataLoading && (
             <div className="text-white/60 text-center py-8">
@@ -217,6 +214,7 @@ export default function LocationPage({ params }: Props) {
           )}
           
           {tracks.map((track) => {
+            console.log('🎨 Rendering track:', track);
             const hasStartLabel = !!track.start_label;
             const colorClasses = getColorClasses(track.color || (track.mode === 'date' ? 'pink' : 'yellow'), hasStartLabel);
             
