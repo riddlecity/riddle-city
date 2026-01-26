@@ -354,6 +354,7 @@ export default function LocationPage({ params }: Props) {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Extra info */}
