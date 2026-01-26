@@ -78,6 +78,7 @@ export default function LocationPage({ params }: Props) {
       
       try {
         // SPEED OPTIMIZATION: Use dedicated API endpoint for faster server-side query
+        console.log('🔍 Fetching tracks for location:', locationSlug);
         const response = await fetch(`/api/tracks/${locationSlug}`, {
           cache: 'no-store',
           headers: {
@@ -92,9 +93,12 @@ export default function LocationPage({ params }: Props) {
         }
 
         const data = await response.json();
+        console.log('🔍 API Response:', data);
         const { tracks: fetchedTracks } = data;
+        console.log('🔍 Fetched tracks:', fetchedTracks);
 
         setTracks(fetchedTracks || []);
+        console.log('🔍 Tracks set in state');
 
       } catch (error) {
         console.error('Error loading track metadata:', error);
@@ -202,7 +206,16 @@ export default function LocationPage({ params }: Props) {
         <p className="text-sm text-white/60 mb-12">📍 Head to your start point before you begin!</p>
 
         <div className="w-full max-w-md mx-auto space-y-6">
+          {/* Debug info */}
+          {console.log('🎨 Rendering with tracks:', tracks, 'loading:', trackMetadataLoading)}
+          
           {/* Dynamic Track Display */}
+          {tracks.length === 0 && !trackMetadataLoading && (
+            <div className="text-white/60 text-center py-8">
+              No adventures available yet for this location.
+            </div>
+          )}
+          
           {tracks.map((track) => {
             const hasStartLabel = !!track.start_label;
             const colorClasses = getColorClasses(track.color || (track.mode === 'date' ? 'pink' : 'yellow'), hasStartLabel);
