@@ -44,7 +44,7 @@ export async function GET(
           start_label: track.start_label,
           start_time: track.start_time,
           mode: track.mode,
-          color: track.color || (track.mode === 'date' ? 'pink' : 'yellow'), // Default colors based on mode
+          color: track.color || 'pink', // Default to pink if no color specified
           riddle_count: count || 0
         };
       })

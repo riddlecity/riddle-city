@@ -140,9 +140,8 @@ export default function LocationPage({ params }: Props) {
       }
     }
 
-    // Proceed to adventure setup page - use mode from URL mapping
-    const urlMode = mode === 'standard' ? 'pubcrawl' : mode;
-    router.push(`/${resolvedParams.location}/${urlMode}`);
+    // Proceed to adventure setup page - mode now directly matches URL
+    router.push(`/${resolvedParams.location}/${mode}`);
   };
 
   // Helper to get color classes
