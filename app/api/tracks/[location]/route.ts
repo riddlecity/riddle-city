@@ -19,7 +19,7 @@ export async function GET(
     // Fetch ALL tracks for the location (not just date and standard)
     const { data: tracks, error } = await supabase
       .from('tracks')
-      .select('id, name, start_label, start_time, mode, color')
+      .select('id, name, start_label, start_time, mode')
       .eq('location', location)
       .order('mode', { ascending: true }); // Order by mode for consistency
 
@@ -44,7 +44,7 @@ export async function GET(
           start_label: track.start_label,
           start_time: track.start_time,
           mode: track.mode,
-          color: track.color || 'pink', // Default to pink if no color specified
+          color: track.mode === 'date' ? 'pink' : 'yellow', // Default colors based on mode
           riddle_count: count || 0
         };
       })

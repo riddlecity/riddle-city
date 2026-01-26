@@ -203,6 +203,11 @@ export default function LocationPage({ params }: Props) {
           Riddle City {location}
         </h1>
         <p className="text-lg text-white/80 mb-2">Choose Your Adventure</p>
+        {tracks.length > 0 && !trackMetadataLoading && (
+          <p className="text-sm text-white/70 mb-2">
+            {tracks.length} {tracks.length === 1 ? 'route' : 'routes'} available
+          </p>
+        )}
         <p className="text-sm text-white/60 mb-12">📍 Head to your start point before you begin!</p>
 
         <div className="w-full max-w-md mx-auto space-y-6">
