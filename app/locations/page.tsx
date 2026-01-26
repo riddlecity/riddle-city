@@ -75,12 +75,12 @@ export default function LocationsPage() {
               <Link
                 key={location.slug}
                 href={`/${location.slug}`}
-                className="block w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
+                className="block w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-6 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                <div className="flex items-center justify-between">
-                  <span>{location.name}</span>
-                  <span className="text-sm text-red-100 font-normal">
-                    {location.trackCount} {location.trackCount === 1 ? 'route' : 'routes'}
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-xl">{location.name}</span>
+                  <span className="text-xs text-red-100 font-normal opacity-90">
+                    {location.trackCount} {location.trackCount === 1 ? 'adventure' : 'adventures'}
                   </span>
                 </div>
               </Link>

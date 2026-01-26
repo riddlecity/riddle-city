@@ -154,19 +154,31 @@ export default function LocationPage({ params }: Props) {
 
   // Helper to get color classes
   const getColorClasses = (color: string, hasStartLabel: boolean) => {
-    if (!hasStartLabel) {
-      return 'bg-gray-600/30 cursor-not-allowed';
-    }
-    
-    const colorMap: Record<string, string> = {
-      pink: 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer',
-      yellow: 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 cursor-pointer',
-      blue: 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 cursor-pointer',
-      green: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 cursor-pointer',
-      purple: 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 cursor-pointer',
+    const colorMap: Record<string, { active: string; faded: string }> = {
+      pink: {
+        active: 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer',
+        faded: 'bg-gradient-to-r from-pink-600/30 to-red-600/30 cursor-not-allowed'
+      },
+      yellow: {
+        active: 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 cursor-pointer',
+        faded: 'bg-gradient-to-r from-yellow-600/30 to-orange-600/30 cursor-not-allowed'
+      },
+      blue: {
+        active: 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 cursor-pointer',
+        faded: 'bg-gradient-to-r from-blue-600/30 to-cyan-600/30 cursor-not-allowed'
+      },
+      green: {
+        active: 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 cursor-pointer',
+        faded: 'bg-gradient-to-r from-green-600/30 to-emerald-600/30 cursor-not-allowed'
+      },
+      purple: {
+        active: 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 cursor-pointer',
+        faded: 'bg-gradient-to-r from-purple-600/30 to-violet-600/30 cursor-not-allowed'
+      },
     };
     
-    return colorMap[color] || colorMap['pink'];
+    const colors = colorMap[color] || colorMap['pink'];
+    return hasStartLabel ? colors.active : colors.faded;
   };
 
   return (
