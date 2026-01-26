@@ -97,20 +97,15 @@ export default async function LeaderboardsPage() {
                         ? 'Pub Crawl Adventure' 
                         : 'Adventure');
                     
-                    const icon = track.mode === 'date' ? '💘' : (track.mode === 'standard' || track.mode === 'pub') ? '🍻' : '🎮';
-                    
                     return (
                       <Link
                         key={track.id}
                         href={`/leaderboard/${track.id}`}
                         className="block bg-gradient-to-br from-purple-900/40 to-blue-900/40 hover:from-purple-800/50 hover:to-blue-800/50 border border-white/20 rounded-xl p-6 transition-all duration-200 hover:scale-105 hover:shadow-xl"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-3xl">{icon}</span>
-                          <h3 className="text-lg font-semibold text-white">
-                            {adventureType}
-                          </h3>
-                        </div>
+                        <h3 className="text-lg font-semibold text-white">
+                          {adventureType}
+                        </h3>
                       </Link>
                     );
                   })}

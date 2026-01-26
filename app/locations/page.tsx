@@ -32,7 +32,7 @@ export default function LocationsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center justify-center px-4 py-16 relative">
+    <main className="min-h-screen bg-neutral-900 text-white flex flex-col items-center px-4 py-8 relative">
       {/* Logo in consistent top-left position */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
         <Link href="/">
@@ -59,13 +59,13 @@ export default function LocationsPage() {
         </Link>
       </div>
 
-      {/* Main content centered */}
-      <div className="w-full text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-12 text-center tracking-tight leading-tight">
+      {/* Main content */}
+      <div className="w-full text-center mt-20">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight leading-tight">
           Choose Your City
         </h1>
         
-        <div className="w-full max-w-md mx-auto space-y-4">
+        <div className="w-full max-w-sm mx-auto space-y-4">
           {loading ? (
             <div className="text-gray-400 py-8">Loading locations...</div>
           ) : locations.length === 0 ? (
@@ -77,9 +77,9 @@ export default function LocationsPage() {
                 href={`/${location.slug}`}
                 className="block w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-6 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-1.5">
                   <span className="text-xl">{location.name}</span>
-                  <span className="text-xs text-red-100 font-normal opacity-90">
+                  <span className="text-sm text-red-100 font-normal opacity-90">
                     {location.trackCount} {location.trackCount === 1 ? 'adventure' : 'adventures'}
                   </span>
                 </div>
