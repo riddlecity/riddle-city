@@ -22,19 +22,24 @@ export async function GET() {
 
     console.log('🔍 Raw tracks data:', tracks);
 
-    // Get unique locations, filtering out empty strings
-    const uniqueLocations = [...new Set(
-      tracks
-        ?.map(t => t.location)
-        .filter(loc => loc && loc.trim() !== '' && loc.toLowerCase() !== 'null') || []
-    )];
+    // Get unique locations with track counts
+    const locationCounts = tracks?.reduce((acc, track) => {
+      const loc = track.location;
+      if (loc && loc.trim() !== '' && loc.toLowerCase() !== 'null') {
+        acc[loc] = (acc[loc] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>) || {};
     
-    console.log('🔍 Found locations:', uniqueLocations);
+    const uniqueLocations = Object.keys(locationCounts);
+    
+    console.log('🔍 Found locations with counts:', locationCounts);
 
     return NextResponse.json({ 
       locations: uniqueLocations.map(location => ({
         slug: location,
-        name: location.charAt(0).toUpperCase() + location.slice(1)
+        name: location.charAt(0).toUpperCase() + location.slice(1),
+        trackCount: locationCounts[location]
       }))
     });
 

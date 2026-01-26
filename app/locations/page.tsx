@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 interface Location {
   slug: string;
   name: string;
+  trackCount: number;
 }
 
 export default function LocationsPage() {
@@ -76,7 +77,12 @@ export default function LocationsPage() {
                 href={`/${location.slug}`}
                 className="block w-full bg-red-600 hover:bg-red-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
               >
-                {location.name}
+                <div className="flex items-center justify-between">
+                  <span>{location.name}</span>
+                  <span className="text-sm text-red-100 font-normal">
+                    {location.trackCount} {location.trackCount === 1 ? 'route' : 'routes'}
+                  </span>
+                </div>
               </Link>
             ))
           )}
