@@ -199,15 +199,18 @@ export default function LocationPage({ params }: Props) {
 
         <div className="w-full max-w-md mx-auto space-y-6">
           {/* Date Day Adventure */}
-          <button
-            onClick={() => handleModeSelect("date")}
-            disabled={dateLoading && !loadTimeout}
-            className={`w-full ${
-              dateLoading && !loadTimeout
-                ? 'bg-gray-600/50 cursor-wait opacity-70' 
-                : 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer'
-            } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
-          >
+          {(dateStartLabel || dateLoading || trackMetadataLoading) && (
+            <button
+              onClick={() => handleModeSelect("date")}
+              disabled={dateLoading && !loadTimeout}
+              className={`w-full ${
+                dateLoading && !loadTimeout
+                  ? 'bg-gray-600/50 cursor-wait opacity-70' 
+                  : dateStartLabel && !dateLoading
+                  ? 'bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 cursor-pointer'
+                  : 'bg-gray-600/30 cursor-not-allowed'
+              } text-white font-semibold py-6 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 group text-left`}
+            >
             {/* Header row with title and price */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
@@ -223,10 +226,22 @@ export default function LocationPage({ params }: Props) {
                 )}
               </div>
               <div className="text-right ml-4">
-                <div className="text-xl font-bold">£12.99</div>
-                <div className="text-xs font-normal text-pink-100">
-                  per person
-                </div>
+                {dateStartLabel && !dateLoading ? (
+                  <>
+                    <div className="text-xl font-bold">£12.99</div>
+                    <div className="text-xs font-normal text-pink-100">
+                      per person
+                    </div>
+                  </>
+                ) : dateLoading ? (
+                  <div className="text-lg font-bold text-gray-300">
+                    Loading...
+                  </div>
+                ) : (
+                  <div className="text-lg font-bold text-gray-500">
+                    Coming Soon
+                  </div>
+                )}
               </div>
             </div>
             
@@ -234,13 +249,14 @@ export default function LocationPage({ params }: Props) {
             <div className="text-sm font-normal text-pink-100">
               {dateLoading && !loadTimeout 
                 ? 'Loading location data...' 
-                : loadTimeout 
-                ? 'Ready (time warnings may not be available)'
-                : 'Perfect for couples on a romantic adventure'
+                : dateStartLabel
+                ? 'Perfect for couples on a romantic adventure'
+                : 'Coming soon to this location'
               }
             </div>
 
             {/* Start Point */}
+            {(dateStartLabel || trackMetadataLoading) && (
             <div className="mt-3 pt-3 border-t border-white/20">
               <span className="text-xs uppercase tracking-wide text-white/70">
                 Start Point:
@@ -261,10 +277,13 @@ export default function LocationPage({ params }: Props) {
                   <span className="text-sm font-semibold">{dateStartTime}</span>
                 </div>
               )}
+            )}
             </div>
           </button>
+          )}
 
           {/* Pub Crawl Adventure */}
+          {(pubStartLabel || pubLoading || trackMetadataLoading) && (
           <div
             className={`w-full ${
               pubStartLabel && !pubLoading
@@ -312,7 +331,7 @@ export default function LocationPage({ params }: Props) {
             
             {/* Description */}
             <div className="text-sm font-normal text-yellow-100">
-              {pubLoading ? 'Loading location data...' : 'Explore local pubs and bars'}
+              {pubLoading ? 'Loading location data...' : pubStartLabel ? 'Explore local pubs and bars' : 'Coming soon to this location'}
             </div>
 
             {/* Start Point */}
