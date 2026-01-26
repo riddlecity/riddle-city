@@ -107,6 +107,12 @@ export default function LocationPage({ params }: Props) {
   }, [locationSlug]);
 
   const handleModeSelect = async (trackId: string, mode: string) => {
+    console.log("🎯 Mode selected:", mode, "trackId:", trackId);
+    
+    // Set the selected track ID for location hours hook
+    setSelectedTrackId(trackId);
+
+    const isLoading = trackMetadataLoading || locationsLoading;
 
     // PREVENT PROCEEDING IF STILL LOADING DATA (unless timeout occurred)
     if (isLoading && !loadTimeout) {
@@ -116,8 +122,6 @@ export default function LocationPage({ params }: Props) {
     // Check time warnings before proceeding (skip if timeout occurred)
     if (!loadTimeout) {
       try {
-        const trackId = mode === 'date' ? dateTrackId : pubTrackId;
-        
         if (!trackId) {
           console.warn('No track ID available, skipping time warning check');
         } else {
