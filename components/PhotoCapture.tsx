@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Camera, Check } from "lucide-react";
+import { savePhoto, loadPhoto } from "@/lib/photoStorage";
 
 interface PhotoCaptureProps {
   riddleId: string;
@@ -10,22 +11,18 @@ interface PhotoCaptureProps {
 }
 
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
-  // Initialize photo state from localStorage
-  const [photo, setPhoto] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`);
-    }
-    return null;
-  });
+  // Photo state – loaded asynchronously from IndexedDB (see useEffect below)
+  const [photo, setPhoto] = useState<string | null>(null);
   const [showTipModal, setShowTipModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Update photo state when riddleId changes (navigating between riddles)
+  // Load photo from IndexedDB (with localStorage fallback) on mount and when riddleId changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedPhoto = localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`);
-      setPhoto(storedPhoto);
-    }
+    let cancelled = false;
+    loadPhoto(groupId, riddleId).then((stored) => {
+      if (!cancelled) setPhoto(stored);
+    });
+    return () => { cancelled = true; };
   }, [riddleId, groupId]);
 
   // For backwards compatibility
@@ -103,8 +100,8 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               );
               
               const compressedPhoto = canvas.toDataURL("image/jpeg", 0.65);
-              const storageKey = `riddlecity_photo_${groupId}_${riddleId}`;
-              localStorage.setItem(storageKey, compressedPhoto);
+              // Save to IndexedDB (primary) and localStorage (fallback)
+              savePhoto(groupId, riddleId, compressedPhoto);
               setPhoto(compressedPhoto);
               
               if (onPhotoTaken) {

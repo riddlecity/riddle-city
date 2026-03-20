@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Download, Image as ImageIcon, Instagram } from "lucide-react";
+import { loadPhotosForGroup } from "@/lib/photoStorage";
 
 interface CollageGeneratorProps {
   groupId: string;
@@ -43,12 +44,11 @@ export default function CollageGeneratorV2({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const loadedPhotos: { [key: string]: string } = {};
-    riddleIds.forEach(riddleId => {
-      const photo = localStorage.getItem(`riddlecity_photo_${groupId}_${riddleId}`);
-      if (photo) loadedPhotos[riddleId] = photo;
+    let cancelled = false;
+    loadPhotosForGroup(groupId, riddleIds).then((loaded) => {
+      if (!cancelled) setPhotos(loaded);
     });
-    setPhotos(loadedPhotos);
+    return () => { cancelled = true; };
   }, [groupId, riddleIds]);
 
   const photoCount = Object.keys(photos).length;
