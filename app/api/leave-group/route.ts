@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +9,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "groupId and userId are required" }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
     const supabase = await createClient();
 
     // Mark the member as left
