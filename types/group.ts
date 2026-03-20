@@ -3,6 +3,7 @@ export interface GroupMember {
   is_leader: boolean;
   group_id: string;
   created_at?: string;
+  left_at?: string | null;
 }
 
 export interface Group {

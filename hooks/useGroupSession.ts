@@ -77,7 +77,34 @@ export function useGroupSession(autoRedirect: boolean = false) {
         }
         
         if (!groupId || !userId) {
-          console.log('🔍 USE GROUP SESSION: No session cookies found')
+          // Fallback: check localStorage (more persistent on iPhone/Safari)
+          try {
+            const lsSession = localStorage.getItem('riddlecity-session');
+            const lsExpiry = localStorage.getItem('riddlecity-session-expiry');
+            if (lsSession && lsExpiry && Date.now() < Number(lsExpiry)) {
+              const lsData = JSON.parse(lsSession);
+              groupId = lsData.groupId || null;
+              userId = lsData.userId || null;
+              teamName = lsData.teamName || null;
+              console.log('🔍 USE GROUP SESSION: Recovered session from localStorage:', { groupId, userId });
+              // Restore cookies from localStorage so future checks work
+              if (groupId && userId) {
+                const encoded = btoa(JSON.stringify(lsData));
+                const maxAge = 48 * 60 * 60;
+                document.cookie = `riddlecity-session=${encoded}; max-age=${maxAge}; path=/; samesite=lax`;
+                document.cookie = `group_id=${groupId}; max-age=${maxAge}; path=/; samesite=lax`;
+                document.cookie = `user_id=${userId}; max-age=${maxAge}; path=/; samesite=lax`;
+                if (teamName) document.cookie = `team_name=${teamName}; max-age=${maxAge}; path=/; samesite=lax`;
+                console.log('🔍 USE GROUP SESSION: Restored cookies from localStorage');
+              }
+            }
+          } catch (e) {
+            console.warn('🔍 USE GROUP SESSION: Could not read localStorage');
+          }
+        }
+
+        if (!groupId || !userId) {
+          console.log('🔍 USE GROUP SESSION: No session found in cookies or localStorage')
           setActiveSession(null)
           setLoading(false)
           return

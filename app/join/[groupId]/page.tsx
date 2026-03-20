@@ -71,7 +71,11 @@ export default function JoinGroupPage() {
       document.cookie = `user_id=${sessionData.userId}; max-age=${maxAge}; path=/; ${isProduction ? 'secure; ' : ''}samesite=lax`;
       document.cookie = `team_name=${sessionData.teamName}; max-age=${maxAge}; path=/; ${isProduction ? 'secure; ' : ''}samesite=lax`;
       
-      console.log("✅ JOIN: Set both new and legacy cookies for compatibility");
+      // ALSO save to localStorage as backup (Safari on iPhone can clear cookies aggressively)
+      localStorage.setItem('riddlecity-session', JSON.stringify(sessionData));
+      localStorage.setItem('riddlecity-session-expiry', String(Date.now() + maxAge * 1000));
+      
+      console.log("✅ JOIN: Set both cookies and localStorage for session resilience");
     } catch (e) {
       console.error("Failed to set session cookie:", e);
     }
@@ -124,11 +128,7 @@ export default function JoinGroupPage() {
         setError(null);
         setStatusMessage("Joining your group...");
 
-        // Clear any conflicting cookies before joining (ensure clean state)
-        clearAllCookies();
-
-        // Small delay to ensure cookies are cleared
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // NOTE: Do NOT clear cookies here - the API needs them to identify returning users
 
         const res = await fetch("/api/join-group", {
           method: "POST",

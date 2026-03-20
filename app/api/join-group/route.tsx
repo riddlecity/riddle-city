@@ -167,10 +167,12 @@ export async function POST(req: Request) {
       return response;
     }
     
-    // Check if group is full (only for new members)
-    const currentMemberCount = group.group_members?.length || 0;
-    if (currentMemberCount >= group.player_limit) {
-      console.log("❌ JOIN GROUP: Group is full:", currentMemberCount, ">=", group.player_limit);
+    // Check if group is full (only count active members - those who haven't left)
+    const activeMemberCount = group.group_members?.filter(
+      (m: GroupMember) => !m.left_at
+    ).length || 0;
+    if (activeMemberCount >= group.player_limit) {
+      console.log("❌ JOIN GROUP: Group is full:", activeMemberCount, ">=", group.player_limit);
       return NextResponse.json({ error: "Group is full" }, { status: 403 });
     }
     
