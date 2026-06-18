@@ -12,33 +12,228 @@ interface CollageGeneratorProps {
   riddleIds: string[];
 }
 
-// Instagram 4:5 aspect ratio
-const CANVAS_WIDTH = 1080;
-const CANVAS_HEIGHT = 1350;
-const PADDING = 12;
-const CORNER_RADIUS = 12;
+// ── Canvas constants ──────────────────────────────────────────────────────────
+const CANVAS_W  = 1080;
+const CANVAS_H  = 1350;   // 4:5 Instagram portrait
+const PAD       = 12;
+const GAP       = 8;
+const CORNER_R  = 12;
+const BADGE_H   = 100;    // dedicated brand strip at bottom of canvas
+const BADGE_GAP = 8;      // gap between photo grid and badge strip
 
-interface PhotoTile {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+// Available photo area (everything above the badge)
+const PW  = CANVAS_W - PAD * 2;                       // 1056
+const PH  = CANVAS_H - PAD * 2 - BADGE_H - BADGE_GAP; // 1218
+
+// Reusable column widths (last column absorbs pixel rounding)
+const HW  = Math.floor((PW - GAP) / 2);        // ~524 — 2-col half width
+const TW  = Math.floor((PW - GAP * 2) / 3);    // ~346 — 3-col third width
+const QW  = Math.floor((PW - GAP * 3) / 4);    // ~258 — 4-col quarter width
+const HW2 = PW - HW - GAP;                     // right half (absorbs rounding)
+const TW3 = PW - TW * 2 - GAP * 2;             // right third
+const QW4 = PW - QW * 3 - GAP * 3;             // right quarter
+
+// Reusable row heights (last row absorbs pixel rounding)
+const HH  = Math.floor((PH - GAP) / 2);        // ~605
+const TH  = Math.floor((PH - GAP * 2) / 3);    // ~400
+const HH2 = PH - HH - GAP;
+const TH3 = PH - TH * 2 - GAP * 2;
+
+interface Tile { x: number; y: number; w: number; h: number }
+
+// ── Adaptive template selection ───────────────────────────────────────────────
+// Picks the layout whose slot aspect ratio best matches the photos' actual AR.
+// avgAR < 1.0 → mostly portrait shots; ≥ 1.0 → mostly landscape.
+function getTemplate(count: number, avgAR: number): Tile[] {
+  const p = avgAR < 1.0; // portrait-oriented?
+  const n = Math.min(count, 9);
+
+  switch (n) {
+    case 1:
+      return [{ x: PAD, y: PAD, w: PW, h: PH }];
+
+    case 2:
+      return p
+        ? [
+            // Side-by-side → tall portrait slots (0.43 AR) ≈ 9:16 ✓
+            { x: PAD,        y: PAD, w: HW,  h: PH },
+            { x: PAD+HW+GAP, y: PAD, w: HW2, h: PH },
+          ]
+        : [
+            // Stacked → wide landscape slots (1.75 AR) ≈ 16:9 ✓
+            { x: PAD, y: PAD,        w: PW, h: HH  },
+            { x: PAD, y: PAD+HH+GAP, w: PW, h: HH2 },
+          ];
+
+    case 3:
+      return p
+        ? [
+            // Left full-height column + right two stacked
+            { x: PAD,        y: PAD,         w: HW,  h: PH  },
+            { x: PAD+HW+GAP, y: PAD,         w: HW2, h: HH  },
+            { x: PAD+HW+GAP, y: PAD+HH+GAP,  w: HW2, h: HH2 },
+          ]
+        : [
+            // One wide landscape on top + two below
+            { x: PAD,        y: PAD,         w: PW,  h: HH  },
+            { x: PAD,        y: PAD+HH+GAP,  w: HW,  h: HH2 },
+            { x: PAD+HW+GAP, y: PAD+HH+GAP,  w: HW2, h: HH2 },
+          ];
+
+    case 4:
+      // 2×2 works well for both orientations (0.87 AR per slot)
+      return [
+        { x: PAD,        y: PAD,         w: HW,  h: HH  },
+        { x: PAD+HW+GAP, y: PAD,         w: HW2, h: HH  },
+        { x: PAD,        y: PAD+HH+GAP,  w: HW,  h: HH2 },
+        { x: PAD+HW+GAP, y: PAD+HH+GAP,  w: HW2, h: HH2 },
+      ];
+
+    case 5:
+      return p
+        ? [
+            // 2 wide top + 3 narrow bottom — bottom slots 0.57 AR ≈ 9:16 ✓
+            { x: PAD,             y: PAD,        w: HW,  h: HH  },
+            { x: PAD+HW+GAP,      y: PAD,        w: HW2, h: HH  },
+            { x: PAD,             y: PAD+HH+GAP, w: TW,  h: HH2 },
+            { x: PAD+TW+GAP,      y: PAD+HH+GAP, w: TW,  h: HH2 },
+            { x: PAD+TW*2+GAP*2,  y: PAD+HH+GAP, w: TW3, h: HH2 },
+          ]
+        : [
+            // 3 wide top + 2 below
+            { x: PAD,             y: PAD,        w: TW,  h: HH  },
+            { x: PAD+TW+GAP,      y: PAD,        w: TW,  h: HH  },
+            { x: PAD+TW*2+GAP*2,  y: PAD,        w: TW3, h: HH  },
+            { x: PAD,             y: PAD+HH+GAP, w: HW,  h: HH2 },
+            { x: PAD+HW+GAP,      y: PAD+HH+GAP, w: HW2, h: HH2 },
+          ];
+
+    case 6:
+      return p
+        ? [
+            // 3 cols × 2 rows → 346×605 = 0.57 AR — near-perfect for 9:16 ✓✓
+            { x: PAD,            y: PAD,        w: TW,  h: HH  },
+            { x: PAD+TW+GAP,     y: PAD,        w: TW,  h: HH  },
+            { x: PAD+TW*2+GAP*2, y: PAD,        w: TW3, h: HH  },
+            { x: PAD,            y: PAD+HH+GAP, w: TW,  h: HH2 },
+            { x: PAD+TW+GAP,     y: PAD+HH+GAP, w: TW,  h: HH2 },
+            { x: PAD+TW*2+GAP*2, y: PAD+HH+GAP, w: TW3, h: HH2 },
+          ]
+        : [
+            // 2 cols × 3 rows → 524×400 = 1.31 AR ≈ 4:3 landscape ✓
+            { x: PAD,        y: PAD,              w: HW,  h: TH  },
+            { x: PAD+HW+GAP, y: PAD,              w: HW2, h: TH  },
+            { x: PAD,        y: PAD+TH+GAP,       w: HW,  h: TH  },
+            { x: PAD+HW+GAP, y: PAD+TH+GAP,      w: HW2, h: TH  },
+            { x: PAD,        y: PAD+TH*2+GAP*2,   w: HW,  h: TH3 },
+            { x: PAD+HW+GAP, y: PAD+TH*2+GAP*2,  w: HW2, h: TH3 },
+          ];
+
+    case 7: {
+      // 3 top + 4 bottom
+      const b = HH2;
+      return [
+        { x: PAD,            y: PAD,        w: TW,  h: HH },
+        { x: PAD+TW+GAP,     y: PAD,        w: TW,  h: HH },
+        { x: PAD+TW*2+GAP*2, y: PAD,        w: TW3, h: HH },
+        { x: PAD,            y: PAD+HH+GAP, w: QW,  h: b  },
+        { x: PAD+QW+GAP,     y: PAD+HH+GAP, w: QW,  h: b  },
+        { x: PAD+QW*2+GAP*2, y: PAD+HH+GAP, w: QW,  h: b  },
+        { x: PAD+QW*3+GAP*3, y: PAD+HH+GAP, w: QW4, h: b  },
+      ];
+    }
+
+    case 8:
+      if (p) {
+        // 4 cols × 2 rows → 258×605 = 0.43 AR — great for portrait
+        return [
+          { x: PAD,            y: PAD,        w: QW,  h: HH  },
+          { x: PAD+QW+GAP,     y: PAD,        w: QW,  h: HH  },
+          { x: PAD+QW*2+GAP*2, y: PAD,        w: QW,  h: HH  },
+          { x: PAD+QW*3+GAP*3, y: PAD,        w: QW4, h: HH  },
+          { x: PAD,            y: PAD+HH+GAP, w: QW,  h: HH2 },
+          { x: PAD+QW+GAP,     y: PAD+HH+GAP, w: QW,  h: HH2 },
+          { x: PAD+QW*2+GAP*2, y: PAD+HH+GAP, w: QW,  h: HH2 },
+          { x: PAD+QW*3+GAP*3, y: PAD+HH+GAP, w: QW4, h: HH2 },
+        ];
+      } else {
+        // 2 cols × 4 rows → 524×298 = 1.76 AR — great for landscape
+        const rh = Math.floor((PH - GAP * 3) / 4);
+        const rh4 = PH - rh * 3 - GAP * 3;
+        return [
+          { x: PAD,        y: PAD,              w: HW, h: rh  },
+          { x: PAD+HW+GAP, y: PAD,              w: HW2,h: rh  },
+          { x: PAD,        y: PAD+rh+GAP,       w: HW, h: rh  },
+          { x: PAD+HW+GAP, y: PAD+rh+GAP,       w: HW2,h: rh  },
+          { x: PAD,        y: PAD+rh*2+GAP*2,   w: HW, h: rh  },
+          { x: PAD+HW+GAP, y: PAD+rh*2+GAP*2,   w: HW2,h: rh  },
+          { x: PAD,        y: PAD+rh*3+GAP*3,   w: HW, h: rh4 },
+          { x: PAD+HW+GAP, y: PAD+rh*3+GAP*3,   w: HW2,h: rh4 },
+        ];
+      }
+
+    default: // 9  →  3×3 grid (0.87 AR — works for mixed orientations)
+      return [
+        { x: PAD,            y: PAD,              w: TW,  h: TH  },
+        { x: PAD+TW+GAP,     y: PAD,              w: TW,  h: TH  },
+        { x: PAD+TW*2+GAP*2, y: PAD,              w: TW3, h: TH  },
+        { x: PAD,            y: PAD+TH+GAP,       w: TW,  h: TH  },
+        { x: PAD+TW+GAP,     y: PAD+TH+GAP,      w: TW,  h: TH  },
+        { x: PAD+TW*2+GAP*2, y: PAD+TH+GAP,      w: TW3, h: TH  },
+        { x: PAD,            y: PAD+TH*2+GAP*2,   w: TW,  h: TH3 },
+        { x: PAD+TW+GAP,     y: PAD+TH*2+GAP*2,  w: TW,  h: TH3 },
+        { x: PAD+TW*2+GAP*2, y: PAD+TH*2+GAP*2,  w: TW3, h: TH3 },
+      ];
+  }
 }
 
-interface Layout {
-  photoTiles: PhotoTile[];
-  badgeArea: PhotoTile;
-  badgeOverlay: boolean;
+// ── Drawing helpers ───────────────────────────────────────────────────────────
+function drawPhotoInTile(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  tile: Tile
+) {
+  const imgAR  = img.width / img.height;
+  const tileAR = tile.w / tile.h;
+  let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+  if (imgAR > tileAR) {
+    // Photo wider than slot → crop sides, keep centre
+    sw = img.height * tileAR;
+    sx = (img.width - sw) / 2;
+  } else {
+    // Photo taller than slot → crop top/bottom, keep centre
+    sh = img.width / tileAR;
+    sy = (img.height - sh) / 2;
+  }
+
+  ctx.save();
+  const r = CORNER_R;
+  ctx.beginPath();
+  ctx.moveTo(tile.x + r, tile.y);
+  ctx.lineTo(tile.x + tile.w - r, tile.y);
+  ctx.arcTo(tile.x + tile.w, tile.y,      tile.x + tile.w, tile.y + r,      r);
+  ctx.lineTo(tile.x + tile.w, tile.y + tile.h - r);
+  ctx.arcTo(tile.x + tile.w, tile.y + tile.h, tile.x + tile.w - r, tile.y + tile.h, r);
+  ctx.lineTo(tile.x + r, tile.y + tile.h);
+  ctx.arcTo(tile.x, tile.y + tile.h, tile.x, tile.y + tile.h - r, r);
+  ctx.lineTo(tile.x, tile.y + r);
+  ctx.arcTo(tile.x, tile.y, tile.x + r, tile.y, r);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(img, sx, sy, sw, sh, tile.x, tile.y, tile.w, tile.h);
+  ctx.restore();
 }
 
-export default function CollageGeneratorV2({ 
-  groupId, 
+// ── Component ─────────────────────────────────────────────────────────────────
+export default function CollageGeneratorV2({
+  groupId,
   teamName,
   adventureName: _adventureName,
-  completionTime: _completionTime, 
-  riddleIds 
+  completionTime: _completionTime,
+  riddleIds,
 }: CollageGeneratorProps) {
-  const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [photos, setPhotos]       = useState<{ [key: string]: string }>({});
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,537 +248,242 @@ export default function CollageGeneratorV2({
 
   const photoCount = Object.keys(photos).length;
 
-  // Smart layout calculator - all landscape-oriented tiles
-  const calculateLayout = (count: number): Layout => {
-    const w = CANVAS_WIDTH - PADDING * 2;
-    const h = CANVAS_HEIGHT - PADDING * 2;
-    const gap = 8;
-
-    // Badge dimensions
-    const badgeW = Math.floor(w * 0.68);
-    const badgeH = Math.floor(h * 0.16);
-    const badgeX = PADDING + (w - badgeW) / 2;
-    const badgeY = PADDING + (h - badgeH) / 2;
-
-    const photoTiles: PhotoTile[] = [];
-
-    if (count === 1) {
-      // Single large photo with badge below
-      const photoH = Math.floor(h * 0.72);
-      photoTiles.push({ x: PADDING, y: PADDING, width: w, height: photoH });
-      return {
-        photoTiles,
-        badgeArea: { x: PADDING, y: PADDING + photoH + gap, width: w, height: h - photoH - gap },
-        badgeOverlay: false
-      };
-    }
-
-    if (count === 2) {
-      // 2 stacked landscape photos
-      const photoH = (h - gap) / 2;
-      photoTiles.push({ x: PADDING, y: PADDING, width: w, height: photoH });
-      photoTiles.push({ x: PADDING, y: PADDING + photoH + gap, width: w, height: photoH });
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
-    }
-
-    if (count === 3) {
-      // 2x2 grid with badge in smaller 4th spot
-      const row1H = Math.floor(h * 0.58); // Top row larger
-      const row2H = h - row1H - gap; // Bottom row smaller
-      const col1W = Math.floor(w * 0.52);
-      const col2W = w - col1W - gap;
-      
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      
-      return {
-        photoTiles,
-        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap, width: col2W, height: row2H },
-        badgeOverlay: false
-      };
-    }
-
-    if (count === 4) {
-      // 2x2 staggered grid - photos criss-cross for visual interest
-      const row1H = Math.floor(h * 0.45);
-      const row2H = Math.floor(h * 0.48);
-      const bottomGap = Math.floor(gap * 1.5); // Slightly larger gap for offset
-      
-      // Top row
-      const col1W = Math.floor(w * 0.48);
-      const col2W = w - col1W - gap;
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      
-      // Bottom row - wider left (picture 3), narrower right (picture 4), slightly offset down
-      const col3W = Math.floor(w * 0.54); // Picture 3 wider than picture 1
-      const col4W = w - col3W - gap; // Picture 4 narrower than picture 2
-      const row2Y = PADDING + row1H + bottomGap;
-      
-      photoTiles.push({ x: PADDING, y: row2Y, width: col3W, height: row2H });
-      photoTiles.push({ x: PADDING + col3W + gap, y: row2Y, width: col4W, height: row2H });
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
-    }
-
-    if (count === 5) {
-      // 3 rows of 2 with badge in 6th spot
-      const row1H = Math.floor(h * 0.32);
-      const row2H = Math.floor(h * 0.36);
-      const row3H = h - row1H - row2H - gap * 2;
-      const col1W = Math.floor(w * 0.58);
-      const col2W = w - col1W - gap;
-      
-      // Row 1: 58/42 split
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      
-      // Row 2: 42/58 split (alternated)
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      
-      // Row 3: Photo on left, badge on right
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
-      
-      return {
-        photoTiles,
-        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H },
-        badgeOverlay: false
-      };
-    }
-
-    if (count === 6) {
-      // 3 rows of 2 with varied heights
-      const row1H = Math.floor(h * 0.30);
-      const row2H = Math.floor(h * 0.38);
-      const row3H = h - row1H - row2H - gap * 2;
-      const col1W = Math.floor(w * 0.48);
-      const col2W = w - col1W - gap;
-      
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
-      
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: badgeH }, badgeOverlay: true };
-    }
-
-    if (count === 7) {
-      // 4 rows of 2 with badge in 8th spot - largest rows in middle
-      const row1H = Math.floor(h * 0.22);
-      const row2H = Math.floor(h * 0.30);
-      const row3H = Math.floor(h * 0.26);
-      const row4H = h - row1H - row2H - row3H - gap * 3;
-      const col1W = Math.floor(w * 0.54);
-      const col2W = w - col1W - gap;
-      
-      // Bottom row: wider photo on left, more square badge on right
-      const row4PhotoW = Math.floor(w * 0.65);
-      const row4BadgeW = w - row4PhotoW - gap;
-      
-      // Row 1: 54/46 split
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      
-      // Row 2: 46/54 split (alternated)
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      
-      // Row 3: 54/46 split
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
-      
-      // Row 4: Wider photo on left (65%), more square badge on right (35%)
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: row4PhotoW, height: row4H });
-      
-      return {
-        photoTiles,
-        badgeArea: { x: PADDING + row4PhotoW + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: row4BadgeW, height: row4H },
-        badgeOverlay: false
-      };
-    }
-
-    if (count === 8) {
-      // 4 rows of 2 with varied dimensions - largest rows in middle
-      const row1H = Math.floor(h * 0.22);
-      const row2H = Math.floor(h * 0.30);
-      const row3H = Math.floor(h * 0.26);
-      const row4H = h - row1H - row2H - row3H - gap * 3;
-      const col1W = Math.floor(w * 0.54);
-      const col2W = w - col1W - gap;
-      
-      // Alternate column widths for visual interest
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
-      
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H });
-      
-      return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: Math.floor(h * 0.14) }, badgeOverlay: true };
-    }
-
-    if (count === 9) {
-      // 5 rows of 2 with badge in 10th spot
-      const row1H = Math.floor(h * 0.22);
-      const row2H = Math.floor(h * 0.20);
-      const row3H = Math.floor(h * 0.21);
-      const row4H = Math.floor(h * 0.19);
-      const row5H = h - row1H - row2H - row3H - row4H - gap * 4;
-      const col1W = Math.floor(w * 0.52);
-      const col2W = w - col1W - gap;
-      
-      // Row 1
-      photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-      
-      // Row 2
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
-      
-      // Row 3
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
-      photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
-      
-      // Row 4
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
-      photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H });
-      
-      // Row 5: Photo on left, badge on right
-      photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col1W, height: row5H });
-      
-      return {
-        photoTiles,
-        badgeArea: { x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col2W, height: row5H },
-        badgeOverlay: false
-      };
-    }
-
-    // 10+ photos: 5 rows of 2 with varied dimensions
-    const row1H = Math.floor(h * 0.22);
-    const row2H = Math.floor(h * 0.19);
-    const row3H = Math.floor(h * 0.21);
-    const row4H = Math.floor(h * 0.18);
-    const row5H = h - row1H - row2H - row3H - row4H - gap * 4;
-    const col1W = Math.floor(w * 0.54);
-    const col2W = w - col1W - gap;
-    
-    // Row 1
-    photoTiles.push({ x: PADDING, y: PADDING, width: col1W, height: row1H });
-    photoTiles.push({ x: PADDING + col1W + gap, y: PADDING, width: col2W, height: row1H });
-    
-    // Row 2
-    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap, width: col2W, height: row2H });
-    photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap, width: col1W, height: row2H });
-    
-    // Row 3
-    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap, width: col1W, height: row3H });
-    photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap, width: col2W, height: row3H });
-    
-    // Row 4
-    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col2W, height: row4H });
-    photoTiles.push({ x: PADDING + col2W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap, width: col1W, height: row4H });
-    
-    // Row 5
-    photoTiles.push({ x: PADDING, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col1W, height: row5H });
-    photoTiles.push({ x: PADDING + col1W + gap, y: PADDING + row1H + gap + row2H + gap + row3H + gap + row4H + gap, width: col2W, height: row5H });
-    
-    return { photoTiles, badgeArea: { x: badgeX, y: badgeY, width: badgeW, height: Math.floor(h * 0.13) }, badgeOverlay: true };
-  };
-
-  // Smart crop with center bias - minimizes cropping of landscape photos
-  const drawCroppedPhoto = (
-    ctx: CanvasRenderingContext2D,
-    img: HTMLImageElement,
-    tile: PhotoTile
-  ) => {
-    const imgAspect = img.width / img.height;
-    const tileAspect = tile.width / tile.height;
-
-    let sx = 0, sy = 0, sw = img.width, sh = img.height;
-
-    if (imgAspect > tileAspect) {
-      // Image is wider - crop sides, keep center
-      sw = img.height * tileAspect;
-      sx = (img.width - sw) / 2;
-    } else {
-      // Image is taller - crop top/bottom, keep center
-      sh = img.width / tileAspect;
-      sy = (img.height - sh) / 2;
-    }
-
-    // Draw with rounded corners
-    ctx.save();
-    ctx.beginPath();
-    const r = CORNER_RADIUS;
-    ctx.moveTo(tile.x + r, tile.y);
-    ctx.lineTo(tile.x + tile.width - r, tile.y);
-    ctx.arcTo(tile.x + tile.width, tile.y, tile.x + tile.width, tile.y + r, r);
-    ctx.lineTo(tile.x + tile.width, tile.y + tile.height - r);
-    ctx.arcTo(tile.x + tile.width, tile.y + tile.height, tile.x + tile.width - r, tile.y + tile.height, r);
-    ctx.lineTo(tile.x + r, tile.y + tile.height);
-    ctx.arcTo(tile.x, tile.y + tile.height, tile.x, tile.y + tile.height - r, r);
-    ctx.lineTo(tile.x, tile.y + r);
-    ctx.arcTo(tile.x, tile.y, tile.x + r, tile.y, r);
-    ctx.closePath();
-    ctx.clip();
-
-    ctx.drawImage(img, sx, sy, sw, sh, tile.x, tile.y, tile.width, tile.height);
-    ctx.restore();
-  };
-
-  // Analyze average brightness
-  const analyzeBrightness = async (photoUrls: string[]): Promise<number> => {
-    let totalBrightness = 0;
-    
-    for (const url of photoUrls.slice(0, 3)) {
-      const img = new Image();
-      await new Promise<void>((resolve) => {
-        img.onload = () => {
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = 100;
-          tempCanvas.height = 100;
-          const tempCtx = tempCanvas.getContext('2d');
-          if (tempCtx) {
-            tempCtx.drawImage(img, 0, 0, 100, 100);
-            const data = tempCtx.getImageData(0, 0, 100, 100).data;
-            let sum = 0;
-            for (let i = 0; i < data.length; i += 4) {
-              sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
-            }
-            totalBrightness += sum / (data.length / 4);
-          }
-          resolve();
-        };
-        img.onerror = () => resolve();
-        img.src = url;
-      });
-    }
-    
-    return totalBrightness / Math.min(3, photoUrls.length);
-  };
-
-  // Draw badge with logo
-  const drawBadge = (
-    ctx: CanvasRenderingContext2D,
-    tile: PhotoTile,
-    stamp: HTMLImageElement,
-    _useDarkBadge: boolean,
-    scale: number = 0.50 // Default 50% width, can be overridden
-  ) => {
-    // Just draw the stamp logo - moderate size, slightly stretched
-    if (stamp.complete) {
-      // Make logo scale% of tile width and stretch vertically 1.015x
-      const logoWidth = Math.floor(tile.width * scale);
-      const logoHeight = Math.floor(logoWidth * 1.015); // Very slightly taller
-      const logoX = tile.x + (tile.width - logoWidth) / 2;
-      const logoY = tile.y + (tile.height - logoHeight) / 2;
-      
-      // Draw stamp directly without any filters or backgrounds
-      ctx.drawImage(stamp, logoX, logoY, logoWidth, logoHeight);
-    }
-  };
-
+  // ── Collage generation ──────────────────────────────────────────────────────
   const generateCollage = async () => {
     if (photoCount === 0 || !canvasRef.current) return;
-    
     setIsGenerating(true);
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      setIsGenerating(false);
-      return;
-    }
+    if (!ctx) { setIsGenerating(false); return; }
 
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
+    canvas.width  = CANVAS_W;
+    canvas.height = CANVAS_H;
 
-    // Background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    // Dark background
+    ctx.fillStyle = "#0f0f0f";
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // Load stamp
-    const stamp = new Image();
-    const stampLoaded = new Promise<void>((resolve) => {
-      stamp.onload = () => resolve();
-      stamp.onerror = () => resolve();
-      stamp.src = "/collagestamp.png";
-    });
-    await stampLoaded;
-
-    // Get layout
-    const layout = calculateLayout(photoCount);
+    // Shuffle entries
     const photoEntries = Object.entries(photos);
-    
-    // Shuffle photos
     for (let i = photoEntries.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [photoEntries[i], photoEntries[j]] = [photoEntries[j], photoEntries[i]];
     }
 
-    // Analyze brightness
-    const avgBrightness = await analyzeBrightness(photoEntries.map(([, url]) => url));
-    const useDarkBadge = avgBrightness > 128;
+    // Cap at 9 photos (largest supported template)
+    const selected = photoEntries.slice(0, 9);
 
-    // Load and draw photos
-    for (let i = 0; i < Math.min(photoEntries.length, layout.photoTiles.length); i++) {
-      const img = new Image();
-      await new Promise<void>((resolve) => {
-        img.onload = () => {
-          drawCroppedPhoto(ctx, img, layout.photoTiles[i]);
-          resolve();
-        };
-        img.onerror = () => resolve();
-        img.src = photoEntries[i][1];
-      });
+    // Load all images in parallel to get their real dimensions
+    const imgs = await Promise.all(
+      selected.map(([, url]) =>
+        new Promise<HTMLImageElement>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => {
+            // Placeholder with a sensible AR so the layout doesn't break
+            const ph = document.createElement("canvas");
+            ph.width = 4; ph.height = 3;
+            const placeholder = new Image();
+            placeholder.width = 4; placeholder.height = 3;
+            resolve(placeholder);
+          };
+          img.src = url;
+        })
+      )
+    );
+
+    // Detect dominant orientation from actual photo dimensions
+    const avgAR = imgs.reduce((s, img) => s + img.width / img.height, 0) / imgs.length;
+
+    // Choose the best-fitting template
+    const tiles = getTemplate(imgs.length, avgAR);
+
+    // Draw photos into tiles
+    for (let i = 0; i < imgs.length && i < tiles.length; i++) {
+      drawPhotoInTile(ctx, imgs[i], tiles[i]);
     }
 
-    // Draw badge (larger for specific layouts: 5, 7 photos)
-    const badgeScale = photoCount === 5 ? 0.70 : photoCount === 3 ? 0.65 : photoCount === 7 ? 0.85 : 0.50;
-    drawBadge(ctx, layout.badgeArea, stamp, useDarkBadge, badgeScale);
-
-    // Convert to blob
-    canvas.toBlob((blob) => {
-      if (blob) {
-        setCollageUrl(URL.createObjectURL(blob));
-      }
-      setIsGenerating(false);
-    }, "image/png");
-  };
-
-  const downloadCollage = () => {
-    if (!collageUrl) return;
-    const link = document.createElement("a");
-    link.href = collageUrl;
-    link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-collage.png`;
-    link.click();
-  };
-
-  const downloadAllPhotos = async () => {
-    const photoEntries = Object.entries(photos);
-    if (photoEntries.length === 0) return;
-
-    // Load stamp
+    // Draw brand badge strip at bottom
     const stamp = new Image();
-    stamp.crossOrigin = "anonymous";
-    const stampLoaded = new Promise<void>((resolve) => {
+    await new Promise<void>((resolve) => {
       stamp.onload = () => resolve();
       stamp.onerror = () => resolve();
       stamp.src = "/collagestamp.png";
     });
-    await stampLoaded;
 
-    // Create temporary canvas for watermarking
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
+    if (stamp.complete && stamp.width > 0) {
+      const badgeY  = PAD + PH + BADGE_GAP;
+      const stampH  = Math.floor(BADGE_H * 0.80);
+      const stampW  = Math.floor(stampH * (stamp.width / stamp.height));
+      const stampX  = (CANVAS_W - stampW) / 2;
+      const stampYp = badgeY + (BADGE_H - stampH) / 2;
+      ctx.drawImage(stamp, stampX, stampYp, stampW, stampH);
+    }
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) setCollageUrl(URL.createObjectURL(blob));
+        setIsGenerating(false);
+      },
+      "image/jpeg",
+      0.95
+    );
+  };
+
+  const downloadCollage = () => {
+    if (!collageUrl) return;
+    const a = document.createElement("a");
+    a.href = collageUrl;
+    a.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-collage.jpg`;
+    a.click();
+  };
+
+  // ── Download all individual photos with watermark ───────────────────────────
+  const downloadAllPhotos = async () => {
+    const photoEntries = Object.entries(photos);
+    if (photoEntries.length === 0) return;
+
+    const stamp = new Image();
+    stamp.crossOrigin = "anonymous";
+    await new Promise<void>((resolve) => {
+      stamp.onload = () => resolve();
+      stamp.onerror = () => resolve();
+      stamp.src = "/collagestamp.png";
+    });
+
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d");
     if (!tempCtx) return;
 
     for (let i = 0; i < photoEntries.length; i++) {
       const [, dataUrl] = photoEntries[i];
-      
-      // Load photo
       const img = new Image();
       await new Promise<void>((resolve) => {
         img.onload = () => {
-          // Set canvas to image size
-          tempCanvas.width = img.width;
+          tempCanvas.width  = img.width;
           tempCanvas.height = img.height;
-          
-          // Draw original photo
           tempCtx.drawImage(img, 0, 0);
-          
-          // Add watermark in bottom-right corner (22% of image width, positioned left from edge)
           if (stamp.complete && stamp.width > 0) {
-            const watermarkWidth = Math.floor(img.width * 0.22); // Increased from 0.15 to 0.22
-            const watermarkHeight = Math.floor(watermarkWidth * 1.015);
-            const padding = Math.floor(img.width * 0.08); // Increased from 0.03 to 0.08 - more left
-            const x = img.width - watermarkWidth - padding;
-            const y = img.height - watermarkHeight - padding;
-            
-            tempCtx.drawImage(stamp, x, y, watermarkWidth, watermarkHeight);
+            const ww = Math.floor(img.width * 0.22);
+            const wh = Math.floor(ww * 1.015);
+            const wp = Math.floor(img.width * 0.08);
+            tempCtx.drawImage(stamp, img.width - ww - wp, img.height - wh - wp, ww, wh);
           }
-          
-          // Download
-          tempCanvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-photo-${i + 1}.jpg`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              setTimeout(() => URL.revokeObjectURL(url), 100);
-            }
-            resolve();
-          }, "image/jpeg", 0.9);
+          tempCanvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const url  = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href  = url;
+                link.download = `riddle-city-${teamName.toLowerCase().replace(/\s+/g, "-")}-photo-${i + 1}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+              }
+              resolve();
+            },
+            "image/jpeg",
+            0.9
+          );
         };
         img.onerror = () => resolve();
         img.src = dataUrl;
       });
-      
-      // Stagger downloads
+
       if (i < photoEntries.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((r) => setTimeout(r, 200));
       }
     }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full space-y-6">
-      {photoCount > 0 && (
+    <div className="w-full space-y-5">
+      {photoCount > 0 ? (
         <>
+          {/* Photo count + thumbnail strip */}
+          <div>
+            <p className="text-white/50 text-sm mb-2 flex items-center gap-2">
+              <ImageIcon className="w-4 h-4" />
+              {photoCount} photo{photoCount !== 1 ? "s" : ""} from your adventure
+              {photoCount > 9 && (
+                <span className="text-white/30 text-xs">(first 9 used in collage)</span>
+              )}
+            </p>
+            <div className="grid grid-cols-5 gap-1">
+              {Object.values(photos)
+                .slice(0, 10)
+                .map((url, i) => (
+                  <div key={i} className="aspect-square rounded-md overflow-hidden bg-neutral-800">
+                    <img
+                      src={url}
+                      alt={`Adventure photo ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              {photoCount > 10 && (
+                <div className="aspect-square rounded-md bg-neutral-800 flex items-center justify-center text-white/40 text-xs font-medium">
+                  +{photoCount - 10}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Generate / re-shuffle button */}
           <button
             onClick={generateCollage}
             disabled={isGenerating}
             className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 disabled:from-gray-600 disabled:via-gray-600 disabled:to-gray-600 text-white font-semibold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg"
           >
             <Instagram className="w-5 h-5" />
-            {isGenerating ? "Generating Collage..." : collageUrl ? "Randomize Collage" : "Generate Instagram Collage"}
+            {isGenerating
+              ? "Creating collage…"
+              : collageUrl
+              ? "Shuffle & Regenerate"
+              : "Create Photo Collage"}
           </button>
 
           {collageUrl && (
-            <div className="space-y-4">
-              <div className="relative w-full aspect-[4/5] bg-gray-900/50 rounded-xl overflow-hidden border-2 border-red-400/30">
+            <div className="space-y-3">
+              {/* Preview */}
+              <div className="relative w-full aspect-[4/5] bg-neutral-900 rounded-xl overflow-hidden border border-white/10">
                 <img
                   src={collageUrl}
-                  alt="Team collage"
+                  alt="Your adventure collage"
                   className="w-full h-full object-contain"
                 />
               </div>
+
+              {/* Download collage */}
               <button
                 onClick={downloadCollage}
-                className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-3 shadow-lg whitespace-nowrap"
+                className="w-full bg-gradient-to-r from-red-600 via-pink-600 to-rose-600 hover:from-red-700 hover:via-pink-700 hover:to-rose-700 text-white font-semibold py-4 px-6 rounded-lg transition-all flex items-center justify-center gap-3 shadow-lg"
               >
-                <Download className="w-5 h-5 flex-shrink-0" />
-                <span className="whitespace-nowrap">Download Collage & Tag @riddlecity.co.uk</span>
+                <Download className="w-5 h-5" />
+                Download Collage &amp; Tag @riddlecity.co.uk
               </button>
+
+              {/* Download individual photos */}
               <button
                 onClick={downloadAllPhotos}
                 className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2 border border-white/20"
               >
                 <Download className="w-4 h-4" />
-                Download All Photos
+                Download All {photoCount} Photos
               </button>
             </div>
           )}
         </>
-      )}
-
-      {photoCount === 0 && (
+      ) : (
         <div className="text-center py-12 text-gray-400">
           <ImageIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">No photos captured yet</p>
+          <p className="text-lg font-medium">No photos captured</p>
+          <p className="text-sm mt-1 opacity-60">
+            Take photos during your adventure to create a collage
+          </p>
         </div>
       )}
 
