@@ -24,47 +24,80 @@ const PH = CH - PAD * 2; // 1326 — usable height (full canvas, logo lives in a
 
 interface Tile { x: number; y: number; w: number; h: number; isLogo: boolean }
 
-// Pick grid dimensions for N total tiles (photos + 1 logo).
-// Targets landscape-friendly tile AR for landscape photos:
-//   1×2  → 1056×659 = AR 1.60   ← great for 16:9
-//   2×2  → 524×659  = AR 0.79
-//   2×3  → 524×435  = AR 1.20   ← good for 16:9
-//   2×4  → 524×326  = AR 1.61   ← great for 16:9
-//   3×3  → 344×435  = AR 0.79
-//   2×5  → 524×260  = AR 2.01
-function calcGrid(total: number): { cols: number; rows: number } {
-  if (total <= 2) return { cols: 1, rows: 2 };
-  if (total <= 4) return { cols: 2, rows: 2 };
-  if (total <= 6) return { cols: 2, rows: 3 };
-  if (total <= 8) return { cols: 2, rows: 4 };
-  if (total <= 9) return { cols: 3, rows: 3 };
-  return { cols: 2, rows: 5 }; // up to 10 tiles (9 photos + logo)
+// Logo banner height when used as overlay (2, 4, 6 photos)
+const LOGO_BANNER_H = 110;
+
+// Does this photo count fit a perfect rectangle with the logo as last slot?
+// True for: 1,3,5,7,8,9 — False for: 2,4,6
+function usesLogoSlot(photoCount: number): boolean {
+  const n = Math.min(photoCount, 9);
+  return n % 2 !== 0 || n === 8 || n === 9;
 }
 
-// Build all tile rects. Last filled slot = logo tile.
-function buildTiles(photoCount: number): Tile[] {
-  const total = Math.min(photoCount, 9) + 1;
-  const { cols, rows } = calcGrid(total);
+// Grid for photos only (no logo slot). Used when logo is overlaid.
+function calcPhotoGrid(n: number): { cols: number; rows: number } {
+  if (n <= 2)  return { cols: 1, rows: 2 };
+  if (n <= 4)  return { cols: 2, rows: 2 };
+  return               { cols: 2, rows: 3 }; // 6
+}
+
+// Grid for photos + logo slot (logo = last tile).
+function calcSlotGrid(total: number): { cols: number; rows: number } {
+  if (total <= 2)  return { cols: 1, rows: 2 };
+  if (total <= 4)  return { cols: 2, rows: 2 };
+  if (total <= 6)  return { cols: 2, rows: 3 };
+  if (total <= 8)  return { cols: 2, rows: 4 };
+  if (total <= 9)  return { cols: 3, rows: 3 };
+  return                   { cols: 2, rows: 5 };
+}
+
+function buildPhotoTiles(photoCount: number, gridH: number): Tile[] {
+  const n = Math.min(photoCount, 9);
+  const { cols, rows } = calcPhotoGrid(n);
   const tiles: Tile[] = [];
   let count = 0;
-
-  for (let r = 0; r < rows && count < total; r++) {
-    for (let c = 0; c < cols && count < total; c++) {
-      // Precise pixel positions so last col/row absorb rounding
+  for (let r = 0; r < rows && count < n; r++) {
+    for (let c = 0; c < cols && count < n; c++) {
       const x  = PAD + Math.round(c * (PW + GAP) / cols);
-      const y  = PAD + Math.round(r * (PH + GAP) / rows);
-      const x2 = c < cols - 1
-        ? PAD + Math.round((c + 1) * (PW + GAP) / cols) - GAP
-        : PAD + PW;
-      const y2 = r < rows - 1
-        ? PAD + Math.round((r + 1) * (PH + GAP) / rows) - GAP
-        : PAD + PH;
-
-      tiles.push({ x, y, w: x2 - x, h: y2 - y, isLogo: count === total - 1 });
+      const y  = PAD + Math.round(r * (gridH + GAP) / rows);
+      const x2 = c < cols - 1 ? PAD + Math.round((c + 1) * (PW + GAP) / cols) - GAP : PAD + PW;
+      const y2 = r < rows - 1 ? PAD + Math.round((r + 1) * (gridH + GAP) / rows) - GAP : PAD + gridH;
+      tiles.push({ x, y, w: x2 - x, h: y2 - y, isLogo: false });
       count++;
     }
   }
   return tiles;
+}
+
+// Build all tile rects. Returns photo tiles + optional logo tile.
+function buildTiles(photoCount: number): Tile[] {
+  const n = Math.min(photoCount, 9);
+  if (usesLogoSlot(n)) {
+    // Logo fills the last slot in a perfect rectangle
+    const total = n + 1;
+    const { cols, rows } = calcSlotGrid(total);
+    const tiles: Tile[] = [];
+    let count = 0;
+    for (let r = 0; r < rows && count < total; r++) {
+      for (let c = 0; c < cols && count < total; c++) {
+        const x  = PAD + Math.round(c * (PW + GAP) / cols);
+        const y  = PAD + Math.round(r * (PH + GAP) / rows);
+        const x2 = c < cols - 1 ? PAD + Math.round((c + 1) * (PW + GAP) / cols) - GAP : PAD + PW;
+        const y2 = r < rows - 1 ? PAD + Math.round((r + 1) * (PH + GAP) / rows) - GAP : PAD + PH;
+        tiles.push({ x, y, w: x2 - x, h: y2 - y, isLogo: count === total - 1 });
+        count++;
+      }
+    }
+    return tiles;
+  } else {
+    // Logo overlaid as bottom banner — photos fill available height above it
+    const gridH = PH - LOGO_BANNER_H - GAP;
+    const photoTiles = buildPhotoTiles(n, gridH);
+    // Logo banner spans full width at the bottom
+    const bannerY = PAD + gridH + GAP;
+    photoTiles.push({ x: PAD, y: bannerY, w: PW, h: LOGO_BANNER_H, isLogo: true });
+    return photoTiles;
+  }
 }
 
 function roundedRectPath(
@@ -106,8 +139,7 @@ function drawPhotoInTile(ctx: CanvasRenderingContext2D, img: HTMLImageElement, t
   ctx.restore();
 }
 
-function drawLogoTile(ctx: CanvasRenderingContext2D, tile: Tile, stamp: HTMLImageElement) {
-  // White tile with subtle border
+function drawLogoTile(ctx: CanvasRenderingContext2D, tile: Tile, stamp: HTMLImageElement, isBanner: boolean) {
   ctx.save();
   roundedRectPath(ctx, tile.x, tile.y, tile.w, tile.h, CR);
   ctx.fillStyle = "#ffffff";
@@ -117,9 +149,10 @@ function drawLogoTile(ctx: CanvasRenderingContext2D, tile: Tile, stamp: HTMLImag
   ctx.stroke();
   ctx.restore();
 
-  // Stamp centred, filling 75% of the tile
+  // Stamp centred — banners use 55% width, slots use 75%
   if (stamp.complete && stamp.width > 0 && stamp.height > 0) {
-    const maxW    = tile.w * 0.75;
+    const fillFrac = isBanner ? 0.55 : 0.75;
+    const maxW    = tile.w * fillFrac;
     const maxH    = tile.h * 0.75;
     const stampAR = stamp.width / stamp.height;
     let sW = maxW;
@@ -203,9 +236,10 @@ export default function CollageGeneratorV2({
       }
     }
 
-    // Draw logo slot
+    // Draw logo slot or banner
     if (logoTile) {
-      drawLogoTile(ctx, logoTile, stamp);
+      const isBanner = !usesLogoSlot(Math.min(photoCount, 9));
+      drawLogoTile(ctx, logoTile, stamp, isBanner);
     }
 
     canvas.toBlob(
