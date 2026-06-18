@@ -61,49 +61,35 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
           img.onload = () => {
             try {
               const canvas = document.createElement("canvas");
-              const TARGET_WIDTH = 800;
-              const TARGET_HEIGHT = 450;
-              const TARGET_ASPECT = TARGET_WIDTH / TARGET_HEIGHT;
-              
-              const sourceWidth = img.width;
-              const sourceHeight = img.height;
-              const sourceAspect = sourceWidth / sourceHeight;
-              
-              canvas.width = TARGET_WIDTH;
-              canvas.height = TARGET_HEIGHT;
-              
+
+              // Preserve natural orientation — compress to max 1200px on longest side
+              const MAX = 1200;
+              const nw = img.width;
+              const nh = img.height;
+              let outW: number, outH: number;
+              if (nw >= nh) {
+                outW = Math.min(nw, MAX);
+                outH = Math.round(outW / nw * nh);
+              } else {
+                outH = Math.min(nh, MAX);
+                outW = Math.round(outH / nh * nw);
+              }
+
+              canvas.width  = outW;
+              canvas.height = outH;
+
               const ctx = canvas.getContext("2d");
               if (!ctx) return;
-              
-              // Flip image horizontally to un-mirror selfies
-              ctx.translate(TARGET_WIDTH, 0);
-              ctx.scale(-1, 1);
-              
-              let cropWidth, cropHeight, cropX, cropY;
-              
-              if (sourceAspect > TARGET_ASPECT) {
-                cropHeight = sourceHeight;
-                cropWidth = sourceHeight * TARGET_ASPECT;
-                cropX = (sourceWidth - cropWidth) / 2;
-                cropY = 0;
-              } else {
-                cropWidth = sourceWidth;
-                cropHeight = sourceWidth / TARGET_ASPECT;
-                cropX = 0;
-                cropY = (sourceHeight - cropHeight) / 2;
-              }
-              
-              ctx.drawImage(
-                img,
-                cropX, cropY, cropWidth, cropHeight,
-                0, 0, TARGET_WIDTH, TARGET_HEIGHT
-              );
-              
-              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.65);
+
+              // Draw without any flip — the saved file is already correctly oriented
+              // whether taken with the front or back camera
+              ctx.drawImage(img, 0, 0, outW, outH);
+
+              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.75);
               // Save to IndexedDB (primary) and localStorage (fallback)
               savePhoto(groupId, riddleId, compressedPhoto);
               setPhoto(compressedPhoto);
-              
+
               if (onPhotoTaken) {
                 onPhotoTaken();
               }
