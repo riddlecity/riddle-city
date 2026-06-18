@@ -32,6 +32,7 @@ export default function LocationPage({ params }: Props) {
   const [trackMetadataLoading, setTrackMetadataLoading] = useState(true);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [timeWarningData, setTimeWarningData] = useState<{
     shouldWarn: boolean;
     closedCount: number;
@@ -329,6 +330,98 @@ export default function LocationPage({ params }: Props) {
             new way!
           </p>
         </div>
+      </div>
+
+      {/* ── SEO Content Section ── */}
+      <div className="w-full max-w-2xl mx-auto mt-16 px-2 text-left">
+        {/* Intro */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold mb-4 text-white">
+            Things to Do in {location} — The Riddle City Adventure
+          </h2>
+          <p className="text-white/70 leading-relaxed mb-4">
+            Looking for something fun and different in {location}? Riddle City is an outdoor puzzle adventure that leads you around {location}&apos;s best pubs, cafes, and hidden gems through a series of clever riddles and QR codes.
+          </p>
+          <p className="text-white/70 leading-relaxed">
+            Whether you&apos;re planning a {location} treasure hunt for a hen party, a birthday trip, a date night, or just a great group day out — our {location} riddle trail is the perfect activity. Solve clues, scan QR codes, discover local hotspots, and see who gets through the route first!
+          </p>
+        </section>
+
+        {/* How it works */}
+        <section className="mb-10">
+          <h2 className="text-xl font-bold mb-4 text-white">How It Works</h2>
+          <ol className="space-y-3 text-white/70">
+            <li className="flex gap-3">
+              <span className="text-red-500 font-bold shrink-0">1.</span>
+              Choose your adventure above and pay per person (from £12.99).
+            </li>
+            <li className="flex gap-3">
+              <span className="text-red-500 font-bold shrink-0">2.</span>
+              Head to the start point shown on your chosen route in {location}.
+            </li>
+            <li className="flex gap-3">
+              <span className="text-red-500 font-bold shrink-0">3.</span>
+              Solve riddles, scan QR codes, and explore {location} as a team — no booking, no guide needed!
+            </li>
+          </ol>
+        </section>
+
+        {/* FAQ */}
+        <section className="mb-12">
+          <h2 className="text-xl font-bold mb-4 text-white">Frequently Asked Questions</h2>
+          <div className="space-y-2">
+            {[
+              {
+                question: "How long does the adventure take?",
+                answer: "Most adventures take 2–4 hours depending on your pace and how long you spend at each location. There's no time limit — take as long as you like!",
+              },
+              {
+                question: "How many people can play?",
+                answer: "A minimum of 2 players is required. You can bring as many friends as you like — the price is per person so it scales easily for larger groups.",
+              },
+              {
+                question: "Is it suitable for hen parties and group events?",
+                answer: `Absolutely — Riddle City is perfect for hen parties, birthdays, team days, and group outings in ${location}. Many of our routes take you through bars and pubs, so it's designed for adults.`,
+              },
+              {
+                question: "Do I need to book in advance?",
+                answer: "No booking needed! Just choose your adventure, pay, and start when you're ready. We recommend checking the suggested start time so most locations are open.",
+              },
+              {
+                question: "What if we get stuck on a riddle?",
+                answer: "The group leader can skip any riddle at any time to keep the adventure moving. No one gets left behind!",
+              },
+              {
+                question: "Do we need anything other than our phones?",
+                answer: "Just a charged phone with mobile data, comfortable shoes, and clothes for the weather. No printing, no guides — everything runs on your phone.",
+              },
+            ].map((faq, i) => (
+              <div key={i} className="border border-white/10 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                  className="w-full text-left px-4 py-3 text-white font-medium flex justify-between items-center gap-4 hover:bg-white/5 transition-colors"
+                >
+                  <span>{faq.question}</span>
+                  <span className="text-white/50 shrink-0 text-lg leading-none">
+                    {openFaqIndex === i ? "−" : "+"}
+                  </span>
+                </button>
+                {openFaqIndex === i && (
+                  <div className="px-4 pb-4 text-white/60 text-sm leading-relaxed">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-white/40 text-sm mt-4">
+            More questions?{" "}
+            <Link href="/faq" className="text-red-400 hover:text-red-300 underline">
+              See our full FAQ page
+            </Link>
+            .
+          </p>
+        </section>
       </div>
 
       {/* Time Warning Modal */}

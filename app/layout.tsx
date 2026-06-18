@@ -16,11 +16,64 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://www.riddlecity.co.uk";
+
 export const metadata: Metadata = {
-  title: "Riddle City - Your Mystery Awaits",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Riddle City - Outdoor Puzzle Adventures",
+    template: "%s | Riddle City",
+  },
   description:
-    "Puzzle-based adventures through your town or city. Scan QR codes, solve riddles, and explore with friends.",
+    "Riddle City is an outdoor puzzle adventure where you scan QR codes, solve riddles, and explore your town or city with friends and family.",
+  keywords: [
+    "outdoor puzzle adventure",
+    "riddle trail",
+    "city treasure hunt",
+    "QR code adventure",
+    "family day out",
+    "things to do",
+    "riddle city",
+  ],
+  authors: [{ name: "Riddle City", url: siteUrl }],
+  creator: "Riddle City",
+  publisher: "Riddle City",
   manifest: "/site.webmanifest",
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    url: siteUrl,
+    siteName: "Riddle City",
+    title: "Riddle City - Outdoor Puzzle Adventures",
+    description:
+      "Scan QR codes, solve riddles, and explore your town or city. A fun outdoor adventure for friends and families.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Riddle City - Outdoor Puzzle Adventures",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Riddle City - Outdoor Puzzle Adventures",
+    description:
+      "Scan QR codes, solve riddles, and explore your town or city with friends and family.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
   other: {
     "msapplication-TileColor": "#dc2626",
     "msapplication-config": "/browserconfig.xml",
@@ -37,9 +90,42 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const siteUrl = "https://www.riddlecity.co.uk";
+
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Riddle City",
+    url: siteUrl,
+    logo: `${siteUrl}/riddle-city-logo.png`,
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: "hello@riddlecity.co.uk",
+      contactType: "customer support",
+    },
+    sameAs: [],
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Riddle City",
+    url: siteUrl,
+    description:
+      "Outdoor puzzle adventures — scan QR codes, solve riddles, and explore your city with friends and family.",
+  };
+
   return (
     <html lang="en">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         {/* Standard favicon links for desktop browsers */}
         <link rel="icon" type="image/x-icon" href="/favicon-custom.ico" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-custom.png" />

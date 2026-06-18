@@ -1,5 +1,16 @@
 // app/contact/page.tsx
+import { Metadata } from "next";
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with the Riddle City team. We're happy to help with any questions about our outdoor puzzle adventures.",
+  openGraph: {
+    title: "Contact Us | Riddle City",
+    description: "Get in touch with the Riddle City team.",
+  },
+};
 
 export default function ContactPage() {
   return (
