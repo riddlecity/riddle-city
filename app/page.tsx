@@ -52,19 +52,20 @@ export default function Home() {
   }
 
   return (
-    <main className="flex-1 bg-black text-white flex flex-col items-center px-4 py-8">
-      {/* Banner image */}
-      <div className="w-full max-w-4xl mb-12">
+    <main className="flex-1 bg-black text-white flex flex-col items-center">
+      {/* Full-bleed banner on mobile, rounded on larger screens */}
+      <div className="w-full mb-12">
         <Image
-          src="/banner.png"
+          src="/og-image1200x800.png"
           alt="Riddle City - Outdoor Puzzle Adventures"
-          width={1731}
-          height={909}
-          className="w-full rounded-2xl shadow-2xl"
+          width={1200}
+          height={800}
+          className="w-full sm:rounded-2xl shadow-2xl"
           priority
         />
       </div>
 
+      <div className="flex flex-col items-center px-4 w-full">
       <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-12 text-center tracking-tight">
         Your Mystery Awaits
       </h1>
@@ -123,7 +124,7 @@ export default function Home() {
       </div>
 
       {/* Collapsible info section */}
-      <div className="w-full max-w-2xl mt-auto">
+      <div className="w-full max-w-2xl mt-auto pb-8">
         <button
           onClick={() => setShowInfo(!showInfo)}
           className="flex items-center justify-center gap-3 mx-auto text-2xl font-semibold text-white/80 hover:text-white transition-colors duration-200"
@@ -152,6 +153,7 @@ export default function Home() {
             </p>
           </div>
         )}
+      </div>
       </div>
     </main>
   );
