@@ -52,9 +52,9 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-black text-white flex flex-col items-center justify-start px-4 pt-8 pb-12">
+    <main className="bg-black text-white flex flex-col items-center justify-start px-4 pt-6 pb-6">
       {/* Banner image replacing the logo */}
-      <div className="w-full max-w-4xl mb-8">
+      <div className="w-full max-w-4xl mb-5">
         <Image
           src="/banner.png"
           alt="Riddle City - Outdoor Puzzle Adventures"
@@ -65,7 +65,7 @@ export default function Home() {
         />
       </div>
 
-      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-8 text-center tracking-tight">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-5 text-center tracking-tight">
         Your Mystery Awaits
       </h1>
       
