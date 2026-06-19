@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="bg-neutral-900 border-t border-neutral-800 py-2 px-4 mt-auto">
       <div className="max-w-6xl mx-auto">
         {/* Mobile: everything on one tight line */}
-        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs text-neutral-500 md:hidden">
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] text-neutral-500 md:hidden">
           <span>&copy; 2025 RiddleCity</span>
           <span className="text-neutral-700">·</span>
           <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>

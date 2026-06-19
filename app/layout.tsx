@@ -146,7 +146,7 @@ export default function RootLayout({
                     min-h-[100svh] md:min-h-dvh`}
       >
         <GameLayoutWrapper>
-          <div className="flex-1">{children}</div>
+          <div>{children}</div>
           <Footer />
         </GameLayoutWrapper>
 
