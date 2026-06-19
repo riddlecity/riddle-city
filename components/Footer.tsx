@@ -3,79 +3,51 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-neutral-900 border-t border-neutral-800 py-4 px-4 mt-auto">
+    <footer className="bg-neutral-900 border-t border-neutral-800 py-3 px-4 mt-auto">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* Contact Section */}
+        {/* Mobile: single compact row of links */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400 md:hidden">
+          <a href="mailto:hello@riddlecity.co.uk" className="hover:text-white transition-colors">hello@riddlecity.co.uk</a>
+          <span className="text-neutral-700">·</span>
+          <Link href="/leaderboards" className="hover:text-white transition-colors">Leaderboards</Link>
+          <span className="text-neutral-700">·</span>
+          <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+          <span className="text-neutral-700">·</span>
+          <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+          <span className="text-neutral-700">·</span>
+          <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+          <span className="text-neutral-700">·</span>
+          <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+        </div>
+
+        {/* Desktop: 4-column grid */}
+        <div className="hidden md:grid md:grid-cols-4 gap-4">
           <div>
             <h4 className="font-semibold mb-2 text-white text-sm">Contact</h4>
             <p className="text-neutral-400 text-xs">
-              <a 
-                href="mailto:hello@riddlecity.co.uk" 
-                className="hover:text-purple-400 transition-colors duration-200"
-              >
-                hello@riddlecity.co.uk
-              </a>
+              <a href="mailto:hello@riddlecity.co.uk" className="hover:text-purple-400 transition-colors duration-200">hello@riddlecity.co.uk</a>
             </p>
           </div>
-          
-          {/* Leaderboards Section */}
           <div>
             <h4 className="font-semibold mb-2 text-white text-sm">Compete</h4>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <Link 
-                href="/leaderboards" 
-                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200"
-              >
-                🏆 Leaderboards
-              </Link>
-            </div>
+            <Link href="/leaderboards" className="text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-xs">🏆 Leaderboards</Link>
           </div>
-          
-          {/* Info Section */}
           <div>
             <h4 className="font-semibold mb-2 text-white text-sm">Info</h4>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <Link 
-                href="/faq" 
-                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200"
-              >
-                ❓ FAQ
-              </Link>
-            </div>
+            <Link href="/faq" className="text-neutral-400 hover:text-purple-400 transition-colors duration-200 text-xs">❓ FAQ</Link>
           </div>
-          
-          {/* Legal Section */}
           <div>
             <h4 className="font-semibold mb-2 text-white text-sm">Legal</h4>
             <div className="flex flex-wrap gap-2 text-xs">
-              <Link 
-                href="/privacy" 
-                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200"
-              >
-                Privacy Policy
-              </Link>
-              <Link 
-                href="/terms" 
-                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200"
-              >
-                Terms of Service
-              </Link>
-              <Link 
-                href="/contact" 
-                className="text-neutral-400 hover:text-purple-400 transition-colors duration-200"
-              >
-                Contact Us
-              </Link>
+              <Link href="/privacy" className="text-neutral-400 hover:text-purple-400 transition-colors duration-200">Privacy Policy</Link>
+              <Link href="/terms" className="text-neutral-400 hover:text-purple-400 transition-colors duration-200">Terms of Service</Link>
+              <Link href="/contact" className="text-neutral-400 hover:text-purple-400 transition-colors duration-200">Contact Us</Link>
             </div>
           </div>
         </div>
-        
-        {/* Copyright Section */}
-        <div className="border-t border-neutral-800 mt-3 pt-2 text-center">
-          <p className="text-neutral-500 text-xs">
-            &copy; 2025 RiddleCity. All rights reserved.
-          </p>
+
+        <div className="border-t border-neutral-800 mt-2 pt-2 text-center">
+          <p className="text-neutral-600 text-xs">&copy; 2025 RiddleCity. All rights reserved.</p>
         </div>
       </div>
     </footer>
