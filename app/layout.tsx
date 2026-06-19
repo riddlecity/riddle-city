@@ -49,9 +49,9 @@ export const metadata: Metadata = {
       "Scan QR codes, solve riddles, and explore your town or city. A fun outdoor adventure for friends and families.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image1200x800.png",
         width: 1200,
-        height: 630,
+        height: 800,
         alt: "Riddle City - Outdoor Puzzle Adventures",
       },
     ],
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     title: "Riddle City - Outdoor Puzzle Adventures",
     description:
       "Scan QR codes, solve riddles, and explore your town or city with friends and family.",
-    images: ["/og-image.png"],
+    images: ["/og-image1200x800.png"],
   },
   robots: {
     index: true,
