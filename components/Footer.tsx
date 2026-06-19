@@ -5,17 +5,20 @@ export default function Footer() {
   return (
     <footer className="bg-neutral-900 border-t border-neutral-800 py-2 px-4 mt-auto">
       <div className="max-w-6xl mx-auto">
-        {/* Mobile: everything on one tight line, no wrapping */}
-        <div className="flex items-center justify-center gap-x-2 text-[11px] text-neutral-500 md:hidden whitespace-nowrap overflow-hidden">
-          <span className="text-neutral-600 shrink-0">&copy; 2025 RiddleCity</span>
-          <span className="text-neutral-700">·</span>
-          <Link href="/faq" className="hover:text-white transition-colors shrink-0">FAQ</Link>
-          <span className="text-neutral-700">·</span>
-          <Link href="/privacy" className="hover:text-white transition-colors shrink-0">Privacy</Link>
-          <span className="text-neutral-700">·</span>
-          <Link href="/terms" className="hover:text-white transition-colors shrink-0">Terms</Link>
-          <span className="text-neutral-700">·</span>
-          <Link href="/contact" className="hover:text-white transition-colors shrink-0">Contact</Link>
+        {/* Mobile: two lines — links centred, copyright below */}
+        <div className="flex flex-col items-center gap-1 md:hidden">
+          <div className="flex items-center gap-x-2 text-xs text-neutral-400 whitespace-nowrap">
+            <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+            <span className="text-neutral-700">·</span>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <span className="text-neutral-700">·</span>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <span className="text-neutral-700">·</span>
+            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+            <span className="text-neutral-700">·</span>
+            <Link href="/leaderboards" className="hover:text-white transition-colors">Leaderboards</Link>
+          </div>
+          <p className="text-[10px] text-neutral-600">&copy; 2025 RiddleCity. All rights reserved.</p>
         </div>
 
         {/* Desktop: 4-column grid */}
