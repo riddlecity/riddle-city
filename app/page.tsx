@@ -52,9 +52,9 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-black text-white flex flex-col items-center justify-start px-4 pt-6 pb-6">
-      {/* Banner image replacing the logo */}
-      <div className="w-full max-w-4xl mb-5">
+    <main className="flex-1 bg-black text-white flex flex-col items-center px-4 py-8">
+      {/* Banner image */}
+      <div className="w-full max-w-4xl mb-10">
         <Image
           src="/banner.png"
           alt="Riddle City - Outdoor Puzzle Adventures"
@@ -65,13 +65,13 @@ export default function Home() {
         />
       </div>
 
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-5 text-center tracking-tight">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-10 text-center tracking-tight">
         Your Mystery Awaits
       </h1>
       
       {/* Show rejoin options if user has active group */}
       {hasActiveGroup && resumeUrl && (
-        <div className="bg-blue-900/30 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6 mb-8 max-w-md w-full shadow-xl">
+        <div className="bg-blue-900/30 backdrop-blur-sm border border-blue-400/20 rounded-xl p-6 mb-10 max-w-md w-full shadow-xl">
           <h2 className="text-xl font-semibold text-blue-100 mb-2">
             🎮 Game Found!
           </h2>
@@ -102,15 +102,15 @@ export default function Home() {
         onConfirm={handleStartFresh}
       />
       
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row items-center gap-5 mb-12">
         <Link
           href="/locations"
-          className="bg-red-600 hover:bg-red-500 transition-colors duration-200 text-white font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl"
+          className="bg-red-600 hover:bg-red-500 transition-colors duration-200 text-white font-semibold px-10 py-5 rounded-xl shadow-lg hover:shadow-xl text-lg"
         >
           See Locations →
         </Link>
         
-        {/* WhatsApp Share - Subtle and compact */}
+        {/* WhatsApp Share */}
         <button
           onClick={shareOnWhatsApp}
           className="flex items-center gap-2 text-white/60 hover:text-white/80 transition-colors duration-200 text-sm"
@@ -123,7 +123,7 @@ export default function Home() {
       </div>
 
       {/* Collapsible info section */}
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl mt-auto">
         <button
           onClick={() => setShowInfo(!showInfo)}
           className="flex items-center justify-center gap-2 mx-auto text-lg font-medium text-white/80 hover:text-white transition-colors duration-200"
