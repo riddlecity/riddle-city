@@ -3,15 +3,15 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-neutral-900 border-t border-neutral-800 py-3 px-4 mt-auto">
+    <footer className="bg-neutral-900 border-t border-neutral-800 py-2 px-4 mt-auto">
       <div className="max-w-6xl mx-auto">
-        {/* Mobile: single compact row of links */}
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400 md:hidden">
-          <a href="mailto:hello@riddlecity.co.uk" className="hover:text-white transition-colors">hello@riddlecity.co.uk</a>
-          <span className="text-neutral-700">·</span>
-          <Link href="/leaderboards" className="hover:text-white transition-colors">Leaderboards</Link>
+        {/* Mobile: everything on one tight line */}
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs text-neutral-500 md:hidden">
+          <span>&copy; 2025 RiddleCity</span>
           <span className="text-neutral-700">·</span>
           <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+          <span className="text-neutral-700">·</span>
+          <Link href="/leaderboards" className="hover:text-white transition-colors">Leaderboards</Link>
           <span className="text-neutral-700">·</span>
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           <span className="text-neutral-700">·</span>
@@ -46,7 +46,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-neutral-800 mt-2 pt-2 text-center">
+        <div className="hidden md:block border-t border-neutral-800 mt-2 pt-2 text-center">
           <p className="text-neutral-600 text-xs">&copy; 2025 RiddleCity. All rights reserved.</p>
         </div>
       </div>
