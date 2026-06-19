@@ -127,10 +127,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         {/* Standard favicon links for desktop browsers */}
-        <link rel="icon" type="image/x-icon" href="/favicon-custom.ico" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-custom.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-custom.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/favicon-custom.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/Riddlecityfavicon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/Riddlecityfavicon.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/Riddlecityfavicon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/Riddlecityfavicon.png" />
         
         {/* Mobile browser theme colors */}
         <meta name="theme-color" content="#dc2626" />
@@ -139,7 +139,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="Riddle City" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="mask-icon" href="/favicon-custom.png" color="#dc2626" />
+        <link rel="mask-icon" href="/Riddlecityfavicon.png" color="#dc2626" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black flex flex-col
