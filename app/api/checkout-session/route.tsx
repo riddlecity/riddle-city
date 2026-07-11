@@ -124,7 +124,8 @@ export async function POST(req: Request) {
     const testingModeRequested = /\(testing\)/i.test(teamName);
     const authorizedTestEmails = (process.env.TESTING_MODE_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
     const userEmail = (emails && emails.length > 0 ? emails[0] : '').toLowerCase();
-    const isAuthorizedForTesting = authorizedTestEmails.includes(userEmail);
+    const allEmails = (emails || []).map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+    const isAuthorizedForTesting = allEmails.some(e => authorizedTestEmails.includes(e));
     const isTestingMode = testingModeRequested && isAuthorizedForTesting;
     
     // If someone tries testing mode without authorization, reject it
@@ -140,7 +141,50 @@ export async function POST(req: Request) {
       ? teamName.replace(/\(testing\)/gi, '').trim() 
       : teamName.trim();
     
-    console.log(isTestingMode ? "🧪 TESTING MODE: Free checkout enabled for " + userEmail : "💳 Regular checkout");
+    console.log(isTestingMode ? "🧪 TESTING MODE: Bypassing Stripe for " + userEmail : "💳 Regular checkout");
+
+    // 🧪 TESTING MODE: Skip Stripe entirely, same as admin bypass
+    if (isTestingMode) {
+      const testGroupId = uuidv4();
+
+      const { error: testGroupError } = await supabase.from("groups").insert({
+        id: testGroupId,
+        track_id: track.id,
+        player_limit: players,
+        paid: true,
+        finished: false,
+        is_versus: false,
+        current_riddle_id: track.start_riddle_id,
+        created_by: userId,
+        team_name: displayTeamName,
+        riddles_skipped: 0,
+        game_started: false,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+
+      if (testGroupError) {
+        console.error("❌ TESTING: Failed to create group:", testGroupError);
+        return NextResponse.json({ error: "Failed to create test group" }, { status: 500 });
+      }
+
+      const { error: testMemberError } = await supabase
+        .from("group_members")
+        .insert({ group_id: testGroupId, user_id: userId, is_leader: true });
+
+      if (testMemberError) {
+        console.error("❌ TESTING: Failed to add leader:", testMemberError);
+        return NextResponse.json({ error: "Failed to assign group leader" }, { status: 500 });
+      }
+
+      const gameData = { groupId: testGroupId, userId, teamName: displayTeamName };
+      return NextResponse.json({
+        adminTest: true,
+        groupId: testGroupId,
+        userId,
+        teamName: displayTeamName,
+        directUrl: `/riddle/${track.start_riddle_id}?game_data=${btoa(JSON.stringify(gameData))}`,
+      });
+    }
 
     const groupData = {
       track_id: track.id,
@@ -150,7 +194,7 @@ export async function POST(req: Request) {
       is_versus: false,
       current_riddle_id: track.start_riddle_id,
       created_by: userId,
-      team_name: displayTeamName, // Store without "(testing)"
+      team_name: displayTeamName,
       riddles_skipped: 0,
     };
 
