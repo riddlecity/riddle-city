@@ -81,14 +81,12 @@ export async function POST(req: Request) {
         trackId: track.id,
       });
 
-      const gameData = { groupId: testGroupId, userId: testUserId, teamName: teamName.trim() };
-
       return NextResponse.json({
         adminTest: true,
         groupId: testGroupId,
         userId: testUserId,
         teamName: teamName.trim(),
-        directUrl: `/riddle/${track.start_riddle_id}?game_data=${btoa(JSON.stringify(gameData))}`,
+        directUrl: `/api/admin-start?groupId=${testGroupId}&userId=${testUserId}&teamName=${encodeURIComponent(teamName.trim())}&location=${location}&mode=${mode}&firstRiddleId=${track.start_riddle_id}`,
       });
     }
 
@@ -176,13 +174,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Failed to assign group leader" }, { status: 500 });
       }
 
-      const gameData = { groupId: testGroupId, userId, teamName: displayTeamName };
       return NextResponse.json({
         adminTest: true,
         groupId: testGroupId,
         userId,
         teamName: displayTeamName,
-        directUrl: `/riddle/${track.start_riddle_id}?game_data=${btoa(JSON.stringify(gameData))}`,
+        directUrl: `/api/admin-start?groupId=${testGroupId}&userId=${userId}&teamName=${encodeURIComponent(displayTeamName)}&location=${location}&mode=${mode}&firstRiddleId=${track.start_riddle_id}`,
       });
     }
 
