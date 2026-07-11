@@ -37,8 +37,7 @@ function buildLinks(opts: {
   return { googleMapsUrl, w3wUrl };
 }
 
-export default async function AdminStartPage({ params, searchParams }: Props) {
-  const awaitedParams = await params;
+export default async function AdminStartPage({ searchParams }: Props) {
   const awaitedSearchParams = await searchParams;
 
   const groupId = awaitedSearchParams.groupId as string | undefined;
