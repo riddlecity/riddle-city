@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     const authorizedTestEmails = (process.env.TESTING_MODE_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
     const userEmail = (emails && emails.length > 0 ? emails[0] : '').toLowerCase();
     const allEmails = (emails || []).map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-    const isAuthorizedForTesting = allEmails.some(e => authorizedTestEmails.includes(e));
+    const isAuthorizedForTesting = allEmails.some((e: string) => authorizedTestEmails.includes(e));
     const isTestingMode = testingModeRequested && isAuthorizedForTesting;
     
     // If someone tries testing mode without authorization, reject it
