@@ -67,6 +67,43 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
     }
   };
 
+  // Shared handler for both the postgres_changes and broadcast paths - redirects
+  // this device to the new riddle (or completion page) the moment we learn the
+  // group has moved on.
+  const handleRiddleChange = (newRiddleId?: string, isFinished?: boolean) => {
+    const currentUrlId = window.location.pathname.split("/").pop();
+
+    console.log("Riddle change details:", {
+      newRiddleId,
+      currentUrlId,
+      isFinished,
+      shouldRedirect: newRiddleId && newRiddleId !== currentUrlId
+    });
+
+    // Reset connection status and update sync time
+    setIsConnected(true);
+    setReconnectAttempts(0);
+    lastSyncCheck.current = new Date();
+
+    // Check if game just finished
+    if (isFinished && !window.location.pathname.includes('/adventure-complete/')) {
+      console.log(`🔄 REALTIME: Adventure finished, redirecting to completion page`);
+      window.location.href = `/adventure-complete/${groupId}`;
+      return;
+    }
+
+    // Check if riddle changed
+    if (newRiddleId && newRiddleId !== currentUrlId) {
+      console.log(`🔄 REALTIME: Redirecting: ${currentUrlId} → ${newRiddleId}`);
+      window.location.href = `/riddle/${newRiddleId}`;
+    } else {
+      console.log("❌ NO REDIRECT:", {
+        reason: !newRiddleId ? "No new riddle ID" : "Same as current URL",
+        isFinished
+      });
+    }
+  };
+
   // Enhanced real-time subscription with mobile-friendly reconnection
   const setupRealtimeSubscription = async () => {
     try {
@@ -98,46 +135,30 @@ export default function RealTimeRiddleSync({ groupId }: RealTimeRiddleSyncProps)
             filter: `id=eq.${groupId}`,
           },
           (payload) => {
-            console.log("=== REALTIME UPDATE RECEIVED ===");
+            console.log("=== REALTIME UPDATE RECEIVED (postgres_changes) ===");
             console.log("Full payload:", payload);
-            
-            const newRiddleId = payload.new?.current_riddle_id;
-            const oldRiddleId = payload.old?.current_riddle_id;
-            const isFinished = payload.new?.finished;
-            const currentUrlId = window.location.pathname.split("/").pop();
-            
-            console.log("Riddle change details:", {
-              newRiddleId,
-              oldRiddleId,
-              currentUrlId,
-              isFinished,
-              hasNewRiddle: !!newRiddleId,
-              isDifferentFromCurrent: newRiddleId !== currentUrlId,
-              shouldRedirect: newRiddleId && newRiddleId !== currentUrlId
-            });
 
-            // Reset connection status and update sync time
-            setIsConnected(true);
-            setReconnectAttempts(0);
-            lastSyncCheck.current = new Date();
-            
-            // Check if game just finished
-            if (isFinished && !window.location.pathname.includes('/adventure-complete/')) {
-              console.log(`🔄 REALTIME: Adventure finished, redirecting to completion page`);
-              window.location.href = `/adventure-complete/${groupId}`;
-              return;
-            }
-            
-            // Check if riddle changed
-            if (newRiddleId && newRiddleId !== currentUrlId) {
-              console.log(`🔄 REALTIME: Redirecting: ${currentUrlId} → ${newRiddleId}`);
-              window.location.href = `/riddle/${newRiddleId}`;
-            } else {
-              console.log("❌ NO REDIRECT:", {
-                reason: !newRiddleId ? "No new riddle ID" : "Same as current URL",
-                isFinished
-              });
-            }
+            const newRiddleId = payload.new?.current_riddle_id;
+            const isFinished = payload.new?.finished;
+
+            handleRiddleChange(newRiddleId, isFinished);
+          }
+        )
+        .on(
+          'broadcast',
+          { event: 'riddle_update' },
+          (message) => {
+            // 🚀 Low-latency path: every riddle-advancing API route (answer
+            // submission, QR scan, skip, go-back) broadcasts this event
+            // directly over the websocket the instant it updates the group,
+            // so we don't have to wait on postgres_changes replication (which
+            // requires the `groups` table to be added to the Supabase
+            // realtime publication) or the slower polling fallback below.
+            console.log("=== REALTIME UPDATE RECEIVED (broadcast) ===");
+            console.log("Full payload:", message);
+
+            const payload = message.payload as { newRiddleId?: string; isCompleted?: boolean } | undefined;
+            handleRiddleChange(payload?.newRiddleId, payload?.isCompleted);
           }
         )
         .subscribe((status) => {

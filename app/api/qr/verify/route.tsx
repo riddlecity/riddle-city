@@ -1,9 +1,33 @@
 // app/api/qr/verify/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 import { addRiddleCompletion } from '@/lib/riddleProgress';
+
+// Reused service-role client for broadcasting realtime updates - a fresh
+// client per-request risks the websocket not being ready before the
+// serverless function returns, so we keep one warm module-level instance.
+const serviceSupabase = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+function broadcastRiddleUpdate(groupId: string, newRiddleId: string | null, isCompleted: boolean) {
+  return serviceSupabase
+    .channel(`riddle-updates-${groupId}`)
+    .send({
+      type: 'broadcast',
+      event: 'riddle_update',
+      payload: {
+        groupId,
+        newRiddleId,
+        isCompleted,
+        completedAt: isCompleted ? new Date().toISOString() : null
+      }
+    });
+}
 
 // Generate QR validation token
 function generateQRToken(locationId: string, timestamp: number): string {
@@ -165,6 +189,10 @@ export async function GET(request: NextRequest) {
         console.error('Error finishing game:', finishError);
       }
       
+      // 🚀 Push an instant update to every device in the group instead of
+      // waiting on postgres_changes replication or the slower polling fallback.
+      await Promise.allSettled([broadcastRiddleUpdate(groupId, null, true)]);
+
       return NextResponse.json(
         { 
           success: true, 
@@ -233,6 +261,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // 🚀 Push an instant update to every device in the group instead of
+    // waiting on postgres_changes replication or the slower polling fallback.
+    await Promise.allSettled([broadcastRiddleUpdate(groupId, currentRiddle.next_riddle_id, false)]);
+
     return NextResponse.json(
       { 
         success: true, 
