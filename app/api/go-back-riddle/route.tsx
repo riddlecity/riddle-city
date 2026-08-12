@@ -9,7 +9,7 @@ const serviceSupabase = createServiceClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(request: Request) {
+export async function POST() {
   const cookieStore = await cookies();
 
   // Try new format first (riddlecity-session)
