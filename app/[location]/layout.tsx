@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Omit<Props, "children">): Pro
 
   return {
     title: `${name} Treasure Hunt & Riddle Trail`,
-    description: `Looking for things to do in ${name}? Riddle City is an outdoor puzzle adventure — solve riddles, scan QR codes, and explore ${name}'s best pubs and hidden gems. From £12.99 per person.`,
+    description: `Looking for things to do in ${name}? Riddle City is an outdoor puzzle adventure — solve riddles, scan QR codes, and explore ${name}'s best pubs and hidden gems. From £9.99 per person.`,
     keywords: [
       `things to do in ${name}`,
       `${name} treasure hunt`,
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Omit<Props, "children">): Pro
     ],
     openGraph: {
       title: `${name} Treasure Hunt & Riddle Trail | Riddle City`,
-      description: `Explore ${name} with a fun outdoor riddle adventure. Perfect for groups, hen parties, dates, and team days out. From £12.99 per person.`,
+      description: `Explore ${name} with a fun outdoor riddle adventure. Perfect for groups, hen parties, dates, and team days out. From £9.99 per person.`,
     },
   };
 }
@@ -46,7 +46,7 @@ export default async function LocationLayout({ children, params }: Props) {
     touristType: ["Friends", "Couples", "Groups", "Hen Parties", "Team Building"],
     offers: {
       "@type": "Offer",
-      price: "12.99",
+      price: "9.99",
       priceCurrency: "GBP",
       description: "Per person",
     },
@@ -74,7 +74,7 @@ export default async function LocationLayout({ children, params }: Props) {
         name: "How much does Riddle City cost?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Adventures start from £12.99 per person. There are no hidden fees — pay once and play at your own pace.",
+          text: "Adventures start from £9.99 per person. There are no hidden fees — pay once and play at your own pace.",
         },
       },
       {

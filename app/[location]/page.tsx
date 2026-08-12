@@ -279,7 +279,7 @@ export default function LocationPage({ params }: Props) {
                   <div className="text-right ml-4">
                     {hasStartLabel ? (
                       <>
-                        <div className="text-xl font-bold">£12.99</div>
+                        <div className="text-xl font-bold">£9.99</div>
                         <div className={`text-xs font-normal ${textAccent}`}>
                           per person
                         </div>
@@ -353,7 +353,7 @@ export default function LocationPage({ params }: Props) {
           <ol className="space-y-3 text-white/70">
             <li className="flex gap-3">
               <span className="text-red-500 font-bold shrink-0">1.</span>
-              Choose your adventure above and pay per person (from £12.99).
+              Choose your adventure above and pay per person (from £9.99).
             </li>
             <li className="flex gap-3">
               <span className="text-red-500 font-bold shrink-0">2.</span>
