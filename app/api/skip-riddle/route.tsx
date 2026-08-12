@@ -19,7 +19,7 @@ const serviceSupabase = createServiceClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function POST(request: Request) {
+export async function POST() {
   console.log("=== SKIP RIDDLE API START (OPTIMIZED) ===");
   
   const cookieStore = await cookies();
