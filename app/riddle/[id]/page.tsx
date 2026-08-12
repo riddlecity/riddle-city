@@ -258,12 +258,13 @@ export default async function RiddlePage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white relative overflow-hidden flex flex-col">
+    <main className="h-[100svh] md:h-dvh bg-neutral-900 text-white relative overflow-hidden flex flex-col">
       {/* Handle cookie setting from URL parameters */}
       <CookieHandler />
 
-      {/* Background maze logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0 pointer-events-none">
+      {/* Background maze logo - kept subtle so it doesn't compete with the
+          riddle text and buttons in front of it */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-10 z-0 pointer-events-none">
         <Image
           src="/riddle-city-logo2.png"
           alt=""
@@ -278,14 +279,14 @@ export default async function RiddlePage({ params }: Props) {
           Rendered in normal flow (not an overlay) so it takes up real space
           instead of covering the riddle content below. */}
       {groupId && showGoBack && (
-        <div className="w-full px-4 pt-4 z-10" style={{ paddingTop: "max(env(safe-area-inset-top, 1rem), 1rem)" }}>
+        <div className="w-full px-4 pt-2 z-10 flex-shrink-0" style={{ paddingTop: "max(env(safe-area-inset-top, 0.5rem), 0.5rem)" }}>
           <GoBackButton groupId={groupId} />
         </div>
       )}
 
       {/* Game Progress - At the very top (NO TIMER) */}
       {groupId && (
-        <div className="w-full px-4 pt-4 z-10">
+        <div className="w-full px-4 pt-2 z-10 flex-shrink-0">
           <GameProgress
             currentRiddleOrder={currentRiddleOrder}
             totalRiddles={totalRiddles}
@@ -294,14 +295,19 @@ export default async function RiddlePage({ params }: Props) {
       )}
 
       {/* Time Warning for this riddle's location */}
-      <RiddleTimeWarning riddleId={id} trackId={track_id} />
+      <div className="flex-shrink-0">
+        <RiddleTimeWarning riddleId={id} trackId={track_id} />
+      </div>
 
-      {/* Main content area - riddle centered in logo */}
-      <div className="flex-1 flex items-center justify-center px-4 z-10">
+      {/* Main content area - riddle centered in logo.
+          min-h-0 + overflow-y-auto lets THIS area scroll internally if the
+          riddle text/hint is too tall for the screen, while the go-back
+          button above and the skip/share bar below stay pinned in view. */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center px-4 z-10 py-2">
         <div className="w-full max-w-4xl text-center">
           {/* Show start location if previous riddle was skipped */}
           {showStartLocation && start_location && (
-            <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/30 rounded-lg">
+            <div className="mb-4 p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg">
               <p className="text-blue-200 text-sm mb-1">📍 Start from:</p>
               <p className="text-white font-semibold">{start_location}</p>
             </div>
@@ -316,8 +322,8 @@ export default async function RiddlePage({ params }: Props) {
             />
           ) : (
             <h1
-              className="font-bold text-white leading-tight drop-shadow-lg mb-8
-                         text-[clamp(1.5rem,5vw,2.25rem)]
+              className="font-bold text-white leading-tight drop-shadow-lg mb-4
+                         text-[clamp(1.25rem,4.5vw,2.25rem)]
                          md:text-[clamp(1.75rem,3.5vw,2.5rem)]
                          px-2"
               style={{
@@ -330,7 +336,7 @@ export default async function RiddlePage({ params }: Props) {
 
           {/* Manual Answer Form */}
           {has_manual_answer && groupId && (
-            <div className="mt-8 mb-8">
+            <div className="mt-4 mb-4">
               <ManualAnswerForm
                 riddleId={id}
                 groupId={groupId}
@@ -342,19 +348,19 @@ export default async function RiddlePage({ params }: Props) {
 
           {/* Scan QR Button for non-manual answer riddles */}
           {!has_manual_answer && groupId && (
-            <div className="mt-8 mb-8">
+            <div className="mt-4 mb-4">
               <ScanQRButton />
             </div>
           )}
 
           {/* Hint section */}
           {qr_hint && (
-            <div className="mt-8">
+            <div className="mt-4">
               <details className="group">
-                <summary className="cursor-pointer text-white/60 hover:text-white/80 transition-colors duration-200 text-center text-sm sm:text-base font-medium bg-white/10 rounded-lg px-4 py-3.5 hover:bg-white/20 inline-block min-h-[48px] active:scale-95">
+                <summary className="cursor-pointer text-white/60 hover:text-white/80 transition-colors duration-200 text-center text-sm sm:text-base font-medium bg-white/10 rounded-lg px-4 py-3 hover:bg-white/20 inline-block min-h-[44px] active:scale-95">
                   💡 Need a hint? ▼
                 </summary>
-                <div className="text-white/80 text-sm sm:text-base leading-relaxed bg-black/40 backdrop-blur-sm rounded-lg p-4 sm:p-5 border border-white/20 mt-3 max-w-lg mx-auto animate-in slide-in-from-top-2 duration-200">
+                <div className="text-white/80 text-sm sm:text-base leading-relaxed bg-black/40 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-white/20 mt-2 max-w-lg mx-auto animate-in slide-in-from-top-2 duration-200">
                   {qr_hint}
                 </div>
               </details>
@@ -375,8 +381,8 @@ export default async function RiddlePage({ params }: Props) {
           bottom-right stays free for the selfie button above and avoids
           accidental taps between the two actions */}
       <div
-        className="relative z-10 px-4 py-3 sm:py-4 flex flex-col items-start gap-2 bg-gradient-to-t from-black/30 to-transparent"
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom, 16px), 1rem)" }}
+        className="relative z-10 px-4 py-2 flex-shrink-0 flex flex-col items-start gap-1 bg-gradient-to-t from-black/30 to-transparent"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom, 12px), 0.75rem)" }}
       >
         {/* Copy Link */}
         {groupId && isLeader && !isLastRiddle && (

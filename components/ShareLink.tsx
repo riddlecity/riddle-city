@@ -28,21 +28,22 @@ export default function ShareLink({ groupId }: { groupId: string }) {
 
   return (
     <div className="text-left">
-      <div className="text-xs sm:text-xs text-white/60 mb-1.5">Invite your team</div>
-
       <button
         onClick={handleCopy}
         className={`
-          min-h-[44px] text-sm sm:text-base font-medium border-2 rounded-lg px-4 py-2.5 transition-all duration-200
-          bg-white/10 hover:bg-white/20 active:scale-95 border-white/20 hover:border-white/40
-          ${copied 
-            ? "text-green-400 border-green-400/50 bg-green-400/10" 
-            : copyError 
-              ? "text-red-400 border-red-400/50 bg-red-400/10" 
-              : "text-red-500 hover:text-red-400"}
+          text-left min-h-[48px] px-3 py-2 rounded-lg transition-all duration-200
+          active:scale-95
+          ${copied
+            ? "bg-green-400/10 text-green-400"
+            : copyError
+              ? "bg-red-400/10 text-red-400"
+              : "hover:bg-white/10 text-white"}
         `}
       >
-        {copied ? "✅ Copied!" : copyError ? "❌ Failed" : "📋 Copy Invite Link"}
+        <div className="text-xs sm:text-xs text-white/60 mb-0.5">Invite your team</div>
+        <div className="text-sm sm:text-base font-medium">
+          {copied ? "✅ Copied!" : copyError ? "❌ Failed to copy" : "📋 Copy invite link"}
+        </div>
       </button>
     </div>
   );
