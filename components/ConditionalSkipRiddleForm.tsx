@@ -214,11 +214,6 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
         <div className="text-sm sm:text-base font-medium">
           {isSkipping ? 'Skipping...' : skipActionText}
         </div>
-        {warning && (
-          <div className="text-xs text-amber-300/80 mt-0.5">
-            {warning.type === 'closed' ? '⚠️ Location closed' : '⚠️ Closing soon'}
-          </div>
-        )}
         {isEmergencySkip && !isLeader && (
           <div className="text-xs text-white/40 mt-0.5">
             (Emergency skip available)
@@ -233,7 +228,7 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
             <p className="text-white/70 text-sm mb-6 text-center">
               {isFinalRiddle
                 ? 'This will mark the adventure as complete for the whole team.'
-                : 'Your whole team will move on to the next riddle. This can\'t be undone unless you go back later.'}
+                : 'Are you sure you want to skip? Your whole team will move on to the next riddle, and you may only go back one riddle - even if you skip several in a row.'}
             </p>
             <div className="flex gap-3">
               <button

@@ -106,8 +106,22 @@ export async function POST() {
 
     // Remove the skip record for the previous riddle since the group is now
     // going back to attempt it properly.
+    //
+    // 🔒 ONE-RIDDLE-BACK LIMIT: If several riddles in a row were skipped
+    // (e.g. A, B, C all skipped before reaching D), only ONE go-back should
+    // ever be usable for that streak - not a full rewind through A → B → C.
+    // So alongside removing the entry we're actually rewinding to, we also
+    // clear the "skip" marker on any earlier riddles in the same consecutive
+    // streak. Those riddles remain counted as skipped (riddles_skipped isn't
+    // touched for them), they just can no longer be walked back to.
     const updatedProgress = { ...(group.riddle_progress || {}) };
     delete updatedProgress[previousOrder.toString()];
+
+    let streakOrder = previousOrder - 1;
+    while (streakOrder >= 1 && updatedProgress[streakOrder.toString()]?.type === 'skip') {
+      delete updatedProgress[streakOrder.toString()];
+      streakOrder -= 1;
+    }
 
     // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id so this only
     // applies if nobody else has already moved the group on in the meantime.

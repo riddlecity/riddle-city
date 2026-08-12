@@ -41,20 +41,19 @@ export default function GoBackButton({ groupId }: Props) {
   };
 
   return (
-    <div
-      className="absolute z-20 left-3 sm:left-4 bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-2 max-w-[160px] sm:max-w-[200px]"
-      style={{ top: "max(env(safe-area-inset-top, 0.75rem), 0.75rem)" }}
-    >
-      <p className="text-white/60 text-[11px] sm:text-xs mb-1 leading-tight">Skipped the last riddle?</p>
+    <div className="w-full">
       <button
         onClick={handleGoBack}
         disabled={isGoingBack}
-        className="text-white text-xs sm:text-sm font-medium hover:text-white/80 active:scale-95 transition-all duration-200 min-h-[36px] disabled:opacity-60"
+        className="flex items-center gap-2 text-white/80 hover:text-white active:scale-95 transition-all duration-200 min-h-[36px] disabled:opacity-60"
       >
-        {isGoingBack ? 'Going back…' : '⬅️ Go back'}
+        <span aria-hidden="true" className="text-lg leading-none">←</span>
+        <span className="text-sm sm:text-base font-medium">
+          {isGoingBack ? 'Going back…' : 'Go back to previous riddle'}
+        </span>
       </button>
       {error && (
-        <p className="text-red-300 text-[11px] mt-1 leading-tight">{error}</p>
+        <p className="text-red-300 text-xs mt-1">{error}</p>
       )}
     </div>
   );

@@ -262,9 +262,6 @@ export default async function RiddlePage({ params }: Props) {
       {/* Handle cookie setting from URL parameters */}
       <CookieHandler />
 
-      {/* Go back option - only shown to the leader if the previous riddle was skipped */}
-      {groupId && showGoBack && <GoBackButton groupId={groupId} />}
-
       {/* Background maze logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0 pointer-events-none">
         <Image
@@ -276,6 +273,15 @@ export default async function RiddlePage({ params }: Props) {
           priority={false}
         />
       </div>
+
+      {/* Go back option - only shown to the leader if the previous riddle was skipped.
+          Rendered in normal flow (not an overlay) so it takes up real space
+          instead of covering the riddle content below. */}
+      {groupId && showGoBack && (
+        <div className="w-full px-4 pt-4 z-10" style={{ paddingTop: "max(env(safe-area-inset-top, 1rem), 1rem)" }}>
+          <GoBackButton groupId={groupId} />
+        </div>
+      )}
 
       {/* Game Progress - At the very top (NO TIMER) */}
       {groupId && (
