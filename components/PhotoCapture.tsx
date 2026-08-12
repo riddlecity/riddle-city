@@ -191,7 +191,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
       )}
 
       {/* Compact floating button - bottom right */}
-      <div className="fixed bottom-20 right-4 z-40">
+      <div className="fixed bottom-12 right-4 z-40">
         {hasPhoto ? (
           <button
             onClick={handleButtonClick}
