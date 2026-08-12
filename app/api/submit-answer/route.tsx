@@ -144,19 +144,34 @@ export async function POST(request: NextRequest) {
         ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'manual_answer')
         : group.riddle_progress;
       
-      const { error: completeError } = await supabase
+      // 🔒 CONCURRENCY GUARD: Only apply this update if the group is still on
+      // the riddle we read above. If another simultaneous request already
+      // advanced the group, this compare-and-swap update affects 0 rows.
+      const { data: updatedGroup, error: completeError } = await supabase
         .from('groups')
         .update({ 
           finished: true,
           completed_at: now,
           riddle_progress: updatedProgress
         })
-        .eq('id', groupId);
+        .eq('id', groupId)
+        .eq('current_riddle_id', group.current_riddle_id)
+        .select('finished')
+        .maybeSingle();
 
       if (completeError) {
         return NextResponse.json({ 
           error: 'Failed to complete adventure' 
         }, { status: 500 });
+      }
+
+      if (!updatedGroup) {
+        // Another request already advanced the group - it's already done.
+        return NextResponse.json({
+          correct: true,
+          completed: true,
+          message: 'Adventure completed!'
+        });
       }
       
       return NextResponse.json({
@@ -172,18 +187,49 @@ export async function POST(request: NextRequest) {
         ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'manual_answer')
         : group.riddle_progress;
       
-      const { error: progressError } = await supabase
+      // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id so that if
+      // two group members submit the correct answer at the same time, only
+      // the first request actually advances the group - the second is a no-op
+      // that simply returns the (already correct) next riddle id.
+      const { data: updatedGroup, error: progressError } = await supabase
         .from('groups')
         .update({ 
           current_riddle_id: riddle.next_riddle_id,
           riddle_progress: updatedProgress
         })
-        .eq('id', groupId);
+        .eq('id', groupId)
+        .eq('current_riddle_id', group.current_riddle_id)
+        .select('current_riddle_id')
+        .maybeSingle();
 
       if (progressError) {
         return NextResponse.json({ 
           error: 'Failed to progress to next riddle' 
         }, { status: 500 });
+      }
+
+      if (!updatedGroup) {
+        // Someone else already advanced the group - fetch the authoritative
+        // current state instead of blindly trusting our stale computation.
+        const { data: freshGroup } = await supabase
+          .from('groups')
+          .select('current_riddle_id, finished')
+          .eq('id', groupId)
+          .single();
+
+        if (freshGroup?.finished) {
+          return NextResponse.json({
+            correct: true,
+            completed: true,
+            message: 'Adventure completed!'
+          });
+        }
+
+        return NextResponse.json({
+          correct: true,
+          nextRiddleId: freshGroup?.current_riddle_id ?? riddle.next_riddle_id,
+          message: 'Correct! Moving to next riddle...'
+        });
       }
       
       return NextResponse.json({

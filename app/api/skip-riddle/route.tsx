@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { addRiddleCompletion, type RiddleProgress } from "@/lib/riddleProgress";
+import { isLocationEmergencySkippable } from "@/lib/locationEmergencySkip";
 
 interface GroupUpdate {
   current_riddle_id: string;
@@ -22,15 +23,6 @@ export async function POST(request: Request) {
   console.log("=== SKIP RIDDLE API START (OPTIMIZED) ===");
   
   const cookieStore = await cookies();
-  
-  // Parse request body for emergency skip info
-  let isEmergencySkip = false;
-  try {
-    const body = await request.json();
-    isEmergencySkip = body.isEmergencySkip || false;
-  } catch (e) {
-    // Continue with default values if parsing fails
-  }
   
   // Try new format first (riddlecity-session)
   let groupId: string | undefined;
@@ -77,12 +69,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found in group" }, { status: 404 });
     }
 
-    // Check authorization - leaders can always skip, non-leaders only during emergency
-    if (!member.is_leader && !isEmergencySkip) {
-      console.error("User is not leader and not emergency skip");
-      return NextResponse.json({ error: "Only group leaders can skip riddles" }, { status: 403 });
-    }
-
     // Get current group riddle
     const { data: group, error: groupError } = await supabase
       .from("groups")
@@ -98,13 +84,25 @@ export async function POST(request: Request) {
     // Get current riddle to check if it has a next riddle and get its order
     const { data: currentRiddle, error: riddleError } = await supabase
       .from("riddles")
-      .select("next_riddle_id, order_index")
+      .select("next_riddle_id, order_index, opening_hours")
       .eq("id", group.current_riddle_id)
       .single();
 
     if (riddleError) {
       console.error("Failed to get current riddle:", riddleError);
       return NextResponse.json({ error: "Current riddle not found" }, { status: 404 });
+    }
+
+    // 🔒 SECURITY: Only the group leader can skip a riddle - UNLESS the
+    // location itself is closed or closing very soon, in which case any
+    // member can skip. Eligibility is computed here from the riddle's own
+    // opening_hours data - never trust a client-supplied "emergency" flag,
+    // since that would let anyone bypass the leader-only restriction.
+    const isEmergencySkip = isLocationEmergencySkippable(currentRiddle.opening_hours);
+
+    if (!member.is_leader && !isEmergencySkip) {
+      console.error("User is not leader and location is not closed/closing soon");
+      return NextResponse.json({ error: "Only the group leader can skip riddles" }, { status: 403 });
     }
 
     // If current riddle has no next_riddle_id, we're on the final riddle
@@ -129,11 +127,14 @@ export async function POST(request: Request) {
         completed_at: completionTime
       };
 
+      // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id so this
+      // skip only applies if nobody else has already progressed the group.
       const [updateResult] = await Promise.allSettled([
         serviceSupabase
           .from('groups')
           .update(updates)
           .eq('id', groupId)
+          .eq('current_riddle_id', group.current_riddle_id)
       ]);
 
       if (updateResult.status === 'rejected') {
@@ -171,12 +172,14 @@ export async function POST(request: Request) {
 
     // Don't mark as complete - just moving to next riddle
 
-    // OPTIMIZATION: Use service client for update + broadcast in parallel
+    // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id + OPTIMIZATION:
+    // Use service client for update + broadcast in parallel
     const [updateResult, broadcastResult] = await Promise.allSettled([
       serviceSupabase
         .from('groups')
         .update(updates)
-        .eq('id', groupId),
+        .eq('id', groupId)
+        .eq('current_riddle_id', group.current_riddle_id),
       
       serviceSupabase
         .channel(`riddle-updates-${groupId}`)
@@ -188,8 +191,7 @@ export async function POST(request: Request) {
             newRiddleId: nextRiddleId,
             skippedCount: updates.riddles_skipped,
             isCompleted: false,
-            completedAt: null,
-            wasEmergencySkip: isEmergencySkip
+            completedAt: null
           }
         })
     ]);

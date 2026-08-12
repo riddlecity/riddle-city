@@ -13,6 +13,7 @@ import ManualAnswerForm from "@/components/ManualAnswerForm";
 import ScanQRButton from "@/components/ScanQRButton";
 import AlternativeRiddleToggle from "@/components/AlternativeRiddleToggle";
 import PhotoCapture from "@/components/PhotoCapture";
+import GoBackButton from "@/components/GoBackButton";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -223,9 +224,10 @@ export default async function RiddlePage({ params }: Props) {
     isLeader = memberData?.is_leader || false;
   }
 
-  // Check if previous riddle was skipped (to show start_location)
+  // Check if previous riddle was skipped (to show start_location / go-back option)
   let showStartLocation = false;
-  if (groupId && order_index > 1 && start_location) {
+  let showGoBack = false;
+  if (groupId && order_index > 1) {
     const { data: groupData } = await supabase
       .from("groups")
       .select("riddle_progress")
@@ -236,7 +238,8 @@ export default async function RiddlePage({ params }: Props) {
       const previousRiddleKey = (order_index - 1).toString();
       const previousRiddle = groupData.riddle_progress[previousRiddleKey];
       if (previousRiddle?.type === 'skip') {
-        showStartLocation = true;
+        showStartLocation = !!start_location;
+        showGoBack = isLeader;
       }
     }
   }
@@ -258,6 +261,9 @@ export default async function RiddlePage({ params }: Props) {
     <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white relative overflow-hidden flex flex-col">
       {/* Handle cookie setting from URL parameters */}
       <CookieHandler />
+
+      {/* Go back option - only shown to the leader if the previous riddle was skipped */}
+      {groupId && showGoBack && <GoBackButton groupId={groupId} />}
 
       {/* Background maze logo */}
       <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0 pointer-events-none">
@@ -351,7 +357,7 @@ export default async function RiddlePage({ params }: Props) {
         </div>
       </div>
 
-      {/* Photo Capture - Only for Leaders - Fixed Position */}
+      {/* Photo Capture (take a selfie) - Only for Leaders - Fixed Bottom Right */}
       {groupId && isLeader && (
         <PhotoCapture 
           riddleId={id}
@@ -359,29 +365,27 @@ export default async function RiddlePage({ params }: Props) {
         />
       )}
 
-      {/* Bottom section - copy link and skip with improved mobile spacing */}
+      {/* Bottom section - copy link and skip, both stacked bottom-left so the
+          bottom-right stays free for the selfie button above and avoids
+          accidental taps between the two actions */}
       <div
-        className="relative z-10 px-4 py-3 sm:py-4 flex justify-between items-end gap-4 bg-gradient-to-t from-black/30 to-transparent"
+        className="relative z-10 px-4 py-3 sm:py-4 flex flex-col items-start gap-2 bg-gradient-to-t from-black/30 to-transparent"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 16px), 1rem)" }}
       >
-        {/* Copy Link - Bottom Left */}
+        {/* Copy Link */}
         {groupId && isLeader && !isLastRiddle && (
-          <div className="flex-1">
-            <ShareLink groupId={groupId} />
-          </div>
+          <ShareLink groupId={groupId} />
         )}
 
-        {/* Skip button - Bottom Right */}
+        {/* Skip button - leader only */}
         {groupId && userId && (
-          <div className="flex-1 flex justify-end">
-            <ConditionalSkipRiddleForm 
-              groupId={groupId} 
-              isLeader={isLeader} 
-              riddleId={id}
-              trackId={track_id}
-              isFinalRiddle={!next_riddle_id}
-            />
-          </div>
+          <ConditionalSkipRiddleForm 
+            groupId={groupId} 
+            isLeader={isLeader} 
+            riddleId={id}
+            trackId={track_id}
+            isFinalRiddle={!next_riddle_id}
+          />
         )}
       </div>
 

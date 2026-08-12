@@ -22,6 +22,7 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
   const [isSkipping, setIsSkipping] = useState(false);
   const [warning, setWarning] = useState<TimeWarning | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
 
   // Fetch location hours and determine warning status
@@ -135,27 +136,30 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     };
   }, [riddleId, trackId]);
 
-  // Check if anyone can skip based on location status
+  // Anyone can skip if the location is closed, or closing within 10 minutes.
+  // This is just for showing/hiding the button - the server independently
+  // re-verifies eligibility from the riddle's opening hours before allowing
+  // a non-leader skip to actually go through.
   const canAnyoneSkip = () => {
     if (!warning) return false;
-    
-    // Allow anyone to skip if location is closed
+
     if (warning.type === 'closed') {
       return true;
     }
-    
-    // Allow anyone to skip if closing very soon (within 10 minutes)
+
     if (warning.type === 'closing_soon' && warning.hoursUntilClose !== undefined) {
       const minutesUntilClose = warning.hoursUntilClose * 60;
       return minutesUntilClose <= 10;
     }
-    
+
     return false;
   };
 
-  // Only show skip button if user is leader OR anyone can skip due to location issues
-  const shouldShowSkip = isLeader || canAnyoneSkip();
+  const isEmergencySkip = canAnyoneSkip();
+  const shouldShowSkip = isLeader || isEmergencySkip;
 
+  // 🔒 Only the group leader can skip a riddle - UNLESS the location itself
+  // is closed or closing very soon. The server enforces this independently.
   if (loading || !shouldShowSkip) {
     return null;
   }
@@ -164,20 +168,17 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     if (isSkipping) return;
     
     setIsSkipping(true);
+    setShowConfirm(false);
     try {
-      const isEmergency = canAnyoneSkip();
       const response = await fetch('/api/skip-riddle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          groupId,
-          isEmergencySkip: isEmergency
-        }),
+        body: JSON.stringify({ groupId, isEmergencySkip }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`Skip successful: ${isEmergency ? 'Emergency' : 'Normal'} skip`);
+        console.log(`Skip successful: ${isEmergencySkip ? 'Emergency' : 'Normal'} skip`);
         
         // Navigate to next riddle or completion page
         if (data.completed) {
@@ -199,38 +200,59 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     }
   };
 
-  // Get appropriate skip text based on why they can skip
-  const getSkipText = () => {
-    if (canAnyoneSkip()) {
-      return {
-        subtitle: 'Location unavailable?',
-        action: isFinalRiddle ? 'Skip to complete' : 'Skip this riddle'
-      };
-    } else {
-      return {
-        subtitle: 'QR missing? Not working?',
-        action: isFinalRiddle ? 'Skip to complete' : 'Skip to next riddle'
-      };
-    }
-  };
-
-  const skipText = getSkipText();
+  const skipActionText = isFinalRiddle ? 'Skip to complete' : 'Skip to next riddle';
+  const skipSubtitle = isEmergencySkip && !isLeader ? 'Location unavailable?' : 'QR missing? Not working?';
 
   return (
-    <button
-      onClick={handleSkip}
-      disabled={isSkipping}
-      className="text-white text-right hover:text-white/80 active:scale-95 transition-all duration-200 min-h-[48px] px-3 py-2 rounded-lg hover:bg-white/10"
-    >
-      <div className="text-xs sm:text-xs text-white/60 mb-0.5">{skipText.subtitle}</div>
-      <div className="text-sm sm:text-base font-medium">
-        {isSkipping ? 'Skipping...' : skipText.action}
-      </div>
-      {canAnyoneSkip() && !isLeader && (
-        <div className="text-xs text-white/40 mt-0.5">
-          (Emergency skip available)
+    <>
+      <button
+        onClick={() => setShowConfirm(true)}
+        disabled={isSkipping}
+        className="text-white text-left hover:text-white/80 active:scale-95 transition-all duration-200 min-h-[48px] px-3 py-2 rounded-lg hover:bg-white/10"
+      >
+        <div className="text-xs sm:text-xs text-white/60 mb-0.5">{skipSubtitle}</div>
+        <div className="text-sm sm:text-base font-medium">
+          {isSkipping ? 'Skipping...' : skipActionText}
+        </div>
+        {warning && (
+          <div className="text-xs text-amber-300/80 mt-0.5">
+            {warning.type === 'closed' ? '⚠️ Location closed' : '⚠️ Closing soon'}
+          </div>
+        )}
+        {isEmergencySkip && !isLeader && (
+          <div className="text-xs text-white/40 mt-0.5">
+            (Emergency skip available)
+          </div>
+        )}
+      </button>
+
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/20 rounded-xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2 text-center">Skip this riddle?</h3>
+            <p className="text-white/70 text-sm mb-6 text-center">
+              {isFinalRiddle
+                ? 'This will mark the adventure as complete for the whole team.'
+                : 'Your whole team will move on to the next riddle. This can\'t be undone unless you go back later.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 min-h-[48px] bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSkip}
+                disabled={isSkipping}
+                className="flex-1 min-h-[48px] bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-60"
+              >
+                {isSkipping ? 'Skipping...' : 'Yes, skip'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </button>
+    </>
   );
 }

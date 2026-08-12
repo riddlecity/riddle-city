@@ -149,6 +149,8 @@ export async function GET(request: NextRequest) {
         ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'scan')
         : group.riddle_progress;
       
+      // 🔒 CONCURRENCY GUARD: compare-and-swap on current_riddle_id so a
+      // duplicate/simultaneous scan can't double-apply the update.
       const { error: finishError } = await supabase
         .from("groups")
         .update({ 
@@ -156,7 +158,8 @@ export async function GET(request: NextRequest) {
           completed_at: new Date().toISOString(),
           riddle_progress: updatedProgress
         })
-        .eq("id", groupId);
+        .eq("id", groupId)
+        .eq("current_riddle_id", group.current_riddle_id);
       
       if (finishError) {
         console.error('Error finishing game:', finishError);
@@ -179,18 +182,54 @@ export async function GET(request: NextRequest) {
       ? addRiddleCompletion(group.riddle_progress, riddleOrder, 'scan')
       : group.riddle_progress;
     
-    const { error: updateError } = await supabase
+    // 🔒 CONCURRENCY GUARD: Only advance if the group is still on the riddle
+    // we just verified. If another team member's scan/answer already moved
+    // the group forward, this affects 0 rows and we fall back to the
+    // authoritative next_riddle_id from the database.
+    const { data: updatedGroup, error: updateError } = await supabase
       .from("groups")
       .update({ 
         current_riddle_id: currentRiddle.next_riddle_id,
         riddle_progress: updatedProgress
       })
-      .eq("id", groupId);
+      .eq("id", groupId)
+      .eq("current_riddle_id", group.current_riddle_id)
+      .select("current_riddle_id")
+      .maybeSingle();
     
     if (updateError) {
       return NextResponse.json(
         { success: false, message: '❌ Failed to update progress' },
         { status: 500 }
+      );
+    }
+
+    if (!updatedGroup) {
+      // Someone else already advanced the group - fetch the authoritative state
+      const { data: freshGroup } = await supabase
+        .from("groups")
+        .select("current_riddle_id, finished")
+        .eq("id", groupId)
+        .single();
+
+      if (freshGroup?.finished) {
+        return NextResponse.json(
+          { 
+            success: true, 
+            message: '🎉 Final code found! Adventure complete!',
+            redirectUrl: `/adventure-complete/${groupId}`
+          },
+          { status: 200 }
+        );
+      }
+
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: '✓ Code found! Moving to next riddle...',
+          redirectUrl: `/riddle/${freshGroup?.current_riddle_id ?? currentRiddle.next_riddle_id}`
+        },
+        { status: 200 }
       );
     }
     
