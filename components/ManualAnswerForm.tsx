@@ -124,10 +124,6 @@ export default function ManualAnswerForm({
     <div className="max-w-md mx-auto">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
-          <h3 className="text-base sm:text-lg font-semibold text-white/90 mb-3 text-center">
-            Enter your answer
-          </h3>
-          
           <div className="space-y-3">
             <input
               type="text"
