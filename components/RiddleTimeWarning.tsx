@@ -91,13 +91,13 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   const getWarningStyles = () => {
     switch (warning.severity) {
       case 'high':
-        return 'bg-gradient-to-r from-red-950/80 to-purple-950/80 border-red-400/20 backdrop-blur-sm';
+        return 'bg-red-950/50 border-red-500/30';
       case 'medium':
-        return 'bg-gradient-to-r from-yellow-950/80 to-purple-950/80 border-yellow-400/20 backdrop-blur-sm';
+        return 'bg-amber-950/50 border-amber-500/30';
       case 'low':
-        return 'bg-gradient-to-r from-blue-950/80 to-purple-950/80 border-blue-400/20 backdrop-blur-sm';
+        return 'bg-blue-950/50 border-blue-500/30';
       default:
-        return 'bg-gradient-to-r from-gray-950/80 to-purple-950/80 border-gray-400/20 backdrop-blur-sm';
+        return 'bg-neutral-800/50 border-white/20';
     }
   };
 
@@ -143,12 +143,12 @@ export default function RiddleTimeWarning({ riddleId, trackId }: TimeWarningProp
   };
 
   return (
-    <div className="w-full px-4 z-10 mb-4">
-      <div className={`p-4 rounded-xl border-2 ${getWarningStyles()} text-white shadow-lg`}>
-        <div className="flex items-center gap-3">
-          <span className="text-2xl flex-shrink-0">{getWarningIcon()}</span>
+    <div className="w-full px-4 z-10 mb-3">
+      <div className={`px-3.5 py-2.5 rounded-lg border ${getWarningStyles()} text-white`}>
+        <div className="flex items-center gap-2.5">
+          <span className="text-lg flex-shrink-0">{getWarningIcon()}</span>
           <div className="flex-1">
-            <p className="font-semibold text-white leading-tight">{getDisplayMessage()}</p>
+            <p className="font-medium text-sm text-white/90 leading-tight">{getDisplayMessage()}</p>
           </div>
         </div>
       </div>

@@ -294,17 +294,18 @@ export default async function RiddlePage({ params }: Props) {
         </div>
       )}
 
-      {/* Time Warning for this riddle's location */}
-      <div className="flex-shrink-0">
-        <RiddleTimeWarning riddleId={id} trackId={track_id} />
-      </div>
-
       {/* Main content area - riddle centered in logo.
           min-h-0 + overflow-y-auto lets THIS area scroll internally if the
-          riddle text/hint is too tall for the screen, while the go-back
-          button above and the skip/share bar below stay pinned in view. */}
+          riddle text/hint/time-warning is too tall for the screen, while the
+          go-back button above and the skip/share bar below stay pinned in
+          view. The time warning lives inside this scrollable block (not as
+          a separate fixed bar) so a long "opens tomorrow at X" message can
+          never squeeze the riddle text out of view - it just sits above it. */}
       <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center px-4 z-10 py-2">
         <div className="w-full max-w-4xl text-center">
+          {/* Time Warning for this riddle's location */}
+          <RiddleTimeWarning riddleId={id} trackId={track_id} />
+
           {/* Show start location if previous riddle was skipped */}
           {showStartLocation && start_location && (
             <div className="mb-4 p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg">

@@ -22,16 +22,16 @@ export default function GameProgress({ currentRiddleOrder, totalRiddles }: GameP
   };
 
   return (
-    <div className="w-full bg-black/80 px-4 py-3">
+    <div className="w-full bg-white/5 rounded-lg px-4 py-2.5">
       {/* Progress info */}
       <div className="flex items-center justify-center mb-2">
-        <span className="text-white font-medium text-sm">
+        <span className="text-white/80 font-medium text-sm">
           Riddle {currentRiddleOrder} of {totalRiddles}
         </span>
       </div>
       
       {/* Full width progress bar */}
-      <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
         <div 
           className={`h-full ${getProgressColor(progressPercentage)} transition-all duration-500 ease-out`}
           style={{ width: `${progressPercentage}%` }}
