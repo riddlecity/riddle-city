@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     
     // Check if user already has a session cookie
     const existingSession = cookieStore.get("riddlecity-session")?.value;
-    let userId: string;
+    let userId: string = uuidv4();
     let existingSessionData: SessionData | null = null;
     
     if (existingSession) {
