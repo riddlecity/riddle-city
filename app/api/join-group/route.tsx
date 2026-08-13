@@ -45,10 +45,33 @@ export async function POST(req: Request) {
         console.warn("⚠️ JOIN GROUP: Invalid session cookie, creating new user. Error:", e);
         userId = uuidv4();
       }
-    } else {
-      // Create new anonymous user
-      userId = uuidv4();
-      console.log("👤 JOIN GROUP: Created new anonymous user:", userId);
+    }
+
+    // 🔧 FIX: Fall back to the legacy group_id/user_id cookies (used by every
+    // other API route in this app) if the newer riddlecity-session cookie is
+    // missing or failed to parse. Without this, a returning player whose
+    // riddlecity-session cookie expired/was cleared (but whose legacy cookies
+    // are still valid) would be treated as a brand new anonymous user when
+    // re-using the invite link - wrongly hitting the "Group is full" check
+    // instead of being recognized as an existing member.
+    if (!existingSessionData) {
+      const legacyGroupId = cookieStore.get("group_id")?.value;
+      const legacyUserId = cookieStore.get("user_id")?.value;
+      const legacyTeamName = cookieStore.get("team_name")?.value;
+
+      if (legacyUserId && legacyGroupId === groupId) {
+        userId = legacyUserId;
+        existingSessionData = {
+          groupId: legacyGroupId,
+          userId: legacyUserId,
+          teamName: legacyTeamName || "Your Team"
+        };
+        console.log("👤 JOIN GROUP: Recovered user from legacy cookies:", userId);
+      } else {
+        // Create new anonymous user
+        userId = uuidv4();
+        console.log("👤 JOIN GROUP: Created new anonymous user:", userId);
+      }
     }
     
     // 🔧 FIX: Ensure profile exists for this user

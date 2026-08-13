@@ -125,39 +125,62 @@ export async function POST() {
 
     // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id so this only
     // applies if nobody else has already moved the group on in the meantime.
-    const [updateResult, broadcastResult] = await Promise.allSettled([
-      serviceSupabase
-        .from('groups')
-        .update({
-          current_riddle_id: previousRiddle.id,
-          riddles_skipped: Math.max((group.riddles_skipped || 0) - 1, 0),
-          riddle_progress: updatedProgress
-        })
-        .eq('id', groupId)
-        .eq('current_riddle_id', group.current_riddle_id),
+    // 🚨 IMPORTANT: .select().maybeSingle() lets us detect when the CAS
+    // condition matched 0 rows - without this check, a failed CAS update
+    // would silently report success while writing nothing to the database.
+    const { data: updatedGroup, error: updateError } = await serviceSupabase
+      .from('groups')
+      .update({
+        current_riddle_id: previousRiddle.id,
+        riddles_skipped: Math.max((group.riddles_skipped || 0) - 1, 0),
+        riddle_progress: updatedProgress
+      })
+      .eq('id', groupId)
+      .eq('current_riddle_id', group.current_riddle_id)
+      .select('current_riddle_id')
+      .maybeSingle();
 
-      serviceSupabase
-        .channel(`riddle-updates-${groupId}`)
-        .send({
-          type: 'broadcast',
-          event: 'riddle_update',
-          payload: {
-            groupId,
-            newRiddleId: previousRiddle.id,
-            isCompleted: false,
-            completedAt: null
-          }
-        })
-    ]);
-
-    if (updateResult.status === 'rejected') {
-      console.error("Failed to go back a riddle:", updateResult.reason);
+    if (updateError) {
+      console.error("Failed to go back a riddle:", updateError);
       return NextResponse.json({ error: "Failed to go back a riddle" }, { status: 500 });
     }
 
-    if (broadcastResult.status === 'rejected') {
-      console.error("Broadcast error:", broadcastResult.reason);
-      // Continue even if broadcast fails
+    if (!updatedGroup) {
+      // Someone else already changed the group's state in the meantime -
+      // fetch the authoritative current state instead of reporting success
+      // with a riddle id that was never actually written.
+      const { data: freshGroup } = await serviceSupabase
+        .from('groups')
+        .select('current_riddle_id')
+        .eq('id', groupId)
+        .single();
+
+      return NextResponse.json({
+        error: "Group already progressed, please try again",
+        currentRiddleId: freshGroup?.current_riddle_id
+      }, { status: 409 });
+    }
+
+    // 🚀 Push an instant update to every device in the group.
+    const broadcastResult = await serviceSupabase
+      .channel(`riddle-updates-${groupId}`)
+      .send({
+        type: 'broadcast',
+        event: 'riddle_update',
+        payload: {
+          groupId,
+          newRiddleId: previousRiddle.id,
+          isCompleted: false,
+          completedAt: null
+        }
+      })
+      .catch((err) => {
+        console.error("Broadcast error:", err);
+        return null;
+      });
+
+    if (!broadcastResult) {
+      console.error("Broadcast failed, continuing anyway");
     }
 
     return NextResponse.json({

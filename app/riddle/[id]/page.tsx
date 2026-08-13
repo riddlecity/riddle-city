@@ -9,6 +9,7 @@ import GameProgress from "@/components/GameProgress";
 import RiddleTimeWarning from "@/components/RiddleTimeWarning";
 import RealTimeRiddleSync from "@/components/RealTimeRiddleSync";
 import CookieHandler from "@/components/CookieHandler";
+import SessionRecovery from "@/components/SessionRecovery";
 import ManualAnswerForm from "@/components/ManualAnswerForm";
 import ScanQRButton from "@/components/ScanQRButton";
 import AlternativeRiddleToggle from "@/components/AlternativeRiddleToggle";
@@ -143,10 +144,15 @@ export default async function RiddlePage({ params }: Props) {
   const { groupId, userId } = await getCookiesWithRetry();
 
   // If cookies missing, show loading screen so CookieHandler can set them
+  // (from a game_data URL param), or SessionRecovery can restore them from
+  // localStorage if they were lost after already joining (e.g. iOS Safari
+  // clearing JS-set cookies) - without this, a lost cookie would leave the
+  // page stuck on this spinner forever, even after refreshing.
   if (!groupId || !userId) {
     return (
       <main className="min-h-[100svh] md:min-h-dvh bg-neutral-900 text-white flex flex-col px-4 py-8 relative overflow-hidden">
         <CookieHandler />
+        <SessionRecovery />
 
         {/* Background maze logo */}
         <div className="absolute inset-0 flex items-center justify-center opacity-25 z-0 pointer-events-none">

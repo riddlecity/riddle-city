@@ -23,6 +23,7 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
   const [warning, setWarning] = useState<TimeWarning | null>(null);
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [skipError, setSkipError] = useState<string | null>(null);
   const router = useRouter();
 
   // Fetch location hours and determine warning status
@@ -169,6 +170,7 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
     
     setIsSkipping(true);
     setShowConfirm(false);
+    setSkipError(null);
     try {
       const response = await fetch('/api/skip-riddle', {
         method: 'POST',
@@ -176,8 +178,9 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
         body: JSON.stringify({ groupId, isEmergencySkip }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data) {
         console.log(`Skip successful: ${isEmergencySkip ? 'Emergency' : 'Normal'} skip`);
         
         // Navigate to next riddle or completion page
@@ -191,11 +194,16 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
           setIsSkipping(false);
         }
       } else {
-        console.error('Skip failed');
+        // Show the real reason to the user instead of failing silently -
+        // e.g. "Only the group leader can skip riddles" if eligibility
+        // changed server-side, or a network/server error message.
+        console.error('Skip failed:', data?.error);
+        setSkipError(data?.error || 'Failed to skip riddle. Please try again.');
         setIsSkipping(false);
       }
     } catch (error) {
       console.error('Skip error:', error);
+      setSkipError('Connection error. Please check your internet and try again.');
       setIsSkipping(false);
     }
   };
@@ -220,6 +228,12 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
           </div>
         )}
       </button>
+
+      {skipError && (
+        <div className="max-w-xs bg-red-600/15 border border-red-500/30 rounded-lg px-3 py-2 animate-in slide-in-from-top-2 duration-200">
+          <p className="text-red-300 text-xs font-medium">{skipError}</p>
+        </div>
+      )}
 
       {showConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">

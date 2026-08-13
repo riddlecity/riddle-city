@@ -129,18 +129,58 @@ export async function POST() {
 
       // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id so this
       // skip only applies if nobody else has already progressed the group.
-      const [updateResult] = await Promise.allSettled([
-        serviceSupabase
-          .from('groups')
-          .update(updates)
-          .eq('id', groupId)
-          .eq('current_riddle_id', group.current_riddle_id)
-      ]);
+      // 🚨 IMPORTANT: .select().maybeSingle() lets us detect when the CAS
+      // condition matched 0 rows (i.e. someone else already moved the group
+      // on) - without this check, a failed CAS update silently reports
+      // success while writing nothing to the database.
+      const { data: updatedGroup, error: updateError } = await serviceSupabase
+        .from('groups')
+        .update(updates)
+        .eq('id', groupId)
+        .eq('current_riddle_id', group.current_riddle_id)
+        .select('current_riddle_id, finished')
+        .maybeSingle();
 
-      if (updateResult.status === 'rejected') {
-        console.error("Failed to complete adventure:", updateResult.reason);
+      if (updateError) {
+        console.error("Failed to complete adventure:", updateError);
         return NextResponse.json({ error: "Failed to complete adventure" }, { status: 500 });
       }
+
+      if (!updatedGroup) {
+        // Someone else already changed the group's state - fetch the
+        // authoritative current state instead of blindly reporting success.
+        const { data: freshGroup } = await serviceSupabase
+          .from('groups')
+          .select('current_riddle_id, finished')
+          .eq('id', groupId)
+          .single();
+
+        return NextResponse.json({
+          success: true,
+          nextRiddleId: freshGroup?.finished ? null : freshGroup?.current_riddle_id,
+          completed: Boolean(freshGroup?.finished),
+          message: freshGroup?.finished ? "Adventure completed!" : "Group already progressed",
+          riddles_skipped: group.riddles_skipped,
+          wasEmergencySkip: isEmergencySkip
+        });
+      }
+
+      // 🚀 Push an instant update to every device in the group.
+      await Promise.allSettled([
+        serviceSupabase
+          .channel(`riddle-updates-${groupId}`)
+          .send({
+            type: 'broadcast',
+            event: 'riddle_update',
+            payload: {
+              groupId,
+              newRiddleId: null,
+              skippedCount: updates.riddles_skipped,
+              isCompleted: true,
+              completedAt: completionTime
+            }
+          })
+      ]);
 
       console.log(`🎯 SKIP SUCCESSFUL: Completed adventure by skipping final riddle`);
 
@@ -173,37 +213,77 @@ export async function POST() {
     // Don't mark as complete - just moving to next riddle
 
     // 🔒 CONCURRENCY GUARD: Compare-and-swap on current_riddle_id + OPTIMIZATION:
-    // Use service client for update + broadcast in parallel
-    const [updateResult, broadcastResult] = await Promise.allSettled([
-      serviceSupabase
-        .from('groups')
-        .update(updates)
-        .eq('id', groupId)
-        .eq('current_riddle_id', group.current_riddle_id),
-      
-      serviceSupabase
-        .channel(`riddle-updates-${groupId}`)
-        .send({
-          type: 'broadcast',
-          event: 'riddle_update',
-          payload: {
-            groupId,
-            newRiddleId: nextRiddleId,
-            skippedCount: updates.riddles_skipped,
-            isCompleted: false,
-            completedAt: null
-          }
-        })
-    ]);
+    // Use service client for the update. 🚨 IMPORTANT: .select().maybeSingle()
+    // lets us detect when the CAS condition matched 0 rows (i.e. someone else
+    // already moved the group on) - without this check, a failed CAS update
+    // would silently report success while writing nothing to the database,
+    // leaving every device stuck on the old riddle.
+    const { data: updatedGroup, error: updateError } = await serviceSupabase
+      .from('groups')
+      .update(updates)
+      .eq('id', groupId)
+      .eq('current_riddle_id', group.current_riddle_id)
+      .select('current_riddle_id')
+      .maybeSingle();
 
-    if (updateResult.status === 'rejected') {
-      console.error("Failed to update group:", updateResult.reason);
+    if (updateError) {
+      console.error("Failed to update group:", updateError);
       return NextResponse.json({ error: "Failed to update group" }, { status: 500 });
     }
 
-    if (broadcastResult.status === 'rejected') {
-      console.error("Broadcast error:", broadcastResult.reason);
-      // Continue even if broadcast fails
+    if (!updatedGroup) {
+      // Someone else already advanced (or completed) the group in the
+      // meantime - fetch the authoritative current state instead of
+      // reporting success with a stale/incorrect nextRiddleId.
+      const { data: freshGroup } = await serviceSupabase
+        .from('groups')
+        .select('current_riddle_id, finished')
+        .eq('id', groupId)
+        .single();
+
+      if (freshGroup?.finished) {
+        return NextResponse.json({
+          success: true,
+          nextRiddleId: null,
+          completed: true,
+          message: "Adventure completed!",
+          riddles_skipped: updates.riddles_skipped,
+          wasEmergencySkip: isEmergencySkip
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        nextRiddleId: freshGroup?.current_riddle_id ?? nextRiddleId,
+        completed: false,
+        message: "Group already progressed",
+        riddles_skipped: updates.riddles_skipped,
+        wasEmergencySkip: isEmergencySkip
+      });
+    }
+
+    // 🚀 Push an instant update to every device in the group instead of
+    // waiting on postgres_changes replication or the slower polling fallback.
+    const broadcastResult = await serviceSupabase
+      .channel(`riddle-updates-${groupId}`)
+      .send({
+        type: 'broadcast',
+        event: 'riddle_update',
+        payload: {
+          groupId,
+          newRiddleId: nextRiddleId,
+          skippedCount: updates.riddles_skipped,
+          isCompleted: false,
+          completedAt: null
+        }
+      })
+      .catch((err) => {
+        console.error("Broadcast error:", err);
+        return null;
+      });
+
+    if (!broadcastResult) {
+      console.error("Broadcast failed, continuing anyway");
     }
 
     console.log(`🎯 SKIP SUCCESSFUL: ${isEmergencySkip ? 'Emergency' : 'Normal'} skip to ${nextRiddleId}`);
