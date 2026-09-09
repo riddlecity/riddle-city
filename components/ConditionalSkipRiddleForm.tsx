@@ -81,7 +81,14 @@ export default function ConditionalSkipRiddleForm({ groupId, isLeader, riddleId,
           const [openHour, openMinute] = todayHours.open.split(':').map(Number);
           const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
           const openMinutes = openHour * 60 + openMinute;
-          const closeMinutes = closeHour * 60 + closeMinute;
+          let closeMinutes = closeHour * 60 + closeMinute;
+
+          // Handle midnight closures (e.g. "00:00") - matches the server-side
+          // fix in lib/locationEmergencySkip.ts so the emergency-skip button's
+          // visibility on the client agrees with what the server will allow.
+          if (closeHour === 0) {
+            closeMinutes += 24 * 60;
+          }
 
           const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
 

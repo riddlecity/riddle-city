@@ -118,7 +118,7 @@ export default async function RiddlePage({ params }: Props) {
   const { data, error } = await supabase
     .from("riddles")
     .select(
-      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, answer, next_riddle_id, alt_message, alt_riddle, start_location"
+      "riddle_text, qr_hint, order_index, track_id, has_manual_answer, next_riddle_id, alt_message, alt_riddle, start_location"
     )
     .eq("id", id)
     .single();
@@ -133,7 +133,6 @@ export default async function RiddlePage({ params }: Props) {
     order_index,
     track_id,
     has_manual_answer,
-    answer,
     next_riddle_id,
     alt_message,
     alt_riddle,
@@ -332,7 +331,7 @@ export default async function RiddlePage({ params }: Props) {
               className="font-bold text-white leading-tight drop-shadow-lg mb-4
                          text-[clamp(1.25rem,4.5vw,2.25rem)]
                          md:text-[clamp(1.75rem,3.5vw,2.5rem)]
-                         px-2"
+                         px-2 whitespace-pre-line"
               style={{
                 textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
               }}
@@ -347,7 +346,6 @@ export default async function RiddlePage({ params }: Props) {
               <ManualAnswerForm
                 riddleId={id}
                 groupId={groupId}
-                correctAnswer={answer}
                 isLastRiddle={isLastRiddle}
               />
             </div>

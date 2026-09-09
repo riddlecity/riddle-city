@@ -19,10 +19,10 @@ export default function AlternativeRiddleToggle({
     <div className="relative">
       {/* Main Riddle Text */}
       <h1
-        className={`font-bold text-white leading-tight drop-shadow-lg mb-8
-                   text-[clamp(1.75rem,6vw,2.5rem)]
-                   md:text-[clamp(2rem,4vw,3rem)]
-                   px-2 transition-all duration-300 ${
+        className={`font-bold text-white leading-tight drop-shadow-lg mb-4
+                   text-[clamp(1.25rem,4.5vw,2.25rem)]
+                   md:text-[clamp(1.75rem,3.5vw,2.5rem)]
+                   px-2 whitespace-pre-line transition-all duration-300 ${
                      showingAlt ? 'opacity-0 invisible absolute top-0 left-0 right-0' : 'opacity-100 visible'
                    }`}
         style={{
@@ -34,10 +34,10 @@ export default function AlternativeRiddleToggle({
 
       {/* Alternative Riddle Text */}
       <h1
-        className={`font-bold text-white leading-tight drop-shadow-lg mb-8
-                   text-[clamp(1.75rem,6vw,2.5rem)]
-                   md:text-[clamp(2rem,4vw,3rem)]
-                   px-2 transition-all duration-300 ${
+        className={`font-bold text-white leading-tight drop-shadow-lg mb-4
+                   text-[clamp(1.25rem,4.5vw,2.25rem)]
+                   md:text-[clamp(1.75rem,3.5vw,2.5rem)]
+                   px-2 whitespace-pre-line transition-all duration-300 ${
                      showingAlt ? 'opacity-100 visible' : 'opacity-0 invisible absolute top-0 left-0 right-0'
                    }`}
         style={{

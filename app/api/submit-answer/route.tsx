@@ -128,7 +128,14 @@ export async function POST(request: NextRequest) {
       .filter((a: string) => a.length > 0); // Remove empty strings
     
     const normalizedUserAnswer = userAnswer.toLowerCase().trim();
-    const isCorrect = correctAnswers.includes(normalizedUserAnswer);
+
+    // A stored answer may use a "." to join two words (e.g. "do.it"). Accept
+    // the same answer with the dot removed (e.g. "doit") too, and vice versa,
+    // so players aren't marked wrong over a missing/extra separator.
+    const stripDots = (s: string) => s.replace(/\./g, '');
+    const isCorrect = correctAnswers.some((candidate: string) =>
+      candidate === normalizedUserAnswer || stripDots(candidate) === stripDots(normalizedUserAnswer)
+    );
 
     // Debug logging
     console.log('🔍 ANSWER CHECK:', {

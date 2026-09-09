@@ -7,14 +7,12 @@ import { useRouter } from 'next/navigation'
 interface ManualAnswerFormProps {
   riddleId: string
   groupId: string
-  correctAnswer: string
   isLastRiddle: boolean
 }
 
 export default function ManualAnswerForm({ 
   riddleId, 
   groupId, 
-  correctAnswer, 
   isLastRiddle 
 }: ManualAnswerFormProps) {
   const [answer, setAnswer] = useState('')
@@ -35,23 +33,12 @@ export default function ManualAnswerForm({
     setError('')
 
     try {
-      // For manual answer riddles, check the answer locally first
-      // Support multiple correct answers separated by "|" (e.g., "42|4-2")
-      const correctAnswers = correctAnswer
-        .split('|')
-        .map(a => a.trim().toLowerCase())
-        .filter(a => a.length > 0);
-      
-      const userAnswerNormalized = answer.trim().toLowerCase();
-      const isAnswerCorrect = correctAnswers.includes(userAnswerNormalized);
-
-      // Only make API call if answer is correct to update game state
-      if (!isAnswerCorrect) {
-        setError('Incorrect answer. Try again!');
-        setAnswer('');
-        return;
-      }
-
+      // Always defer to the server for the correct/incorrect decision (it's
+      // the single source of truth for answer-normalization rules, e.g. the
+      // "." <-> "" equivalence) - checking locally first with duplicated
+      // logic risked disagreeing with the server and briefly showing
+      // "Incorrect answer" right before a correct submission advanced the
+      // group anyway.
       const response = await fetch('/api/submit-answer', {
         method: 'POST',
         headers: {
