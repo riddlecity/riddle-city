@@ -24,21 +24,34 @@ const PH = CH - PAD * 2; // 1326 — usable height (full canvas, logo lives in a
 
 interface Tile { x: number; y: number; w: number; h: number; isLogo: boolean }
 
-// Logo banner height when used as overlay (2, 4, 6 photos)
+// Logo banner height when used as overlay (1, 2, 4, 6, 9 photos)
 const LOGO_BANNER_H = 110;
 
 // Does this photo count fit a perfect rectangle with the logo as last slot?
-// True for: 1,3,5,7,8,9 — False for: 2,4,6
+// True for: 3,5,7,8 — False for: 1,2,4,6,9
+//
+// This isn't just "does it fit a rectangle" — it's whichever arrangement
+// produces cell aspect ratios closest to a portrait phone selfie (~0.8),
+// checked by computing actual tile width/height for every candidate grid.
+// n=1 and n=9 used to be in the "true" list (slot totals of 2 and 10),
+// but 2 only factors as 1x2 (cells 1.6:1, badly cropping portrait photos)
+// and 10 only factors as 2x5 (cells ~2:1, even worse) — banner mode with
+// exact counts of 1 (single full-bleed photo) or 9 (a clean 3x3 grid)
+// looks far better. See CollageGeneratorV2 grid-fix notes.
 function usesLogoSlot(photoCount: number): boolean {
   const n = Math.min(photoCount, 9);
-  return n % 2 !== 0 || n === 8 || n === 9;
+  return n === 3 || n === 5 || n === 7 || n === 8;
 }
 
 // Grid for photos only (no logo slot). Used when logo is overlaid.
+// Orientation matters here too — e.g. 6 photos as 3 cols x 2 rows gives
+// much more portrait-friendly cells than 2 cols x 3 rows.
 function calcPhotoGrid(n: number): { cols: number; rows: number } {
-  if (n <= 2)  return { cols: 1, rows: 2 };
-  if (n <= 4)  return { cols: 2, rows: 2 };
-  return               { cols: 2, rows: 3 }; // 6
+  if (n <= 1) return { cols: 1, rows: 1 };
+  if (n === 2) return { cols: 2, rows: 1 };
+  if (n <= 4) return { cols: 2, rows: 2 };
+  if (n === 6) return { cols: 3, rows: 2 };
+  return { cols: 3, rows: 3 }; // 9
 }
 
 // Grid for photos + logo slot (logo = last tile).

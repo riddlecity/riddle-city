@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Camera, Check } from "lucide-react";
+import { Camera, Check, FlipHorizontal } from "lucide-react";
 import { savePhoto, loadPhoto } from "@/lib/photoStorage";
 
 interface PhotoCaptureProps {
@@ -10,11 +10,42 @@ interface PhotoCaptureProps {
   onPhotoTaken?: () => void;
 }
 
+// Re-draws the captured image onto a canvas at the given output size, with an
+// optional horizontal flip. Used both for the initial (unflipped) preview and
+// to regenerate the preview whenever the user taps "Flip".
+function renderPhotoDataUrl(img: HTMLImageElement, outW: number, outH: number, flip: boolean): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+
+  if (flip) {
+    ctx.translate(outW, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(img, 0, 0, outW, outH);
+
+  return canvas.toDataURL("image/jpeg", 0.75);
+}
+
 export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoCaptureProps) {
   // Photo state – loaded asynchronously from IndexedDB (see useEffect below)
   const [photo, setPhoto] = useState<string | null>(null);
   const [showTipModal, setShowTipModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preview step shown right after capture, before saving — front cameras on
+  // some phones/browsers save selfies mirrored and some don't, and there's no
+  // reliable way to detect this from the file alone, so we let the user flip
+  // it themselves if it looks backwards instead of guessing and getting it
+  // wrong for some devices.
+  const [previewData, setPreviewData] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const capturedImageRef = useRef<HTMLImageElement | null>(null);
+  const captureDimsRef = useRef<{ outW: number; outH: number } | null>(null);
 
   // Load photo from IndexedDB (with localStorage fallback) on mount and when riddleId changes
   useEffect(() => {
@@ -60,8 +91,6 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
           
           img.onload = () => {
             try {
-              const canvas = document.createElement("canvas");
-
               // Preserve natural orientation — compress to max 1200px on longest side
               const MAX = 1200;
               const nw = img.width;
@@ -75,24 +104,13 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
                 outW = Math.round(outH / nh * nw);
               }
 
-              canvas.width  = outW;
-              canvas.height = outH;
-
-              const ctx = canvas.getContext("2d");
-              if (!ctx) return;
-
-              // Draw without any flip — the saved file is already correctly oriented
-              // whether taken with the front or back camera
-              ctx.drawImage(img, 0, 0, outW, outH);
-
-              const compressedPhoto = canvas.toDataURL("image/jpeg", 0.75);
-              // Save to IndexedDB (primary) and localStorage (fallback)
-              savePhoto(groupId, riddleId, compressedPhoto);
-              setPhoto(compressedPhoto);
-
-              if (onPhotoTaken) {
-                onPhotoTaken();
-              }
+              // Don't save yet — show a preview first so the user can flip it
+              // themselves if their phone saved the selfie mirrored.
+              capturedImageRef.current = img;
+              captureDimsRef.current = { outW, outH };
+              setIsFlipped(false);
+              setPreviewData(renderPhotoDataUrl(img, outW, outH, false));
+              setShowPreview(true);
             } catch (error) {
               // Silently handle error
             }
@@ -110,6 +128,36 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
     } catch (error) {
       // Silently handle error
     }
+  };
+
+  const toggleFlip = () => {
+    const next = !isFlipped;
+    setIsFlipped(next);
+    if (capturedImageRef.current && captureDimsRef.current) {
+      const { outW, outH } = captureDimsRef.current;
+      setPreviewData(renderPhotoDataUrl(capturedImageRef.current, outW, outH, next));
+    }
+  };
+
+  const confirmPhoto = () => {
+    if (!previewData) return;
+    savePhoto(groupId, riddleId, previewData);
+    setPhoto(previewData);
+    setShowPreview(false);
+    capturedImageRef.current = null;
+    captureDimsRef.current = null;
+
+    if (onPhotoTaken) {
+      onPhotoTaken();
+    }
+  };
+
+  const retakePhoto = () => {
+    setShowPreview(false);
+    setPreviewData(null);
+    capturedImageRef.current = null;
+    captureDimsRef.current = null;
+    fileInputRef.current?.click();
   };
 
   const currentPhoto = photo || existingPhoto;
@@ -186,6 +234,42 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
             >
               Maybe later
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Preview Modal — lets the user flip a mirrored selfie before saving */}
+      {showPreview && previewData && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-white/20 rounded-xl p-4 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-3 text-center">Check-in photo</h3>
+
+            <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-neutral-800 mb-4">
+              <img src={previewData} alt="Preview" className="w-full h-full object-cover" />
+            </div>
+
+            <button
+              onClick={toggleFlip}
+              className="w-full mb-3 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-white/20"
+            >
+              <FlipHorizontal className="w-4 h-4" />
+              {isFlipped ? "Unflip photo" : "Photo looks backwards? Flip it"}
+            </button>
+
+            <div className="flex gap-3">
+              <button
+                onClick={retakePhoto}
+                className="flex-1 min-h-[48px] bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-all duration-200"
+              >
+                Retake
+              </button>
+              <button
+                onClick={confirmPhoto}
+                className="flex-1 min-h-[48px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-lg transition-all duration-200"
+              >
+                Use this photo
+              </button>
+            </div>
           </div>
         </div>
       )}
