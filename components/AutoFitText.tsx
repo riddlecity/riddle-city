@@ -65,7 +65,15 @@ export default function AutoFitText({ text, className, style, maxPx = 44, minPx 
       <div
         ref={textRef}
         className="font-bold text-white leading-tight drop-shadow-lg inline-block"
-        style={{ whiteSpace: wrapAtFloor ? "pre-wrap" : "pre", fontSize: `${fontSize}px`, ...style }}
+        style={{
+          whiteSpace: wrapAtFloor ? "pre-wrap" : "pre",
+          // Only relevant when wrapAtFloor forces a wrap - spreads words
+          // evenly across lines instead of greedily filling each line and
+          // leaving a lone word dangling on the last one.
+          textWrap: wrapAtFloor ? "balance" : undefined,
+          fontSize: `${fontSize}px`,
+          ...style,
+        }}
       >
         {text}
       </div>
