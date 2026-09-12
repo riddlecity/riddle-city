@@ -14,10 +14,11 @@ interface AutoFitTextProps {
 // container width without wrapping - riddles use "\n" for intentional line
 // breaks, but a long line wrapping mid-word looked like a stray extra line
 // under a full one, which read as confusing/unintentional.
-export default function AutoFitText({ text, className, style, maxPx = 40, minPx = 14 }: AutoFitTextProps) {
+export default function AutoFitText({ text, className, style, maxPx = 44, minPx = 19 }: AutoFitTextProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState(maxPx);
+  const [wrapAtFloor, setWrapAtFloor] = useState(false);
 
   useLayoutEffect(() => {
     const wrapper = wrapperRef.current;
@@ -29,6 +30,7 @@ export default function AutoFitText({ text, className, style, maxPx = 40, minPx 
       textEl!.style.fontSize = `${maxPx}px`;
       if (textEl!.scrollWidth <= containerWidth) {
         setFontSize(maxPx);
+        setWrapAtFloor(false);
         return;
       }
 
@@ -46,6 +48,11 @@ export default function AutoFitText({ text, className, style, maxPx = 40, minPx 
         }
       }
       setFontSize(best);
+
+      // Even the smallest readable size doesn't fit this line - wrap instead
+      // of shrinking further into illegibility.
+      textEl!.style.fontSize = `${minPx}px`;
+      setWrapAtFloor(textEl!.scrollWidth > containerWidth);
     }
 
     fit();
@@ -58,7 +65,7 @@ export default function AutoFitText({ text, className, style, maxPx = 40, minPx 
       <div
         ref={textRef}
         className="font-bold text-white leading-tight drop-shadow-lg inline-block"
-        style={{ whiteSpace: "pre", fontSize: `${fontSize}px`, ...style }}
+        style={{ whiteSpace: wrapAtFloor ? "pre-wrap" : "pre", fontSize: `${fontSize}px`, ...style }}
       >
         {text}
       </div>

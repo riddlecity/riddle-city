@@ -91,9 +91,10 @@ function isLocationOpen(hours: DatabaseOpeningHours, ukTime: Date): boolean {
   const openMinutes = openHour * 60 + openMinute;
   let closeMinutes = closeHour * 60 + closeMinute;
 
-  // Handle midnight closures (e.g., 00:00 or 00:30)
-  if (closeHour === 0 || (closeHour === 0 && closeMinute > 0)) {
-    closeMinutes += 24 * 60; // Add 24 hours for next day
+  // A close time at or before the open time (00:00, 01:00, 02:30, etc.) means
+  // closing actually happens after midnight, the next calendar day.
+  if (closeMinutes <= openMinutes) {
+    closeMinutes += 24 * 60;
   }
 
   return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
@@ -110,11 +111,13 @@ function hoursUntilClose(hours: DatabaseOpeningHours, ukTime: Date): number | nu
   }
 
   const currentMinutes = ukTime.getHours() * 60 + ukTime.getMinutes();
+  const [openHour, openMinute] = todayHours.open.split(':').map(Number);
   const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
+  const openMinutes = openHour * 60 + openMinute;
   let closeMinutes = closeHour * 60 + closeMinute;
 
-  // Handle midnight closures
-  if (closeHour === 0 || (closeHour === 0 && closeMinute > 0)) {
+  // A close time at or before the open time crosses midnight into the next day
+  if (closeMinutes <= openMinutes) {
     closeMinutes += 24 * 60;
   }
 

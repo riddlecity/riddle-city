@@ -49,11 +49,12 @@ export function isLocationEmergencySkippable(openingHoursRaw: unknown): boolean 
   const openMinutes = openHour * 60 + openMinute;
   let closeMinutes = closeHour * 60 + closeMinute;
 
-  // Handle midnight closures (e.g. "00:00") - without this, a close time of
-  // 00:00 evaluates to closeMinutes = 0, which makes currentMinutes < closeMinutes
-  // false almost all day, incorrectly treating the location as closed/emergency-
-  // skippable for everyone the entire day instead of just near/after midnight.
-  if (closeHour === 0) {
+  // A close time at or before the open time (00:00, 01:00, 02:30, etc.)
+  // means closing actually happens after midnight, the next calendar day -
+  // without this, e.g. 01:00 evaluates to closeMinutes = 60, which makes
+  // currentMinutes < closeMinutes false for almost the whole day, incorrectly
+  // treating the location as closed/emergency-skippable all day long.
+  if (closeMinutes <= openMinutes) {
     closeMinutes += 24 * 60;
   }
 
