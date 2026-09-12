@@ -19,7 +19,7 @@ export default function AutoFitText({ text, className, style }: AutoFitTextProps
           className="font-bold text-white leading-tight drop-shadow-lg"
           style={{
             textWrap: "balance",
-            fontSize: "clamp(0.85rem, 4vw, 1.1rem)",
+            fontSize: "clamp(1.1rem, 4.25vw, 1.35rem)",
             ...style,
           }}
         >
