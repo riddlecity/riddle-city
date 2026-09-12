@@ -256,13 +256,13 @@ export default async function AdventureCompletePage({ params }: Props) {
       <CookieCleaner />
 
       {/* Background maze logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
+      <div className="absolute inset-0 flex items-center justify-center opacity-5 overflow-hidden">
         <Image
           src="/riddle-city-logo2.png"
           alt=""
           width={600}
           height={600}
-          className="w-[400px] h-[400px] md:w-[500px] md:h-[500px] object-contain"
+          className="w-[85vw] max-w-[400px] h-auto md:w-[500px] md:max-w-[500px] object-contain"
           priority={false}
         />
       </div>
@@ -381,12 +381,12 @@ export default async function AdventureCompletePage({ params }: Props) {
           {!isCurrentTeamSuspicious && (mainLeaderboard.length > 0 || casualLeaderboard.length > 0 || noviceLeaderboard.length > 0) && (
             <div className="bg-black/40 backdrop-blur-sm border border-white/20 rounded-xl p-4 md:p-5 mb-4">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-2">
-                <h3 className="text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
+                <h3 className="min-w-0 text-lg md:text-xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
                   {isCurrentTeamNovice ? '🌟' : isCurrentTeamCasual ? '🎮' : '🏆'} {isCurrentTeamNovice ? 'Novice Completions' : isCurrentTeamCasual ? 'Casual Completions' : `${adventureType} Elite Leaderboard`} - {cityName}
                 </h3>
                 <Link
                   href={`/leaderboard/${group.track_id}?from_group=${groupId}`}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 text-xs md:text-sm whitespace-nowrap"
+                  className="flex-shrink-0 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 text-xs md:text-sm whitespace-nowrap"
                 >
                   See Full Leaderboard
                 </Link>
@@ -415,15 +415,15 @@ export default async function AdventureCompletePage({ params }: Props) {
                         </div>
                       )}
                       <div
-                        className={`flex items-center justify-between p-2 md:p-3 rounded-lg transition-all duration-200 ${
+                        className={`flex items-center justify-between gap-2 p-2 md:p-3 rounded-lg transition-all duration-200 ${
                           entry.isCurrentTeam
                             ? "bg-yellow-500/20 border border-yellow-500/30"
                             : "bg-white/5 hover:bg-white/10"
                         }`}
                       >
-                        <div className="flex items-center gap-2 md:gap-3">
+                        <div className="flex items-center gap-2 md:gap-3 min-w-0">
                           <div
-                            className={`text-sm md:text-lg font-bold min-w-[2rem] ${
+                            className={`flex-shrink-0 text-sm md:text-lg font-bold min-w-[2rem] ${
                               actualPosition === 1
                                 ? "text-yellow-400"
                                 : actualPosition === 2
@@ -435,9 +435,9 @@ export default async function AdventureCompletePage({ params }: Props) {
                           >
                             {actualPosition}.
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div
-                              className={`text-sm md:text-base font-semibold ${
+                              className={`text-sm md:text-base font-semibold break-words ${
                                 entry.isCurrentTeam
                                   ? "text-yellow-200"
                                   : "text-white"
@@ -457,7 +457,7 @@ export default async function AdventureCompletePage({ params }: Props) {
                           </div>
                         </div>
                         <div
-                          className={`font-mono font-bold text-sm md:text-base ${
+                          className={`flex-shrink-0 font-mono font-bold text-sm md:text-base ${
                             entry.isCurrentTeam ? "text-yellow-200" : "text-white"
                           }`}
                         >

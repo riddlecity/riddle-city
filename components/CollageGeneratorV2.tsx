@@ -153,7 +153,12 @@ export default function CollageGeneratorV2({
     }
   };
 
-  const { cols: gridCols, rows: gridRows } = gridFor(Math.min(photoCount, MAX_COLLAGE_PHOTOS) || 1);
+  const clampedCount = Math.min(photoCount, MAX_COLLAGE_PHOTOS) || 1;
+  // Odd counts never tile a rectangle evenly on their own - giving the logo
+  // its own full cell (instead of a small corner watermark) makes the total
+  // an even number of slots, so the grid comes out clean either way.
+  const logoTakesSlot = clampedCount % 2 === 1;
+  const { cols: gridCols, rows: gridRows } = gridFor(logoTakesSlot ? clampedCount + 1 : clampedCount);
 
   return (
     <div className="w-full space-y-5">
@@ -216,12 +221,28 @@ export default function CollageGeneratorV2({
                   <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 </div>
               ))}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/collagestamp.png"
-                alt=""
-                style={{ position: "absolute", bottom: 14, right: 14, width: "18%", opacity: 0.92 }}
-              />
+              {logoTakesSlot ? (
+                <div
+                  style={{
+                    borderRadius: 10,
+                    background: "#ffffff",
+                    border: "1.5px solid #e0e0e0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/collagestamp.png" alt="" style={{ width: "70%", objectFit: "contain" }} />
+                </div>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src="/collagestamp.png"
+                  alt=""
+                  style={{ position: "absolute", bottom: 14, right: 14, width: "18%", opacity: 0.92 }}
+                />
+              )}
             </div>
           </div>
 

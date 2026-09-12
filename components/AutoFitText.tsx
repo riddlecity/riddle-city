@@ -9,19 +9,26 @@ interface AutoFitTextProps {
 // "balance" so it splits evenly across lines instead of leaving a lone word
 // dangling by itself under an otherwise-full line.
 export default function AutoFitText({ text, className, style }: AutoFitTextProps) {
+  // Each authored line gets its own block + independent "balance" pass -
+  // applying balance across the whole multi-line block at once let earlier
+  // lines skew the wrap point for later ones, getting worse line by line.
+  const lines = text.split("\n");
+
   return (
     <div className={className}>
-      <div
-        className="font-bold text-white leading-tight drop-shadow-lg"
-        style={{
-          whiteSpace: "pre-line",
-          textWrap: "balance",
-          fontSize: "clamp(1.25rem, 5.5vw, 2.25rem)",
-          ...style,
-        }}
-      >
-        {text}
-      </div>
+      {lines.map((line, i) => (
+        <div
+          key={i}
+          className="font-bold text-white leading-tight drop-shadow-lg"
+          style={{
+            textWrap: "balance",
+            fontSize: "clamp(1.25rem, 5.5vw, 2.25rem)",
+            ...style,
+          }}
+        >
+          {line}
+        </div>
+      ))}
     </div>
   );
 }

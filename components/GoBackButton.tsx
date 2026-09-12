@@ -41,7 +41,7 @@ export default function GoBackButton({ groupId }: Props) {
   };
 
   return (
-    <div className="w-full">
+    <div className="flex-shrink-0">
       <button
         onClick={handleGoBack}
         disabled={isGoingBack}

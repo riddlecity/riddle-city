@@ -281,22 +281,21 @@ export default async function RiddlePage({ params }: Props) {
         />
       </div>
 
-      {/* Go back option - only shown to the leader if the previous riddle was skipped.
-          Rendered in normal flow (not an overlay) so it takes up real space
-          instead of covering the riddle content below. */}
-      {groupId && showGoBack && (
-        <div className="w-full px-4 pt-2 z-10 flex-shrink-0" style={{ paddingTop: "max(env(safe-area-inset-top, 0.5rem), 0.5rem)" }}>
-          <GoBackButton groupId={groupId} />
-        </div>
-      )}
-
-      {/* Game Progress - At the very top (NO TIMER) */}
+      {/* Go back option (leader only, previous riddle skipped) + Game Progress
+          share one row so the go-back link doesn't eat its own vertical
+          space above the progress bar. */}
       {groupId && (
-        <div className="w-full px-4 pt-2 z-10 flex-shrink-0">
-          <GameProgress
-            currentRiddleOrder={currentRiddleOrder}
-            totalRiddles={totalRiddles}
-          />
+        <div
+          className="w-full px-4 pt-2 z-10 flex-shrink-0 flex items-center gap-3"
+          style={{ paddingTop: "max(env(safe-area-inset-top, 0.5rem), 0.5rem)" }}
+        >
+          {showGoBack && <GoBackButton groupId={groupId} />}
+          <div className="flex-1 min-w-0">
+            <GameProgress
+              currentRiddleOrder={currentRiddleOrder}
+              totalRiddles={totalRiddles}
+            />
+          </div>
         </div>
       )}
 
