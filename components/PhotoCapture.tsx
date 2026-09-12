@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Camera, Check, FlipHorizontal } from "lucide-react";
+import { Camera, Check, FlipHorizontal, SwitchCamera } from "lucide-react";
 import { savePhoto, loadPhoto } from "@/lib/photoStorage";
 
 interface PhotoCaptureProps {
@@ -46,6 +46,19 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   const [isFlipped, setIsFlipped] = useState(false);
   const capturedImageRef = useRef<HTMLImageElement | null>(null);
   const captureDimsRef = useRef<{ outW: number; outH: number } | null>(null);
+
+  // Defaults to the front/selfie camera since teams almost always check in
+  // with a group selfie - "Switch Camera" in the preview flips this and
+  // immediately retakes with the other camera.
+  const [cameraFacing, setCameraFacing] = useState<"user" | "environment">("user");
+  const pendingRetakeRef = useRef(false);
+
+  useEffect(() => {
+    if (pendingRetakeRef.current) {
+      pendingRetakeRef.current = false;
+      fileInputRef.current?.click();
+    }
+  }, [cameraFacing]);
 
   // Load photo from IndexedDB (with localStorage fallback) on mount and when riddleId changes
   useEffect(() => {
@@ -160,6 +173,15 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
     fileInputRef.current?.click();
   };
 
+  const switchCameraAndRetake = () => {
+    setShowPreview(false);
+    setPreviewData(null);
+    capturedImageRef.current = null;
+    captureDimsRef.current = null;
+    pendingRetakeRef.current = true;
+    setCameraFacing((prev) => (prev === "user" ? "environment" : "user"));
+  };
+
   const currentPhoto = photo || existingPhoto;
   const hasPhoto = !!currentPhoto;
 
@@ -256,6 +278,14 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               {isFlipped ? "Unflip photo" : "Photo looks backwards? Flip it"}
             </button>
 
+            <button
+              onClick={switchCameraAndRetake}
+              className="w-full mb-3 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 border border-white/20"
+            >
+              <SwitchCamera className="w-4 h-4" />
+              {cameraFacing === "user" ? "Wrong camera? Switch & retake" : "Switch back to selfie camera"}
+            </button>
+
             <div className="flex gap-3">
               <button
                 onClick={retakePhoto}
@@ -301,7 +331,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="user"
+        capture={cameraFacing}
         onChange={handlePhotoCapture}
         className="hidden"
       />

@@ -13,6 +13,7 @@ import SessionRecovery from "@/components/SessionRecovery";
 import ManualAnswerForm from "@/components/ManualAnswerForm";
 import ScanQRButton from "@/components/ScanQRButton";
 import AlternativeRiddleToggle from "@/components/AlternativeRiddleToggle";
+import AutoFitText from "@/components/AutoFitText";
 import PhotoCapture from "@/components/PhotoCapture";
 import GoBackButton from "@/components/GoBackButton";
 import { notFound, redirect } from "next/navigation";
@@ -327,17 +328,11 @@ export default async function RiddlePage({ params }: Props) {
               altRiddle={alt_riddle}
             />
           ) : (
-            <h1
-              className="font-bold text-white leading-tight drop-shadow-lg mb-4
-                         text-[clamp(1.25rem,4.5vw,2.25rem)]
-                         md:text-[clamp(1.75rem,3.5vw,2.5rem)]
-                         px-2 whitespace-pre-line"
-              style={{
-                textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
-              }}
-            >
-              {riddle_text}
-            </h1>
+            <AutoFitText
+              text={riddle_text}
+              className="mb-4 px-2"
+              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)' }}
+            />
           )}
 
           {/* Manual Answer Form */}

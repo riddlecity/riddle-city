@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AutoFitText from './AutoFitText';
 
 interface AlternativeRiddleToggleProps {
   riddleText: string;
@@ -18,34 +19,22 @@ export default function AlternativeRiddleToggle({
   return (
     <div className="relative">
       {/* Main Riddle Text */}
-      <h1
-        className={`font-bold text-white leading-tight drop-shadow-lg mb-4
-                   text-[clamp(1.25rem,4.5vw,2.25rem)]
-                   md:text-[clamp(1.75rem,3.5vw,2.5rem)]
-                   px-2 whitespace-pre-line transition-all duration-300 ${
-                     showingAlt ? 'opacity-0 invisible absolute top-0 left-0 right-0' : 'opacity-100 visible'
-                   }`}
-        style={{
-          textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
-        }}
-      >
-        {riddleText}
-      </h1>
+      <AutoFitText
+        text={riddleText}
+        className={`mb-4 px-2 transition-all duration-300 ${
+          showingAlt ? 'opacity-0 invisible absolute top-0 left-0 right-0' : 'opacity-100 visible'
+        }`}
+        style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)' }}
+      />
 
       {/* Alternative Riddle Text */}
-      <h1
-        className={`font-bold text-white leading-tight drop-shadow-lg mb-4
-                   text-[clamp(1.25rem,4.5vw,2.25rem)]
-                   md:text-[clamp(1.75rem,3.5vw,2.5rem)]
-                   px-2 whitespace-pre-line transition-all duration-300 ${
-                     showingAlt ? 'opacity-100 visible' : 'opacity-0 invisible absolute top-0 left-0 right-0'
-                   }`}
-        style={{
-          textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)'
-        }}
-      >
-        {altRiddle}
-      </h1>
+      <AutoFitText
+        text={altRiddle}
+        className={`mb-4 px-2 transition-all duration-300 ${
+          showingAlt ? 'opacity-100 visible' : 'opacity-0 invisible absolute top-0 left-0 right-0'
+        }`}
+        style={{ textShadow: '0 2px 12px rgba(0,0,0,0.8), 0 4px 24px rgba(0,0,0,0.4)' }}
+      />
 
       {/* Toggle Button */}
       <div className="mt-6">
