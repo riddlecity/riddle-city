@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Download, Image as ImageIcon, Instagram } from "lucide-react";
+import { toJpeg } from "html-to-image";
 import { loadPhotosForGroup } from "@/lib/photoStorage";
 
 interface CollageGeneratorProps {
@@ -12,169 +13,30 @@ interface CollageGeneratorProps {
   riddleIds: string[];
 }
 
-// ── Canvas: 1080×1350 (4:5 Instagram portrait, white background) ─────────────
-const CW  = 1080;
-const CH  = 1350;
-const PAD = 12;
-const GAP = 8;
-const CR  = 12; // corner radius
+const MAX_COLLAGE_PHOTOS = 9;
+const CELL_ASPECT = 0.8; // portrait, close to a typical phone photo
+const EXPORT_WIDTH = 480; // on-screen render width in px; upscaled via pixelRatio on export
 
-const PW = CW - PAD * 2; // 1056 — usable width
-const PH = CH - PAD * 2; // 1326 — usable height (full canvas, logo lives in a slot)
-
-interface Tile { x: number; y: number; w: number; h: number; isLogo: boolean }
-
-// Logo banner height when used as overlay (1, 2, 4, 6, 9 photos)
-const LOGO_BANNER_H = 110;
-
-// Does this photo count fit a perfect rectangle with the logo as last slot?
-// True for: 3,5,7,8 — False for: 1,2,4,6,9
-//
-// This isn't just "does it fit a rectangle" — it's whichever arrangement
-// produces cell aspect ratios closest to a portrait phone selfie (~0.8),
-// checked by computing actual tile width/height for every candidate grid.
-// n=1 and n=9 used to be in the "true" list (slot totals of 2 and 10),
-// but 2 only factors as 1x2 (cells 1.6:1, badly cropping portrait photos)
-// and 10 only factors as 2x5 (cells ~2:1, even worse) — banner mode with
-// exact counts of 1 (single full-bleed photo) or 9 (a clean 3x3 grid)
-// looks far better. See CollageGeneratorV2 grid-fix notes.
-function usesLogoSlot(photoCount: number): boolean {
-  const n = Math.min(photoCount, 9);
-  return n === 3 || n === 5 || n === 7 || n === 8;
+// Picks a near-square cols x rows grid for however many photos there are, so
+// the overall collage shape itself goes from a single portrait tile (1
+// photo) to a wide rectangle (e.g. 2x1) to a tall square (e.g. 3x3), instead
+// of forcing every group size into one fixed canvas shape. The grid is real
+// CSS Grid rendered in the DOM (see JSX below) and snapshotted with
+// html-to-image, so the browser's own layout engine handles sizing/cropping
+// instead of hand-rolled canvas math.
+function gridFor(n: number): { cols: number; rows: number } {
+  const cols = Math.max(1, Math.ceil(Math.sqrt(n)));
+  const rows = Math.ceil(n / cols);
+  return { cols, rows };
 }
 
-// Grid for photos only (no logo slot). Used when logo is overlaid.
-// Orientation matters here too — e.g. 6 photos as 3 cols x 2 rows gives
-// much more portrait-friendly cells than 2 cols x 3 rows.
-function calcPhotoGrid(n: number): { cols: number; rows: number } {
-  if (n <= 1) return { cols: 1, rows: 1 };
-  if (n === 2) return { cols: 2, rows: 1 };
-  if (n <= 4) return { cols: 2, rows: 2 };
-  if (n === 6) return { cols: 3, rows: 2 };
-  return { cols: 3, rows: 3 }; // 9
-}
-
-// Grid for photos + logo slot (logo = last tile).
-function calcSlotGrid(total: number): { cols: number; rows: number } {
-  if (total <= 2)  return { cols: 1, rows: 2 };
-  if (total <= 4)  return { cols: 2, rows: 2 };
-  if (total <= 6)  return { cols: 2, rows: 3 };
-  if (total <= 8)  return { cols: 2, rows: 4 };
-  if (total <= 9)  return { cols: 3, rows: 3 };
-  return                   { cols: 2, rows: 5 };
-}
-
-function buildPhotoTiles(photoCount: number, gridH: number): Tile[] {
-  const n = Math.min(photoCount, 9);
-  const { cols, rows } = calcPhotoGrid(n);
-  const tiles: Tile[] = [];
-  let count = 0;
-  for (let r = 0; r < rows && count < n; r++) {
-    for (let c = 0; c < cols && count < n; c++) {
-      const x  = PAD + Math.round(c * (PW + GAP) / cols);
-      const y  = PAD + Math.round(r * (gridH + GAP) / rows);
-      const x2 = c < cols - 1 ? PAD + Math.round((c + 1) * (PW + GAP) / cols) - GAP : PAD + PW;
-      const y2 = r < rows - 1 ? PAD + Math.round((r + 1) * (gridH + GAP) / rows) - GAP : PAD + gridH;
-      tiles.push({ x, y, w: x2 - x, h: y2 - y, isLogo: false });
-      count++;
-    }
+function shuffledCopy<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-  return tiles;
-}
-
-// Build all tile rects. Returns photo tiles + optional logo tile.
-function buildTiles(photoCount: number): Tile[] {
-  const n = Math.min(photoCount, 9);
-  if (usesLogoSlot(n)) {
-    // Logo fills the last slot in a perfect rectangle
-    const total = n + 1;
-    const { cols, rows } = calcSlotGrid(total);
-    const tiles: Tile[] = [];
-    let count = 0;
-    for (let r = 0; r < rows && count < total; r++) {
-      for (let c = 0; c < cols && count < total; c++) {
-        const x  = PAD + Math.round(c * (PW + GAP) / cols);
-        const y  = PAD + Math.round(r * (PH + GAP) / rows);
-        const x2 = c < cols - 1 ? PAD + Math.round((c + 1) * (PW + GAP) / cols) - GAP : PAD + PW;
-        const y2 = r < rows - 1 ? PAD + Math.round((r + 1) * (PH + GAP) / rows) - GAP : PAD + PH;
-        tiles.push({ x, y, w: x2 - x, h: y2 - y, isLogo: count === total - 1 });
-        count++;
-      }
-    }
-    return tiles;
-  } else {
-    // Logo overlaid as bottom banner — photos fill available height above it
-    const gridH = PH - LOGO_BANNER_H - GAP;
-    const photoTiles = buildPhotoTiles(n, gridH);
-    // Logo banner spans full width at the bottom
-    const bannerY = PAD + gridH + GAP;
-    photoTiles.push({ x: PAD, y: bannerY, w: PW, h: LOGO_BANNER_H, isLogo: true });
-    return photoTiles;
-  }
-}
-
-function roundedRectPath(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y,     x + w, y + r,     r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-  ctx.lineTo(x + r, y + h);
-  ctx.arcTo(x,     y + h, x,     y + h - r, r);
-  ctx.lineTo(x, y + r);
-  ctx.arcTo(x,     y,     x + r, y,         r);
-  ctx.closePath();
-}
-
-function drawPhotoInTile(ctx: CanvasRenderingContext2D, img: HTMLImageElement, tile: Tile) {
-  const imgAR  = img.width / img.height;
-  const tileAR = tile.w / tile.h;
-  let sx = 0, sy = 0, sw = img.width, sh = img.height;
-
-  if (imgAR > tileAR) {
-    // Photo wider than slot → crop sides, keep centre
-    sw = img.height * tileAR;
-    sx = (img.width - sw) / 2;
-  } else {
-    // Photo taller than slot → crop top/bottom, keep centre
-    sh = img.width / tileAR;
-    sy = (img.height - sh) / 2;
-  }
-
-  ctx.save();
-  roundedRectPath(ctx, tile.x, tile.y, tile.w, tile.h, CR);
-  ctx.clip();
-  ctx.drawImage(img, sx, sy, sw, sh, tile.x, tile.y, tile.w, tile.h);
-  ctx.restore();
-}
-
-function drawLogoTile(ctx: CanvasRenderingContext2D, tile: Tile, stamp: HTMLImageElement, isBanner: boolean) {
-  ctx.save();
-  roundedRectPath(ctx, tile.x, tile.y, tile.w, tile.h, CR);
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.strokeStyle = "#e0e0e0";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.restore();
-
-  // Stamp centred — banners use 55% width, slots use 75%
-  if (stamp.complete && stamp.width > 0 && stamp.height > 0) {
-    const fillFrac = isBanner ? 0.55 : 0.75;
-    const maxW    = tile.w * fillFrac;
-    const maxH    = tile.h * 0.75;
-    const stampAR = stamp.width / stamp.height;
-    let sW = maxW;
-    let sH = sW / stampAR;
-    if (sH > maxH) { sH = maxH; sW = sH * stampAR; }
-    const sx = tile.x + (tile.w - sW) / 2;
-    const sy = tile.y + (tile.h - sH) / 2;
-    ctx.drawImage(stamp, sx, sy, sW, sH);
-  }
+  return copy;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -185,10 +47,11 @@ export default function CollageGeneratorV2({
   completionTime: _completionTime,
   riddleIds,
 }: CollageGeneratorProps) {
-  const [photos, setPhotos]           = useState<{ [key: string]: string }>({});
-  const [collageUrl, setCollageUrl]   = useState<string | null>(null);
+  const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [gridUrls, setGridUrls] = useState<string[]>([]);
+  const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const collageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,68 +64,27 @@ export default function CollageGeneratorV2({
   const photoCount = Object.keys(photos).length;
 
   const generateCollage = async () => {
-    if (photoCount === 0 || !canvasRef.current) return;
+    if (photoCount === 0 || !collageRef.current) return;
     setIsGenerating(true);
 
-    const canvas = canvasRef.current;
-    const ctx    = canvas.getContext("2d");
-    if (!ctx) { setIsGenerating(false); return; }
+    // Render the actual grid DOM before snapshotting it - wait two animation
+    // frames so the browser has committed styles/layout for the new photo
+    // order before html-to-image reads it.
+    setGridUrls(shuffledCopy(Object.values(photos)).slice(0, MAX_COLLAGE_PHOTOS));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-    canvas.width  = CW;
-    canvas.height = CH;
-
-    // White background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, CW, CH);
-
-    // Load stamp first
-    const stamp = new Image();
-    await new Promise<void>((resolve) => {
-      stamp.onload  = () => resolve();
-      stamp.onerror = () => resolve();
-      stamp.src     = "/collagestamp.png";
-    });
-
-    // Shuffle photo entries
-    const photoEntries = Object.entries(photos);
-    for (let i = photoEntries.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [photoEntries[i], photoEntries[j]] = [photoEntries[j], photoEntries[i]];
-    }
-
-    // Build grid layout
-    const tiles      = buildTiles(photoCount);
-    const photoTiles = tiles.filter(t => !t.isLogo);
-    const logoTile   = tiles.find(t => t.isLogo);
-
-    // Load and draw photos
-    const selected = photoEntries.slice(0, photoTiles.length);
-    for (let i = 0; i < selected.length; i++) {
-      const img = await new Promise<HTMLImageElement>((resolve) => {
-        const image   = new Image();
-        image.onload  = () => resolve(image);
-        image.onerror = () => resolve(image);
-        image.src     = selected[i][1];
+    try {
+      const dataUrl = await toJpeg(collageRef.current, {
+        quality: 0.95,
+        pixelRatio: 3,
+        backgroundColor: "#ffffff",
       });
-      if (img.width > 0) {
-        drawPhotoInTile(ctx, img, photoTiles[i]);
-      }
+      setCollageUrl(dataUrl);
+    } catch (err) {
+      console.error("Collage generation failed:", err);
+    } finally {
+      setIsGenerating(false);
     }
-
-    // Draw logo slot or banner
-    if (logoTile) {
-      const isBanner = !usesLogoSlot(Math.min(photoCount, 9));
-      drawLogoTile(ctx, logoTile, stamp, isBanner);
-    }
-
-    canvas.toBlob(
-      (blob) => {
-        if (blob) setCollageUrl(URL.createObjectURL(blob));
-        setIsGenerating(false);
-      },
-      "image/jpeg",
-      0.95
-    );
   };
 
   const downloadCollage = () => {
@@ -331,6 +153,8 @@ export default function CollageGeneratorV2({
     }
   };
 
+  const { cols: gridCols, rows: gridRows } = gridFor(Math.min(photoCount, MAX_COLLAGE_PHOTOS) || 1);
+
   return (
     <div className="w-full space-y-5">
       {photoCount > 0 ? (
@@ -340,8 +164,8 @@ export default function CollageGeneratorV2({
             <p className="text-white/50 text-sm mb-2 flex items-center gap-2">
               <ImageIcon className="w-4 h-4" />
               {photoCount} photo{photoCount !== 1 ? "s" : ""} from your adventure
-              {photoCount > 9 && (
-                <span className="text-white/30 text-xs">(first 9 used in collage)</span>
+              {photoCount > MAX_COLLAGE_PHOTOS && (
+                <span className="text-white/30 text-xs">(first {MAX_COLLAGE_PHOTOS} used in collage)</span>
               )}
             </p>
             <div className="grid grid-cols-5 gap-1">
@@ -368,10 +192,43 @@ export default function CollageGeneratorV2({
             {isGenerating ? "Creating collage…" : collageUrl ? "Shuffle & Regenerate" : "Create Photo Collage"}
           </button>
 
+          {/* Off-screen live grid that gets snapshotted into collageUrl above.
+              Rendered with real CSS Grid so the browser's layout engine
+              handles sizing/cropping instead of hand-rolled canvas math. */}
+          <div className="overflow-hidden" style={{ height: 0 }}>
+            <div
+              ref={collageRef}
+              style={{
+                width: EXPORT_WIDTH,
+                display: "grid",
+                gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+                gridTemplateRows: `repeat(${gridRows}, 1fr)`,
+                gap: 6,
+                padding: 10,
+                aspectRatio: `${gridCols * CELL_ASPECT} / ${gridRows}`,
+                background: "#ffffff",
+                position: "relative",
+              }}
+            >
+              {gridUrls.map((url, i) => (
+                <div key={i} style={{ borderRadius: 10, overflow: "hidden" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </div>
+              ))}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/collagestamp.png"
+                alt=""
+                style={{ position: "absolute", bottom: 14, right: 14, width: "18%", opacity: 0.92 }}
+              />
+            </div>
+          </div>
+
           {collageUrl && (
             <div className="space-y-3">
-              <div className="relative w-full aspect-[4/5] bg-neutral-900 rounded-xl overflow-hidden border border-white/10">
-                <img src={collageUrl} alt="Your adventure collage" className="w-full h-full object-contain" />
+              <div className="relative w-full bg-neutral-900 rounded-xl overflow-hidden border border-white/10 flex items-center justify-center p-2">
+                <img src={collageUrl} alt="Your adventure collage" className="max-w-full max-h-[70vh] object-contain rounded-lg" />
               </div>
               <button
                 onClick={downloadCollage}
@@ -397,7 +254,6 @@ export default function CollageGeneratorV2({
           <p className="text-sm mt-1 opacity-60">Take photos during your adventure to create a collage</p>
         </div>
       )}
-      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }
