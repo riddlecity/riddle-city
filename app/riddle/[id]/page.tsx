@@ -308,7 +308,7 @@ export default async function RiddlePage({ params }: Props) {
           a separate fixed bar) so a long "opens tomorrow at X" message can
           never squeeze the riddle text out of view - it just sits above it. */}
       <div className="flex-1 min-h-0 overflow-y-auto flex items-center justify-center px-4 z-10 py-2">
-        <div className="w-full max-w-4xl text-center">
+        <div className="w-full min-w-0 max-w-4xl text-center">
           {/* Time Warning for this riddle's location */}
           <RiddleTimeWarning riddleId={id} trackId={track_id} />
 
