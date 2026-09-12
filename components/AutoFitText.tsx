@@ -70,7 +70,10 @@ export default function AutoFitText({ text, className, style, minPx = 19 }: Auto
   }, [text, minPx]);
 
   return (
-    <div ref={wrapperRef} className={className}>
+    // min-width:0 stops "white-space:pre" text from being treated as an
+    // unshrinkable min-content size by flex/grid ancestors, which would
+    // otherwise force the whole layout wider than the viewport.
+    <div ref={wrapperRef} className={className} style={{ minWidth: 0, overflow: "hidden" }}>
       <div
         ref={textRef}
         className="font-bold text-white leading-tight drop-shadow-lg inline-block"
