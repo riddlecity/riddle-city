@@ -13,6 +13,13 @@ interface PhotoCaptureProps {
 // Re-draws the captured image onto a canvas at the given output size, with an
 // optional horizontal flip. Used both for the initial (unflipped) preview and
 // to regenerate the preview whenever the user taps "Flip".
+const AUTO_FLIP_STORAGE_KEY = "riddlecity_selfie_auto_flip";
+
+function getAutoFlipPreference(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(AUTO_FLIP_STORAGE_KEY) === "true";
+}
+
 function renderPhotoDataUrl(img: HTMLImageElement, outW: number, outH: number, flip: boolean): string {
   const canvas = document.createElement("canvas");
   canvas.width = outW;
@@ -118,11 +125,14 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
               }
 
               // Don't save yet — show a preview first so the user can flip it
-              // themselves if their phone saved the selfie mirrored.
+              // themselves if their phone saved the selfie mirrored. Applies
+              // their remembered preference automatically, since the same
+              // phone/camera app mirrors (or doesn't) consistently every time.
+              const autoFlip = getAutoFlipPreference();
               capturedImageRef.current = img;
               captureDimsRef.current = { outW, outH };
-              setIsFlipped(false);
-              setPreviewData(renderPhotoDataUrl(img, outW, outH, false));
+              setIsFlipped(autoFlip);
+              setPreviewData(renderPhotoDataUrl(img, outW, outH, autoFlip));
               setShowPreview(true);
             } catch (error) {
               // Silently handle error
@@ -146,6 +156,7 @@ export default function PhotoCapture({ riddleId, groupId, onPhotoTaken }: PhotoC
   const toggleFlip = () => {
     const next = !isFlipped;
     setIsFlipped(next);
+    localStorage.setItem(AUTO_FLIP_STORAGE_KEY, String(next));
     if (capturedImageRef.current && captureDimsRef.current) {
       const { outW, outH } = captureDimsRef.current;
       setPreviewData(renderPhotoDataUrl(capturedImageRef.current, outW, outH, next));
